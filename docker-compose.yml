@@ -1,0 +1,27 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: production
+      cache_from:
+        - trading-signal-server:latest
+    image: trading-signal-server:latest
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      target: production
+      cache_from:
+        - trading-signal-client:latest
+    image: trading-signal-client:latest
+    ports:
+      - "8080:80"
+    depends_on:
+      - server

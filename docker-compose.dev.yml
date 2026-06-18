@@ -1,0 +1,31 @@
+services:
+  server:
+    build:
+      target: dev
+      cache_from:
+        - trading-signal-server:dev
+    image: trading-signal-server:dev
+    volumes:
+      - ./server/src:/app/src
+      - ./server/tsconfig.json:/app/tsconfig.json
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+
+  client:
+    build:
+      target: dev
+      cache_from:
+        - trading-signal-client:dev
+    image: trading-signal-client:dev
+    volumes:
+      - ./client/src:/app/src
+      - ./client/index.html:/app/index.html
+      - ./client/vite.config.ts:/app/vite.config.ts
+      - ./client/public:/app/public
+    environment:
+      API_PROXY_TARGET: http://server:3000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
