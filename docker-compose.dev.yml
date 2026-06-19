@@ -7,10 +7,34 @@ services:
     image: trading-signal-server:dev
     volumes:
       - ./server/src:/app/src
+      - ./server/prisma:/app/prisma
       - ./server/tsconfig.json:/app/tsconfig.json
     environment:
       NODE_ENV: development
       PORT: 3000
+      DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      JWT_SECRET: dev-jwt-secret-change-me
+
+  worker:
+    build:
+      target: dev
+      cache_from:
+        - trading-signal-worker:dev
+    image: trading-signal-worker:dev
+    command: ["npm", "run", "dev:worker"]
+    volumes:
+      - ./server/src:/app/src
+      - ./server/prisma:/app/prisma
+      - ./server/tsconfig.json:/app/tsconfig.json
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://rabbitmq:5672
+    depends_on:
+      - server
 
   client:
     build:
