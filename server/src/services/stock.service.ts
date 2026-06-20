@@ -12,58 +12,95 @@ import type {
 } from "../types/stock.js";
 import { parseStockQuote } from "../types/stock.js";
 
-/** Returns cached stock quote or fetches from Twelve Data with mock fallback. */
-export async function getStockQuote(symbol: string): Promise<StockQuote> {
-  const normalizedSymbol = symbol.toUpperCase();
-  const cacheKey = `stock:price:${normalizedSymbol}`;
+/** Normalizes a ticker symbol to uppercase. */
+function normalizeSymbol(symbol: string): string {
+  return symbol.toUpperCase();
+}
+
+/** Builds the Redis cache key for a stock quote. */
+function buildQuoteCacheKey(symbol: string): string {
+  return `stock:price:${symbol}`;
+}
+
+/** Reads a cached quote from Redis, or null on miss or parse failure. */
+async function readCachedQuote(symbol: string): Promise<StockQuote | null> {
+  const cacheKey = buildQuoteCacheKey(symbol);
 
   try {
     const cached = await redis.get(cacheKey);
-    if (cached) {
-      console.log(`[stock] Cache hit for ${normalizedSymbol}`);
-      const parsed = parseStockQuote(JSON.parse(cached));
-      if (parsed) {
-        return parsed;
-      }
+    if (!cached) {
+      return null;
     }
+
+    console.log(`[stock] Cache hit for ${symbol}`);
+    return parseStockQuote(JSON.parse(cached));
   } catch (error) {
-    console.error(`[stock] Redis read failed for ${normalizedSymbol}:`, error);
+    console.error(`[stock] Redis read failed for ${symbol}:`, error);
+    return null;
+  }
+}
+
+/** Maps a Twelve Data API payload to a StockQuote. */
+function mapTwelveDataQuote(symbol: string, data: Record<string, unknown>): StockQuote {
+  return {
+    symbol,
+    name: String(data.name ?? `${symbol} Inc.`),
+    price: Number(data.close ?? data.price ?? 0),
+    peRatio: Number(data.pe ?? 0),
+    sector: String(data.sector ?? "Unknown"),
+  };
+}
+
+/** Fetches a quote from Twelve Data; throws when the API key is missing or the request fails. */
+async function fetchQuoteFromApi(symbol: string): Promise<StockQuote> {
+  if (!env.twelveDataApiKey) {
+    throw new Error("TWELVE_DATA_API_KEY not configured");
   }
 
-  let quote: StockQuote;
+  const response = await axios.get("https://api.twelvedata.com/quote", {
+    params: { symbol, apikey: env.twelveDataApiKey },
+    timeout: 8000,
+  });
 
+  return mapTwelveDataQuote(symbol, response.data);
+}
+
+/** Fetches a live quote or falls back to deterministic mock data. */
+async function fetchQuoteWithFallback(symbol: string): Promise<StockQuote> {
   try {
-    if (env.twelveDataApiKey) {
-      const response = await axios.get("https://api.twelvedata.com/quote", {
-        params: { symbol: normalizedSymbol, apikey: env.twelveDataApiKey },
-        timeout: 8000,
-      });
-
-      quote = {
-        symbol: normalizedSymbol,
-        name: String(response.data.name ?? `${normalizedSymbol} Inc.`),
-        price: Number(response.data.close ?? response.data.price ?? 0),
-        peRatio: Number(response.data.pe ?? 0),
-        sector: String(response.data.sector ?? "Unknown"),
-      };
-    } else {
-      throw new Error("TWELVE_DATA_API_KEY not configured");
-    }
+    return await fetchQuoteFromApi(symbol);
   } catch (error) {
     console.warn(
-      `[stock] External API unavailable for ${normalizedSymbol}, using mock payload:`,
+      `[stock] External API unavailable for ${symbol}, using mock payload:`,
       error,
     );
-    quote = buildMockQuote(normalizedSymbol);
+    return buildMockQuote(symbol);
   }
+}
+
+/** Writes a quote to Redis with TTL; logs but does not throw on failure. */
+async function cacheQuote(symbol: string, quote: StockQuote): Promise<void> {
+  const cacheKey = buildQuoteCacheKey(symbol);
 
   try {
     await redis.set(cacheKey, JSON.stringify(quote), "EX", env.stockCacheTtlSeconds);
-    console.log(`[stock] Cached ${normalizedSymbol} for ${env.stockCacheTtlSeconds}s`);
+    console.log(`[stock] Cached ${symbol} for ${env.stockCacheTtlSeconds}s`);
   } catch (error) {
-    console.error(`[stock] Redis write failed for ${normalizedSymbol}:`, error);
+    console.error(`[stock] Redis write failed for ${symbol}:`, error);
+  }
+}
+
+/** Returns cached stock quote or fetches from Twelve Data with mock fallback. */
+export async function getStockQuote(symbol: string): Promise<StockQuote> {
+  const normalizedSymbol = normalizeSymbol(symbol);
+
+  const cached = await readCachedQuote(normalizedSymbol);
+  if (cached) {
+    return cached;
   }
 
+  const quote = await fetchQuoteWithFallback(normalizedSymbol);
+  await cacheQuote(normalizedSymbol, quote);
   return quote;
 }
 
@@ -133,39 +170,86 @@ function calculateChangePercent(previousPrice: number, currentPrice: number): nu
   return ((currentPrice - previousPrice) / previousPrice) * 100;
 }
 
-/** Processes one stock tick: detect surge, persist signal, update leaderboard. */
-export async function processStockTick(tick: StockTickMessage): Promise<void> {
-  const lastPriceKey = `last_price:${tick.symbol}`;
-  const leaderboardKey = `leaderboard:${tick.userId}`;
+/** Builds the Redis key for a symbol's last seen price. */
+function buildLastPriceKey(symbol: string): string {
+  return `last_price:${symbol}`;
+}
 
-  const previousPriceRaw = await redis.get(lastPriceKey);
-  const previousPrice = previousPriceRaw ? Number(previousPriceRaw) : tick.price;
-  const changePercent = calculateChangePercent(previousPrice, tick.price);
+/** Builds the Redis leaderboard key for a user. */
+function buildLeaderboardKey(userId: string): string {
+  return `leaderboard:${userId}`;
+}
 
+/** Reads the previous price from Redis, or the current price when none exists. */
+async function readPreviousPrice(symbol: string, fallbackPrice: number): Promise<number> {
+  const raw = await redis.get(buildLastPriceKey(symbol));
+  return raw ? Number(raw) : fallbackPrice;
+}
+
+/** Logs an incoming tick with its change vs the last price. */
+function logTickReceived(tick: StockTickMessage, changePercent: number): void {
   console.log(
     `[worker] Tick ${tick.symbol} @ ${tick.price} (${changePercent.toFixed(2)}% vs last)`,
   );
+}
 
-  if (changePercent >= env.surgeThresholdPercent) {
-    const recommendation = changePercent >= 3 ? "STRONG_BUY" : "BUY";
+/** Returns true when the price change meets the surge threshold. */
+function isSurgeDetected(changePercent: number): boolean {
+  return changePercent >= env.surgeThresholdPercent;
+}
 
-    await ensureUserExists(tick.userId, `${tick.userId}@ticks.local`);
+/** Maps change percent to a buy recommendation tier. */
+function resolveRecommendation(changePercent: number): string {
+  return changePercent >= 3 ? "STRONG_BUY" : "BUY";
+}
 
-    await createSignal({
-      userId: tick.userId,
-      symbol: tick.symbol,
-      recommendation,
-      price: tick.price,
-      previousPrice,
-      changePercent,
-    });
+/** Persists a surge signal when the change exceeds the threshold. */
+async function persistSurgeSignal(
+  tick: StockTickMessage,
+  previousPrice: number,
+  changePercent: number,
+): Promise<void> {
+  const recommendation = resolveRecommendation(changePercent);
 
-    console.log(
-      `[worker] Signal created for ${tick.symbol}: ${recommendation} (${changePercent.toFixed(2)}%)`,
-    );
-  }
+  await ensureUserExists(tick.userId, `${tick.userId}@ticks.local`);
+
+  await createSignal({
+    userId: tick.userId,
+    symbol: tick.symbol,
+    recommendation,
+    price: tick.price,
+    previousPrice,
+    changePercent,
+  });
+
+  console.log(
+    `[worker] Signal created for ${tick.symbol}: ${recommendation} (${changePercent.toFixed(2)}%)`,
+  );
+}
+
+/** Updates last price and leaderboard score for the tick. */
+async function updatePriceAndLeaderboard(
+  tick: StockTickMessage,
+  changePercent: number,
+): Promise<void> {
+  const lastPriceKey = buildLastPriceKey(tick.symbol);
+  const leaderboardKey = buildLeaderboardKey(tick.userId);
 
   await redis.set(lastPriceKey, String(tick.price));
   await redis.zadd(leaderboardKey, changePercent, tick.symbol);
   console.log(`[worker] Updated leaderboard ${leaderboardKey} for ${tick.symbol}`);
+}
+
+/** Processes one stock tick: detect surge, persist signal, update leaderboard. */
+export async function processStockTick(tick: StockTickMessage): Promise<void> {
+  const previousPrice = await readPreviousPrice(tick.symbol, tick.price);
+  const changePercent = calculateChangePercent(previousPrice, tick.price);
+
+  logTickReceived(tick, changePercent);
+
+  if (isSurgeDetected(changePercent)) {
+    await persistSurgeSignal(tick, previousPrice, changePercent);
+  }
+
+  await updatePriceAndLeaderboard(tick, changePercent);
 }
