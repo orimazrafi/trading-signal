@@ -2,7 +2,7 @@ import { connectWorkerInfrastructure } from "./config/bootstrap.js";
 import { prisma } from "./config/prisma.js";
 import { redis } from "./config/redis.js";
 import { startStockConsumer } from "./queue/consumers/stock.consumer.js";
-import { closeRabbitConnection } from "./queue/rabbit.connection.js";
+import { closeRabbitConnection } from "./queue/rabbit/connection.js";
 
 /** Boots infrastructure connections and starts RabbitMQ consumers. */
 async function startWorker(): Promise<void> {

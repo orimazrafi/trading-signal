@@ -1,6 +1,6 @@
 import { env } from "../../config/env.js";
 import type { StockTickMessage } from "../../types/stock.js";
-import { connectRabbitMq, getRabbitChannel } from "../rabbit.connection.js";
+import { connectRabbitMq, getRabbitChannel } from "../rabbit/connection.js";
 
 /** Publishes a stock price tick to the RabbitMQ queue. */
 export async function publishStockTick(tick: StockTickMessage): Promise<void> {
