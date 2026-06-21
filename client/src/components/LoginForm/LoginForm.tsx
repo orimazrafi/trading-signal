@@ -47,4 +47,3 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
   )
 }
 
-export type { LoginFormProps } from './types'

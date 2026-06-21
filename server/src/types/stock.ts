@@ -6,6 +6,12 @@ export interface StockQuote {
   sector: string;
 }
 
+export interface SearchStockResult {
+  quote: StockQuote;
+  recommendation: string;
+  signalId: string;
+}
+
 export interface TrendingStock {
   symbol: string;
   score: number;

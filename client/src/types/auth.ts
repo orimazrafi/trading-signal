@@ -4,6 +4,16 @@ export type AuthUser = {
   email: string
 }
 
+/** Response body for auth endpoints that return the session user. */
+export type AuthResponse = {
+  user: AuthUser
+}
+
+/** Response body for POST /api/auth/logout. */
+export type LogoutResponse = {
+  ok: boolean
+}
+
 /** OAuth redirect error codes passed via ?authError= query param. */
 export type OAuthRedirectErrorCode =
   | 'invalid_oauth_state'

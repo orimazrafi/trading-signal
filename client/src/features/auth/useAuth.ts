@@ -17,27 +17,14 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) => login(email, password),
-    onSuccess: (user) => {
-      queryClient.setQueryData<AuthUser | null>(queryKeys.auth.me, user)
-      setError(null)
-    },
   })
 
   const signupMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) => signup(email, password),
-    onSuccess: (user) => {
-      queryClient.setQueryData<AuthUser | null>(queryKeys.auth.me, user)
-      setError(null)
-    },
   })
 
   const logoutMutation = useMutation({
     mutationFn: logout,
-    onSuccess: () => {
-      queryClient.setQueryData<AuthUser | null>(queryKeys.auth.me, null)
-      queryClient.removeQueries({ queryKey: queryKeys.health })
-      setError(null)
-    },
   })
 
   const user = meQuery.data ?? null
@@ -50,15 +37,19 @@ export function useAuth() {
     setError,
     login: async (email: string, password: string) => {
       setError(null)
-      await loginMutation.mutateAsync({ email, password })
+      const nextUser = await loginMutation.mutateAsync({ email, password })
+      queryClient.setQueryData<AuthUser | null>(queryKeys.auth.me, nextUser)
     },
     signup: async (email: string, password: string) => {
       setError(null)
-      await signupMutation.mutateAsync({ email, password })
+      const nextUser = await signupMutation.mutateAsync({ email, password })
+      queryClient.setQueryData<AuthUser | null>(queryKeys.auth.me, nextUser)
     },
     logout: async () => {
       setError(null)
       await logoutMutation.mutateAsync()
+      queryClient.setQueryData<AuthUser | null>(queryKeys.auth.me, null)
+      queryClient.removeQueries({ queryKey: queryKeys.health })
     },
     startGoogleSignIn: () => {
       window.location.href = '/api/auth/google'

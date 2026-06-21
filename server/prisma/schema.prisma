@@ -8,25 +8,51 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String      @id @default(cuid())
+  email        String      @unique
   passwordHash String?
-  googleId     String?  @unique
+  googleId     String?     @unique
   signals      Signal[]
-  createdAt    DateTime @default(now())
+  watchlists   Watchlist[]
+  createdAt    DateTime    @default(now())
 }
 
 model Signal {
-  id             String   @id @default(cuid())
+  id             String          @id @default(cuid())
   userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   symbol         String
   recommendation String
   price          Float
   previousPrice  Float
   changePercent  Float
-  createdAt      DateTime @default(now())
+  createdAt      DateTime        @default(now())
+  watchlistItems WatchlistItem[]
 
   @@index([userId, createdAt])
   @@index([userId, symbol])
+}
+
+model Watchlist {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  items     WatchlistItem[]
+  createdAt DateTime        @default(now())
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model WatchlistItem {
+  id          String    @id @default(cuid())
+  watchlistId String
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  signalId    String
+  signal      Signal    @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([watchlistId, signalId])
+  @@index([watchlistId])
 }

@@ -17,4 +17,3 @@ export function AppHeader({ email, onLogout }: AppHeaderProps) {
   )
 }
 
-export type { AppHeaderProps } from './types'

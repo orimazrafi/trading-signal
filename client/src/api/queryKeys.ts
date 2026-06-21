@@ -4,4 +4,7 @@ export const queryKeys = {
     me: ['auth', 'me'] as const,
   },
   health: ['health'] as const,
+  watchlists: {
+    list: (userId: string) => ['watchlists', userId] as const,
+  },
 } as const

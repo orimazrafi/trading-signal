@@ -1,9 +1,5 @@
 import { ApiError, api } from '../../api/client'
-import type { AuthUser } from '../../types/auth'
-
-type AuthResponse = {
-  user: AuthUser
-}
+import type { AuthResponse, AuthUser, LogoutResponse } from '../../types/auth'
 
 /** Returns the current session user, or null when unauthenticated. */
 export async function fetchMe(): Promise<AuthUser | null> {
@@ -33,5 +29,5 @@ export async function signup(email: string, password: string): Promise<AuthUser>
 
 /** Clears the server session cookie. */
 export async function logout(): Promise<void> {
-  await api.post<{ ok: boolean }>('/auth/logout')
+  await api.post<LogoutResponse>('/auth/logout')
 }

@@ -3,6 +3,7 @@ import {
   getMarketNews,
   getStockQuote,
   getTrendingStocks,
+  searchStock,
 } from "../services/stock.service.js";
 
 /** Returns API health status. */
@@ -24,6 +25,30 @@ export async function getStockBySymbol(req: Request, res: Response): Promise<voi
   } catch (error) {
     console.error(`[stock] Failed to resolve quote for ${symbol}:`, error);
     res.status(500).json({ error: "Unable to fetch stock data" });
+  }
+}
+
+/** Searches a stock, generates a recommendation, and persists a user signal. */
+export async function searchStockBySymbol(req: Request, res: Response): Promise<void> {
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const symbol = req.params.symbol?.trim();
+  if (!symbol) {
+    res.status(400).json({ error: "Stock symbol is required" });
+    return;
+  }
+
+  try {
+    const result = await searchStock(userId, symbol);
+    res.json(result);
+  } catch (error) {
+    console.error(`[stock] Failed to search ${symbol} for ${userId}:`, error);
+    res.status(500).json({ error: "Unable to search stock" });
   }
 }
 

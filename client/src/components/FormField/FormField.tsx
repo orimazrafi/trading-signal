@@ -27,4 +27,3 @@ export function FormField({
   )
 }
 
-export type { FormFieldProps } from './types'

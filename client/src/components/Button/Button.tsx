@@ -50,4 +50,3 @@ export function Button({
   )
 }
 
-export type { ButtonProps, ButtonVariant } from './types'

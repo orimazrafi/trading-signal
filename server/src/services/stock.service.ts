@@ -1,11 +1,15 @@
 import axios from "axios";
 import { env } from "../config/env.js";
 import { redis } from "../config/redis.js";
-import { createSignal } from "../repositories/signal.repository.js";
+import {
+  createSignal,
+  createSignalRecord,
+} from "../repositories/signal.repository.js";
 import { ensureUserExists } from "../repositories/user.repository.js";
 import type {
   NewsItem,
   NewsSentiment,
+  SearchStockResult,
   StockQuote,
   StockTickMessage,
   TrendingStock,
@@ -40,29 +44,54 @@ async function readCachedQuote(symbol: string): Promise<StockQuote | null> {
   }
 }
 
+/** Reads a cached quote from Redis, or null on miss or parse failure. */
+export async function getCachedStockQuote(symbol: string): Promise<StockQuote | null> {
+  return readCachedQuote(symbol);
+}
+
+/** Builds the Twelve Data quote URL for a symbol. */
+function buildTwelveDataQuoteUrl(symbol: string, apiKey: string): string {
+  return `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(apiKey)}`;
+}
+
+/** Returns true when Twelve Data responded with an error payload. */
+function isTwelveDataErrorPayload(data: unknown): boolean {
+  return isRecord(data) && ("code" in data || "status" in data) && !("close" in data || "price" in data);
+}
+
+/** Returns true when value is a non-null object record. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 /** Maps a Twelve Data API payload to a StockQuote. */
 function mapTwelveDataQuote(symbol: string, data: Record<string, unknown>): StockQuote {
   return {
     symbol,
     name: String(data.name ?? `${symbol} Inc.`),
     price: Number(data.close ?? data.price ?? 0),
-    peRatio: Number(data.pe ?? 0),
-    sector: String(data.sector ?? "Unknown"),
+    peRatio: Number(data.pe ?? data.trailing_pe ?? 0),
+    sector: String(data.sector ?? data.industry ?? "Unknown"),
   };
 }
 
 /** Fetches a quote from Twelve Data; throws when the API key is missing or the request fails. */
 async function fetchQuoteFromApi(symbol: string): Promise<StockQuote> {
-  if (!env.twelveDataApiKey) {
+  const apiKey = env.twelveDataApiKey;
+
+  if (!apiKey) {
     throw new Error("TWELVE_DATA_API_KEY not configured");
   }
 
-  const response = await axios.get("https://api.twelvedata.com/quote", {
-    params: { symbol, apikey: env.twelveDataApiKey },
+  const response = await axios.get(buildTwelveDataQuoteUrl(symbol, apiKey), {
     timeout: 8000,
   });
 
-  return mapTwelveDataQuote(symbol, response.data);
+  if (isTwelveDataErrorPayload(response.data)) {
+    throw new Error(`Twelve Data error: ${JSON.stringify(response.data)}`);
+  }
+
+  return mapTwelveDataQuote(symbol, response.data as Record<string, unknown>);
 }
 
 /** Fetches a live quote or falls back to deterministic mock data. */
@@ -102,6 +131,49 @@ export async function getStockQuote(symbol: string): Promise<StockQuote> {
   const quote = await fetchQuoteWithFallback(normalizedSymbol);
   await cacheQuote(normalizedSymbol, quote);
   return quote;
+}
+
+/** Derives a BUY/HOLD recommendation from the PE ratio. */
+function resolvePeRecommendation(peRatio: number): "BUY" | "HOLD" {
+  if (peRatio > 0 && peRatio <= 25) {
+    return "BUY";
+  }
+
+  return "HOLD";
+}
+
+/** Persists a search signal for the user and returns the recommendation payload. */
+async function persistSearchSignal(
+  userId: string,
+  quote: StockQuote,
+  recommendation: string,
+): Promise<SearchStockResult> {
+  const previousPrice = await readPreviousPrice(quote.symbol, quote.price);
+  const changePercent = calculateChangePercent(previousPrice, quote.price);
+
+  const signal = await createSignalRecord({
+    userId,
+    symbol: quote.symbol,
+    recommendation,
+    price: quote.price,
+    previousPrice,
+    changePercent,
+  });
+
+  return {
+    quote,
+    recommendation,
+    signalId: signal.id,
+  };
+}
+
+/** Searches a stock, caches the quote, generates a recommendation, and saves a signal. */
+export async function searchStock(userId: string, symbol: string): Promise<SearchStockResult> {
+  const normalizedSymbol = normalizeSymbol(symbol);
+  const quote = await getStockQuote(normalizedSymbol);
+  const recommendation = resolvePeRecommendation(quote.peRatio);
+
+  return persistSearchSignal(userId, quote, recommendation);
 }
 
 /** Builds deterministic mock market data when the external API is unavailable. */

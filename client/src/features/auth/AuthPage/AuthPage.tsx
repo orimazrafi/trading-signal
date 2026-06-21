@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Button } from '../../components/Button'
-import { LoginForm } from '../../components/LoginForm'
-import { SignupForm } from '../../components/SignupForm'
+import { Button } from '../../../components/Button'
+import { LoginForm } from '../../../components/LoginForm'
+import { SignupForm } from '../../../components/SignupForm'
 import styles from './AuthPage.module.css'
 import type { AuthMode, AuthPageProps } from './types'
 
@@ -51,6 +51,3 @@ export function AuthPage({
     </section>
   )
 }
-
-export { useAuth } from './useAuth'
-export type { AuthPageProps } from './types'

@@ -17,4 +17,3 @@ export function StatusCard({ health, error, loading }: StatusCardProps) {
   )
 }
 
-export type { StatusCardProps } from './types'

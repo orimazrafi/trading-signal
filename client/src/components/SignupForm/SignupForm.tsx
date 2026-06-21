@@ -67,4 +67,3 @@ export function SignupForm({ onSubmit }: SignupFormProps) {
   )
 }
 
-export type { SignupFormProps } from './types'
