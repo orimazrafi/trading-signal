@@ -1,11 +1,4 @@
-.app {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 3rem 1.5rem;
-  text-align: center;
-}
-
-.status-card {
+.card {
   margin-top: 2rem;
   padding: 1.5rem;
   border: 1px solid var(--border, #333);
@@ -13,10 +6,10 @@
   text-align: left;
 }
 
-.status-ok {
+.ok {
   color: #22c55e;
 }
 
-.status-error {
+.error {
   color: #ef4444;
 }

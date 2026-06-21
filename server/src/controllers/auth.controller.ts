@@ -1,29 +1,152 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
-import { resolveAuthenticatedUser } from "../services/auth.service.js";
+import {
+  AUTH_COOKIE_NAME,
+  AuthError,
+  OAUTH_STATE_COOKIE,
+  authenticateWithGoogleCode,
+  buildGoogleAuthUrl,
+  clearAuthCookie,
+  createOAuthState,
+  loginWithEmail,
+  parseJwtUser,
+  registerWithEmail,
+  setAuthCookie,
+} from "../services/auth.service.js";
 
-/** Verifies JWT from HTTP-only cookie and attaches the logged-in user to the request. */
-export function authCookieMiddleware(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
-  const token = req.cookies?.auth_token;
+/** Requires a valid JWT in the auth httpOnly cookie. */
+export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+  const token = req.cookies?.[AUTH_COOKIE_NAME];
 
   if (typeof token !== "string") {
-    req.user = env.mockUser;
-    next();
+    if (env.authAllowMock) {
+      req.user = env.mockUser;
+      next();
+      return;
+    }
+
+    res.status(401).json({ error: "Unauthorized" });
     return;
   }
 
   try {
     const decoded = jwt.verify(token, env.jwtSecret);
-    req.user = resolveAuthenticatedUser(decoded);
+    const user = parseJwtUser(decoded);
+
+    if (!user) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    req.user = user;
     next();
   } catch (error) {
-    console.error("[auth] Invalid auth_token cookie, using mock user:", error);
-    req.user = env.mockUser;
-    next();
+    console.error("[auth] Invalid auth cookie:", error);
+    res.status(401).json({ error: "Unauthorized" });
+  }
+}
+
+/** Maps auth service errors to HTTP responses. */
+function handleAuthError(res: Response, error: unknown): void {
+  if (error instanceof AuthError) {
+    res.status(error.statusCode).json({ error: error.message });
+    return;
+  }
+
+  console.error("[auth] Unexpected auth error:", error);
+  res.status(500).json({ error: "Authentication failed" });
+}
+
+/** Registers a new user and sets the auth cookie. */
+export async function postSignup(req: Request, res: Response): Promise<void> {
+  const email = typeof req.body?.email === "string" ? req.body.email : "";
+  const password = typeof req.body?.password === "string" ? req.body.password : "";
+
+  try {
+    const user = await registerWithEmail(email, password);
+    setAuthCookie(res, user);
+    res.status(201).json({ user });
+  } catch (error) {
+    handleAuthError(res, error);
+  }
+}
+
+/** Logs in with email/password and sets the auth cookie. */
+export async function postLogin(req: Request, res: Response): Promise<void> {
+  const email = typeof req.body?.email === "string" ? req.body.email : "";
+  const password = typeof req.body?.password === "string" ? req.body.password : "";
+
+  try {
+    const user = await loginWithEmail(email, password);
+    setAuthCookie(res, user);
+    res.json({ user });
+  } catch (error) {
+    handleAuthError(res, error);
+  }
+}
+
+/** Clears the auth cookie. */
+export function postLogout(_req: Request, res: Response): void {
+  clearAuthCookie(res);
+  res.json({ ok: true });
+}
+
+/** Returns the currently authenticated user. */
+export function getMe(req: Request, res: Response): void {
+  if (!req.user) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  res.json({ user: req.user });
+}
+
+/** Redirects the browser to Google OAuth consent. */
+export function getGoogleAuth(_req: Request, res: Response): void {
+  try {
+    const state = createOAuthState();
+
+    res.cookie(OAUTH_STATE_COOKIE, state, {
+      httpOnly: true,
+      secure: env.nodeEnv === "production",
+      sameSite: "lax",
+      maxAge: 10 * 60 * 1000,
+      path: "/",
+    });
+
+    res.redirect(buildGoogleAuthUrl(state));
+  } catch (error) {
+    handleAuthError(res, error);
+  }
+}
+
+/** Handles the Google OAuth callback, sets auth cookie, and redirects to the client. */
+export async function getGoogleCallback(req: Request, res: Response): Promise<void> {
+  const code = typeof req.query.code === "string" ? req.query.code : "";
+  const state = typeof req.query.state === "string" ? req.query.state : "";
+  const storedState = req.cookies?.[OAUTH_STATE_COOKIE];
+
+  res.clearCookie(OAUTH_STATE_COOKIE, { path: "/" });
+
+  if (!code || !state || !storedState || state !== storedState) {
+    res.redirect(`${env.clientUrl}/?authError=invalid_oauth_state`);
+    return;
+  }
+
+  try {
+    const user = await authenticateWithGoogleCode(code);
+    setAuthCookie(res, user);
+    res.redirect(env.clientUrl);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      console.error("[auth] Google callback failed:", error.message);
+      const authError = error.code ?? "google_sign_in_failed";
+      res.redirect(`${env.clientUrl}/?authError=${encodeURIComponent(authError)}`);
+      return;
+    }
+
+    console.error("[auth] Google callback failed:", error);
+    res.redirect(`${env.clientUrl}/?authError=google_sign_in_failed`);
   }
 }

@@ -1,0 +1,42 @@
+.base {
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.base:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.primary {
+  composes: base;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: #2563eb;
+  color: white;
+}
+
+.secondary {
+  composes: base;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: #334155;
+  color: white;
+}
+
+.tab {
+  composes: base;
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border, #333);
+  background: transparent;
+}
+
+.tabActive {
+  composes: tab;
+  background: #1e293b;
+}
+
+.fullWidth {
+  width: 100%;
+}

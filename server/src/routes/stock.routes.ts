@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { requireAuth } from "../controllers/auth.controller.js";
 import {
   getHealth,
   getNews,
@@ -11,5 +12,5 @@ export const stockRoutes = Router();
 
 stockRoutes.get("/health", getHealth);
 stockRoutes.get("/stock/:symbol", getStockBySymbol);
-stockRoutes.get("/dashboard/trending", getTrending);
+stockRoutes.get("/dashboard/trending", requireAuth, getTrending);
 stockRoutes.get("/dashboard/news", getNews);

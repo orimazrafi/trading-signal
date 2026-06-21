@@ -1,0 +1,28 @@
+.card {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.subtitle {
+  margin-top: 0;
+  color: #94a3b8;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.error {
+  color: #ef4444;
+}
+
+.divider {
+  margin: 1rem 0;
+  text-align: center;
+  color: #94a3b8;
+}

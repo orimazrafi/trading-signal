@@ -3,7 +3,6 @@ import cors from "cors";
 import express from "express";
 import { connectServerInfrastructure } from "./config/bootstrap.js";
 import { env } from "./config/env.js";
-import { authCookieMiddleware } from "./controllers/auth.controller.js";
 import { apiRoutes } from "./routes/index.js";
 
 /** Boots infrastructure connections and starts the Express API server. */
@@ -14,7 +13,6 @@ async function startServer(): Promise<void> {
   app.use(cors({ origin: true, credentials: true }));
   app.use(cookieParser());
   app.use(express.json());
-  app.use(authCookieMiddleware);
   app.use("/api", apiRoutes);
 
   app.listen(env.port, () => {

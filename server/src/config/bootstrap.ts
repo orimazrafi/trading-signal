@@ -1,6 +1,8 @@
 import { prisma } from "./prisma.js";
 import { redis } from "./redis.js";
-import { ensureDefaultUser } from "../services/auth.service.js";
+import { env } from "./env.js";
+import { logGoogleOAuthCredentialStatus } from "./googleOAuthCheck.js";
+import { ensureUserExists } from "../repositories/user.repository.js";
 
 /** Connects Redis and PostgreSQL for the API server process. */
 export async function connectServerInfrastructure(): Promise<void> {
@@ -12,8 +14,17 @@ export async function connectServerInfrastructure(): Promise<void> {
 
     step = "PostgreSQL";
     await prisma.$connect();
-    await ensureDefaultUser();
+
+    if (env.authAllowMock) {
+      await ensureUserExists(env.mockUser.userId, env.mockUser.email);
+      console.log("[server] Mock user enabled for development");
+    }
+
     console.log("[server] Connected to PostgreSQL");
+
+    if (env.nodeEnv === "development" && env.googleClientId) {
+      await logGoogleOAuthCredentialStatus();
+    }
   } catch (error) {
     console.error(`[server] Failed during ${step} setup:`, error);
     process.exit(1);

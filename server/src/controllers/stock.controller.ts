@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import { env } from "../config/env.js";
 import {
   getMarketNews,
   getStockQuote,
@@ -30,7 +29,12 @@ export async function getStockBySymbol(req: Request, res: Response): Promise<voi
 
 /** Returns top trending stocks for the authenticated user. */
 export async function getTrending(req: Request, res: Response): Promise<void> {
-  const userId = req.user?.userId ?? env.mockUser.userId;
+  const userId = req.user?.userId;
+
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
 
   try {
     const trending = await getTrendingStocks(userId);
