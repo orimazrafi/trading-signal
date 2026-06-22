@@ -2,6 +2,10 @@ import { connectWorkerInfrastructure } from "./config/bootstrap.js";
 import { prisma } from "./config/prisma.js";
 import { redis } from "./config/redis.js";
 import { startNewsIngestJob, stopNewsIngestJob } from "./jobs/news-ingest.job.js";
+import {
+  startRecommendationsJob,
+  stopRecommendationsJob,
+} from "./jobs/recommendations.job.js";
 import { log } from "./lib/logger.js";
 import { registerAllConsumers } from "./queue/consumers/registerConsumers.js";
 import {
@@ -19,7 +23,8 @@ async function startWorker(): Promise<void> {
   try {
     await registerAllConsumers();
     startNewsIngestJob();
-    log.info("Stock and news consumers are running");
+    startRecommendationsJob();
+    log.info("Stock, news, and recommendations workers are running");
   } catch (error) {
     log.error("Failed during consumer startup", error);
 
@@ -35,6 +40,7 @@ async function startWorker(): Promise<void> {
 async function shutdown(): Promise<void> {
   log.info("Shutting down...");
   stopNewsIngestJob();
+  stopRecommendationsJob();
   try {
     await closeRabbitConnection();
     await redis.quit();

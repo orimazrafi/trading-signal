@@ -5,4 +5,5 @@ export type NewsFeedProps = {
   news: MarketNewsArticle[]
   isLoading: boolean
   error: string | null
+  variant?: 'panel' | 'page'
 }

@@ -31,6 +31,18 @@ export const env = {
     .split(",")
     .map((symbol) => symbol.trim().toUpperCase())
     .filter(Boolean),
+  dashboardRecommendationsRedisKey: "dashboard:recommendations",
+  recommendationsMaxItems: Number(process.env.RECOMMENDATIONS_MAX_ITEMS) || 20,
+  recommendationsEnabled: process.env.RECOMMENDATIONS_ENABLED !== "false",
+  recommendationsIntervalMs: Number(process.env.RECOMMENDATIONS_INTERVAL_MS) || 300_000,
+  recommendationSymbols: (
+    process.env.RECOMMENDATION_SYMBOLS ??
+    process.env.NEWS_INGEST_SYMBOLS ??
+    "AAPL,MSFT,TSLA,NVDA,GOOGL,AMZN,META,JPM,XOM"
+  )
+    .split(",")
+    .map((symbol) => symbol.trim().toUpperCase())
+    .filter(Boolean),
   surgeThresholdPercent: 1.5,
   mockUser: {
     userId: "user-mock-default",

@@ -1,5 +1,6 @@
 import { api } from '../../api/client'
-import type { Signal, SignalAction, Watchlist } from '../../types/watchlist'
+import type { Signal, Watchlist } from '../../types/watchlist'
+import { buildSignalReason, toSignalAction } from '../../lib/signalUtils'
 import type {
   AddStockResponse,
   ApiWatchlist,
@@ -7,30 +8,6 @@ import type {
   WatchlistResponse,
   WatchlistsResponse,
 } from './types'
-
-/** Maps a server recommendation string to a client signal action. */
-function toSignalAction(recommendation: string): SignalAction {
-  const normalized = recommendation.toUpperCase()
-
-  if (normalized === 'BUY' || normalized === 'SELL' || normalized === 'HOLD') {
-    return normalized
-  }
-
-  return 'HOLD'
-}
-
-/** Builds a human-readable reason from the recommendation action. */
-function buildSignalReason(action: SignalAction): string {
-  if (action === 'BUY') {
-    return 'PE ratio is within the buy threshold (0–25).'
-  }
-
-  if (action === 'SELL') {
-    return 'Signal indicates sell conditions.'
-  }
-
-  return 'PE ratio is outside the buy threshold; hold position.'
-}
 
 /** Maps a server watchlist stock row to a client Signal. */
 function mapApiStockToSignal(stock: ApiWatchlistStock): Signal {

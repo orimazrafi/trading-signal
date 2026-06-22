@@ -62,44 +62,75 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+/** Builds the Twelve Data profile URL for a symbol. */
+function buildTwelveDataProfileUrl(symbol: string, apiKey: string): string {
+  return `https://api.twelvedata.com/profile?symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(apiKey)}`;
+}
+
+type TwelveDataProfileResponse = {
+  name?: string;
+  sector?: string;
+  industry?: string;
+  code?: number;
+  message?: string;
+  status?: string;
+};
+
 /** Maps a Twelve Data API payload to a StockQuote. */
-function mapTwelveDataQuote(symbol: string, data: Record<string, unknown>): StockQuote {
+function mapTwelveDataQuote(
+  symbol: string,
+  data: Record<string, unknown>,
+  profile?: TwelveDataProfileResponse,
+): StockQuote {
   return {
     symbol,
-    name: String(data.name ?? `${symbol} Inc.`),
+    name: String(profile?.name ?? data.name ?? `${symbol} Inc.`),
     price: Number(data.close ?? data.price ?? 0),
     peRatio: Number(data.pe ?? data.trailing_pe ?? 0),
-    sector: String(data.sector ?? data.industry ?? "Unknown"),
+    sector: String(profile?.sector ?? profile?.industry ?? data.sector ?? data.industry ?? "Unknown"),
   };
+}
+
+/** Fetches company profile metadata used to enrich quote responses. */
+async function fetchProfileFromApi(
+  symbol: string,
+  apiKey: string,
+): Promise<TwelveDataProfileResponse | null> {
+  try {
+    const response = await axios.get<TwelveDataProfileResponse>(
+      buildTwelveDataProfileUrl(symbol, apiKey),
+      { timeout: 8000 },
+    );
+
+    if (response.data.code || response.data.status === "error") {
+      throw new Error(response.data.message ?? `Twelve Data profile failed for ${symbol}`);
+    }
+
+    return response.data;
+  } catch (error) {
+    log.error("External API fetch failed", error, { provider: "Twelve Data", symbol, endpoint: "profile" });
+    return null;
+  }
 }
 
 /** Fetches a quote from Twelve Data; throws when the API key is missing or the request fails. */
 async function fetchQuoteFromApi(symbol: string): Promise<StockQuote> {
-  const apiKey = env.twelveDataApiKey;
+  const apiKey = env.twelveDataApiKey?.trim();
 
   if (!apiKey) {
     throw new Error("TWELVE_DATA_API_KEY not configured");
   }
 
-  const response = await axios.get(buildTwelveDataQuoteUrl(symbol, apiKey), {
-    timeout: 8000,
-  });
+  const [quoteResponse, profile] = await Promise.all([
+    axios.get(buildTwelveDataQuoteUrl(symbol, apiKey), { timeout: 8000 }),
+    fetchProfileFromApi(symbol, apiKey),
+  ]);
 
-  if (isTwelveDataErrorPayload(response.data)) {
-    throw new Error(`Twelve Data error: ${JSON.stringify(response.data)}`);
+  if (isTwelveDataErrorPayload(quoteResponse.data)) {
+    throw new Error(`Twelve Data error: ${JSON.stringify(quoteResponse.data)}`);
   }
 
-  return mapTwelveDataQuote(symbol, response.data as Record<string, unknown>);
-}
-
-/** Fetches a live quote or falls back to deterministic mock data. */
-async function fetchQuoteWithFallback(symbol: string): Promise<StockQuote> {
-  try {
-    return await fetchQuoteFromApi(symbol);
-  } catch (error) {
-    log.error("External API fetch failed", error, { provider: "Twelve Data", symbol });
-    return buildMockQuote(symbol);
-  }
+  return mapTwelveDataQuote(symbol, quoteResponse.data as Record<string, unknown>, profile ?? undefined);
 }
 
 /** Writes a quote to Redis with TTL; logs but does not throw on failure. */
@@ -114,7 +145,7 @@ async function cacheQuote(symbol: string, quote: StockQuote): Promise<void> {
   }
 }
 
-/** Returns cached stock quote or fetches from Twelve Data with mock fallback. */
+/** Returns cached stock quote or fetches live data from Twelve Data. */
 export async function getStockQuote(symbol: string): Promise<StockQuote> {
   const normalizedSymbol = normalizeSymbol(symbol);
 
@@ -127,7 +158,7 @@ export async function getStockQuote(symbol: string): Promise<StockQuote> {
     symbol: normalizedSymbol,
   });
 
-  const quote = await fetchQuoteWithFallback(normalizedSymbol);
+  const quote = await fetchQuoteFromApi(normalizedSymbol);
   await cacheQuote(normalizedSymbol, quote);
   return quote;
 }
@@ -179,18 +210,6 @@ export async function searchStock(userId: string, symbol: string): Promise<Searc
   const recommendation = resolvePeRecommendation(quote.peRatio);
 
   return persistSearchSignal(userId, quote, recommendation);
-}
-
-/** Builds deterministic mock market data when the external API is unavailable. */
-function buildMockQuote(symbol: string): StockQuote {
-  const seed = symbol.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  return {
-    symbol,
-    name: `${symbol} Holdings`,
-    price: Number((80 + (seed % 400) + Math.random()).toFixed(2)),
-    peRatio: Number((12 + (seed % 20)).toFixed(2)),
-    sector: ["Technology", "Finance", "Healthcare", "Energy"][seed % 4],
-  };
 }
 
 /** Reads top trending symbols for the authenticated user from Redis. */

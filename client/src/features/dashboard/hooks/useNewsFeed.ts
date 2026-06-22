@@ -7,6 +7,8 @@ export function useNewsFeed() {
   const newsQuery = useQuery({
     queryKey: queryKeys.dashboard.news,
     queryFn: fetchMarketNews,
+    staleTime: 30_000,
+    refetchOnMount: true,
   })
 
   const queryError = newsQuery.error instanceof Error ? newsQuery.error.message : null

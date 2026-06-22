@@ -3,15 +3,21 @@ import { formatPublishedAt, sentimentBadgeClass } from './newsFeedUtils'
 import type { NewsFeedProps } from './types'
 
 /** Scrollable market news panel with sentiment badges and external article links. */
-export function NewsFeed({ news, isLoading, error }: NewsFeedProps) {
+export function NewsFeed({ news, isLoading, error, variant = 'panel' }: NewsFeedProps) {
+  const isPage = variant === 'page'
+
   return (
-    <section className="flex max-h-[32rem] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <section
+      className={`flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 ${
+        isPage ? 'min-h-[calc(100vh-14rem)] flex-1' : 'max-h-[32rem]'
+      }`}
+    >
       <header className="border-b border-slate-200 px-5 py-4 dark:border-slate-700">
         <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
           Market Sentiment News
         </h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Latest headlines analyzed by our background worker
+          General market headlines — your first read when opening the app
         </p>
       </header>
 

@@ -9,5 +9,9 @@ export const queryKeys = {
   },
   dashboard: {
     news: ['dashboard', 'news'] as const,
+    recommendations: ['dashboard', 'recommendations'] as const,
+  },
+  stocks: {
+    quote: (symbol: string) => ['stocks', 'quote', symbol] as const,
   },
 } as const

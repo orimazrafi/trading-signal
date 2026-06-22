@@ -10,6 +10,7 @@
     "start": "node dist/server.js",
     "start:worker": "node dist/worker.js",
     "news:ingest": "tsx src/scripts/publish-news.ts",
+    "recommendations:refresh": "tsx src/scripts/refresh-recommendations.ts",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "postinstall": "prisma generate"

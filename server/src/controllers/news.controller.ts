@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { log } from "../lib/logger.js";
 import { newsService } from "../services/news.service.js";
 
-/** Returns pre-processed market news compiled by the background worker. */
+/** Returns pre-processed market news, fetching from Twelve Data when Redis is empty. */
 export async function getDashboardNews(req: Request, res: Response): Promise<void> {
   try {
     const news = await newsService.getProcessedNews();

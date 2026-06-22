@@ -1,5 +1,12 @@
+/** Allowed trading actions for a saved watchlist signal. */
+export const SIGNAL_ACTIONS = {
+  BUY: 'BUY',
+  SELL: 'SELL',
+  HOLD: 'HOLD',
+} as const
+
 /** Trading recommendation action for a saved signal. */
-export type SignalAction = 'BUY' | 'SELL' | 'HOLD'
+export type SignalAction = (typeof SIGNAL_ACTIONS)[keyof typeof SIGNAL_ACTIONS]
 
 /** Persisted stock signal shown in a custom dashboard view. */
 export interface Signal {

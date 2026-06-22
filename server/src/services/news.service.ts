@@ -2,6 +2,10 @@ import { env } from "../config/env.js";
 import { log } from "../lib/logger.js";
 import { redis } from "../config/redis.js";
 import { parseProcessedNewsArticles } from "../lib/parseNews.js";
+import {
+  fetchLatestMarketNewsArticles,
+  markIncomingArticlesAsSeen,
+} from "../services/news-ingest.service.js";
 import type { IncomingNewsArticle, ProcessedNewsArticle } from "../types/news.js";
 import type { NewsSentiment } from "../types/stock.js";
 
@@ -42,16 +46,13 @@ function analyzeHeadlineSentiment(headline: string): NewsSentiment {
   return "NEUTRAL";
 }
 
-/** Reads processed dashboard news from Redis, or an empty list on miss. */
-async function readProcessedNewsFromRedis(): Promise<ProcessedNewsArticle[]> {
+/** Reads processed dashboard news from Redis, or null on miss. */
+async function readProcessedNewsFromRedis(): Promise<ProcessedNewsArticle[] | null> {
   try {
     const cached = await redis.get(env.dashboardNewsRedisKey);
 
     if (!cached) {
-      log.warn("Cache miss for dynamic data, fetching from external provider", {
-        key: env.dashboardNewsRedisKey,
-      });
-      return [];
+      return null;
     }
 
     return parseProcessedNewsArticles(JSON.parse(cached));
@@ -59,8 +60,36 @@ async function readProcessedNewsFromRedis(): Promise<ProcessedNewsArticle[]> {
     log.error("Failed to read processed news from Redis", error, {
       key: env.dashboardNewsRedisKey,
     });
-    return [];
+    return null;
   }
+}
+
+/** Maps an incoming article to a processed dashboard article. */
+function processIncomingArticle(article: IncomingNewsArticle): ProcessedNewsArticle {
+  return {
+    headline: article.title,
+    url: article.url,
+    source: article.source,
+    publishedAt: article.publishedAt,
+    sentiment: analyzeHeadlineSentiment(article.title),
+  };
+}
+
+/** Fetches market news from Twelve Data, processes it, and caches the feed. */
+async function refreshProcessedNewsFromApi(): Promise<ProcessedNewsArticle[]> {
+  log.warn("Cache miss for dynamic data, fetching from external provider", {
+    key: env.dashboardNewsRedisKey,
+  });
+
+  const incomingArticles = await fetchLatestMarketNewsArticles();
+  const processedArticles = incomingArticles
+    .map((article) => processIncomingArticle(article))
+    .slice(0, env.newsMaxArticles);
+
+  await saveProcessedNewsToRedis(processedArticles);
+  await markIncomingArticlesAsSeen(incomingArticles);
+
+  return processedArticles;
 }
 
 /** Persists the processed news feed back to Redis. */
@@ -79,22 +108,22 @@ export class NewsService {
     return analyzeHeadlineSentiment(headline);
   }
 
-  /** Returns the compiled dashboard news feed from Redis. */
+  /** Returns the dashboard news feed from Redis, fetching from the API on cache miss. */
   async getProcessedNews(): Promise<ProcessedNewsArticle[]> {
-    return readProcessedNewsFromRedis();
+    const cachedArticles = await readProcessedNewsFromRedis();
+
+    if (cachedArticles) {
+      return cachedArticles;
+    }
+
+    return refreshProcessedNewsFromApi();
   }
 
   /** Scores, prepends, trims, and stores an incoming news article. */
   async processIncomingNewsArticle(article: IncomingNewsArticle): Promise<ProcessedNewsArticle> {
-    const processedArticle: ProcessedNewsArticle = {
-      headline: article.title,
-      url: article.url,
-      source: article.source,
-      publishedAt: article.publishedAt,
-      sentiment: this.analyzeSentiment(article.title),
-    };
+    const processedArticle = processIncomingArticle(article);
 
-    const existingArticles = await readProcessedNewsFromRedis();
+    const existingArticles = (await readProcessedNewsFromRedis()) ?? [];
     const updatedArticles = [processedArticle, ...existingArticles].slice(0, env.newsMaxArticles);
 
     await saveProcessedNewsToRedis(updatedArticles);

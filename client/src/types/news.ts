@@ -9,3 +9,8 @@ export type MarketNewsArticle = {
   publishedAt: string
   sentiment: NewsSentiment
 }
+
+/** Response body for GET /api/dashboard/news. */
+export type MarketNewsResponse = {
+  news: MarketNewsArticle[]
+}

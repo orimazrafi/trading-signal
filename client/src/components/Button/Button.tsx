@@ -34,6 +34,7 @@ export function Button({
   loading = false,
   loadingLabel,
   onClick,
+  'aria-current': ariaCurrent,
   children,
 }: ButtonProps) {
   const isDisabled = disabled || loading
@@ -44,6 +45,7 @@ export function Button({
       className={getButtonClassName(variant, fullWidth)}
       disabled={isDisabled}
       onClick={onClick}
+      aria-current={ariaCurrent}
     >
       {getButtonLabel(loading, loadingLabel, children)}
     </button>

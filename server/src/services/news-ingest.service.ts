@@ -69,7 +69,7 @@ async function fetchPressReleasesForSymbol(
 }
 
 /** Resolves a stable dedupe id for an incoming article. */
-function resolveArticleId(article: IncomingNewsArticle): string {
+export function resolveIncomingNewsArticleId(article: IncomingNewsArticle): string {
   if (article.url.includes("#")) {
     const fragment = article.url.split("#").pop()?.trim();
     if (fragment) {
@@ -78,6 +78,16 @@ function resolveArticleId(article: IncomingNewsArticle): string {
   }
 
   return buildFallbackArticleId(article.title, article.publishedAt);
+}
+
+/** Marks article ids as already ingested so the queue is not republished. */
+export async function markIncomingArticlesAsSeen(articles: IncomingNewsArticle[]): Promise<void> {
+  if (articles.length === 0) {
+    return;
+  }
+
+  const articleIds = articles.map((article) => resolveIncomingNewsArticleId(article));
+  await redis.sadd(SEEN_ARTICLE_IDS_KEY, ...articleIds);
 }
 
 /** Returns true when the article id was already published to the queue. */
@@ -96,7 +106,7 @@ export async function fetchLatestMarketNewsArticles(): Promise<IncomingNewsArtic
   const apiKey = env.twelveDataApiKey?.trim();
 
   if (!apiKey) {
-    throw new Error("TWELVE_DATA_API_KEY missing; cannot ingest market news");
+    throw new Error("TWELVE_DATA_API_KEY missing; cannot fetch market news");
   }
 
   const articles: IncomingNewsArticle[] = [];
@@ -121,7 +131,7 @@ export async function ingestLatestNews(): Promise<number> {
   let publishedCount = 0;
 
   for (const article of articles) {
-    const articleId = resolveArticleId(article);
+    const articleId = resolveIncomingNewsArticleId(article);
 
     if (await wasArticlePublished(articleId)) {
       continue;
