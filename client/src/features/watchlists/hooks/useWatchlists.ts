@@ -3,10 +3,10 @@ import { useMemo, useState } from 'react'
 import { queryKeys } from '../../../api/queryKeys'
 import type { UseWatchlistsOptions } from '../types'
 import {
-  addStockToView,
-  createNewWatchlist,
+  addStockToWatchlist,
+  createWatchlist,
   fetchWatchlists,
-} from '../watchlistService'
+} from '../../../api/watchlists'
 
 /** Manages watchlist fetch, active view selection, and create/save mutations. */
 export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOptions = {}) {
@@ -20,12 +20,12 @@ export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOpti
   })
 
   const createMutation = useMutation({
-    mutationFn: (name: string) => createNewWatchlist(name, userId),
+    mutationFn: (name: string) => createWatchlist(name, userId),
   })
 
   const saveStockMutation = useMutation({
     mutationFn: ({ watchlistId, symbol }: { watchlistId: string; symbol: string }) =>
-      addStockToView(watchlistId, symbol),
+      addStockToWatchlist(watchlistId, symbol),
   })
 
   const watchlists = watchlistsQuery.data ?? []

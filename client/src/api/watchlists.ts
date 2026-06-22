@@ -1,13 +1,14 @@
-import { api } from '../../api/client'
-import type { Signal, Watchlist } from '../../types/watchlist'
-import { buildSignalReason, toSignalAction } from '../../lib/signalUtils'
+import { api } from './client'
+import { buildSignalReason, toSignalAction } from '../lib/signalUtils'
 import type {
   AddStockResponse,
   ApiWatchlist,
   ApiWatchlistStock,
+  Signal,
+  Watchlist,
   WatchlistResponse,
   WatchlistsResponse,
-} from './types'
+} from '../types/watchlist'
 
 /** Maps a server watchlist stock row to a client Signal. */
 function mapApiStockToSignal(stock: ApiWatchlistStock): Signal {
@@ -41,13 +42,13 @@ export async function fetchWatchlists(userId = ''): Promise<Watchlist[]> {
 }
 
 /** Creates a new named custom view for the authenticated user. */
-export async function createNewWatchlist(name: string, userId = ''): Promise<Watchlist> {
+export async function createWatchlist(name: string, userId = ''): Promise<Watchlist> {
   const { data } = await api.post<WatchlistResponse>('/watchlists', { name })
   return mapApiWatchlist(data.watchlist, userId)
 }
 
 /** Saves a stock signal into a specific custom view. */
-export async function addStockToView(
+export async function addStockToWatchlist(
   watchlistId: string,
   symbol: string,
 ): Promise<Signal> {

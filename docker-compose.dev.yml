@@ -10,6 +10,8 @@ services:
       - ./server/src:/app/src
       - ./server/prisma:/app/prisma
       - ./server/tsconfig.json:/app/tsconfig.json
+    env_file:
+      - ./server/.env
     environment:
       NODE_ENV: development
       PORT: 3000
@@ -18,7 +20,6 @@ services:
       RABBITMQ_URL: amqp://rabbitmq:5672
       JWT_SECRET: dev-jwt-secret-change-me
       JWT_EXPIRES_IN: 1h
-      TWELVE_DATA_API_KEY: ${TWELVE_DATA_API_KEY}
       CLIENT_URL: http://localhost:5173
       GOOGLE_CALLBACK_URL: http://localhost:5173/api/auth/google/callback
       AUTH_ALLOW_MOCK: "false"
@@ -34,12 +35,13 @@ services:
       - ./server/src:/app/src
       - ./server/prisma:/app/prisma
       - ./server/tsconfig.json:/app/tsconfig.json
+    env_file:
+      - ./server/.env
     environment:
       NODE_ENV: development
       DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://rabbitmq:5672
-      TWELVE_DATA_API_KEY: ${TWELVE_DATA_API_KEY}
       NEWS_INGEST_ENABLED: "true"
       NEWS_INGEST_INTERVAL_MS: "300000"
       NEWS_INGEST_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL"

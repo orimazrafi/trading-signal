@@ -2,7 +2,7 @@ import { type FormEvent, useState } from 'react'
 import type { SearchStockResult } from '../../../types/stock'
 import type { SignalAction } from '../../../types/watchlist'
 import { buildSignalReason, toSignalAction } from '../../../lib/signalUtils'
-import { searchStock } from '../stockService'
+import { searchStock } from '../../../api/stocks'
 
 /** Owns symbol search form state and stock lookup with recommendation. */
 export function useSearchStock() {

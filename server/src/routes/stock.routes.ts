@@ -3,6 +3,7 @@ import { requireAuth } from "../controllers/auth.controller.js";
 import {
   getHealth,
   getStockBySymbol,
+  getStockHistoryBySymbol,
   getTrending,
   searchStockBySymbol,
 } from "../controllers/stock.controller.js";
@@ -11,6 +12,7 @@ import {
 export const stockRoutes = Router();
 
 stockRoutes.get("/health", getHealth);
+stockRoutes.get("/stock/:symbol/history", getStockHistoryBySymbol);
 stockRoutes.get("/stock/:symbol", getStockBySymbol);
 stockRoutes.get("/stocks/:symbol/search", requireAuth, searchStockBySymbol);
 stockRoutes.get("/dashboard/trending", requireAuth, getTrending);

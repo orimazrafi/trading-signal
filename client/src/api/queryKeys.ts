@@ -13,5 +13,6 @@ export const queryKeys = {
   },
   stocks: {
     quote: (symbol: string) => ['stocks', 'quote', symbol] as const,
+    history: (symbol: string, range: string) => ['stocks', 'history', symbol, range] as const,
   },
 } as const

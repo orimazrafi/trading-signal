@@ -1,13 +1,30 @@
+import { useState } from 'react'
+import { Button } from '../../../../components/Button'
+import { usePrefersDarkMode } from '../../../../hooks/usePrefersDarkMode'
+import { useStockHistory } from '../../../stocks/hooks/useStockHistory'
 import { useStockQuote } from '../../../stocks/hooks/useStockQuote'
+import { STOCK_HISTORY_RANGES, type StockHistoryRange } from '../../../../types/stockHistory'
 import { LoadingSpinner } from '../LoadingSpinner'
+import { StockPriceChart } from '../StockPriceChart'
+
+const QUOTE_REFETCH_MS = 60_000
 
 export type StockChartPanelProps = {
   symbol: string | null
 }
 
-/** Shows live quote details and a chart placeholder for the selected symbol. */
+/** Shows live quote details and a historical price chart for the selected symbol. */
 export function StockChartPanel({ symbol }: StockChartPanelProps) {
-  const { quote, isLoading, error: queryError } = useStockQuote(symbol)
+  const [range, setRange] = useState<StockHistoryRange>('3M')
+  const isDarkMode = usePrefersDarkMode()
+  const { quote, isLoading: isQuoteLoading, error: quoteError } = useStockQuote(symbol, {
+    refetchIntervalMs: QUOTE_REFETCH_MS,
+  })
+  const {
+    history,
+    isLoading: isHistoryLoading,
+    error: historyError,
+  } = useStockHistory(symbol, range)
 
   if (!symbol) {
     return (
@@ -23,15 +40,17 @@ export function StockChartPanel({ symbol }: StockChartPanelProps) {
     <section className="flex min-h-[24rem] flex-1 flex-col rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
       <header className="border-b border-slate-200 px-5 py-4 dark:border-slate-700">
         <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{symbol}</h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Live quote and price chart</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          Live quote and historical price chart
+        </p>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-5">
-        {isLoading ? <LoadingSpinner label="Loading live quote…" /> : null}
+        {isQuoteLoading && !quote ? <LoadingSpinner label="Loading live quote…" /> : null}
 
-        {queryError ? (
+        {quoteError ? (
           <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
-            {queryError}
+            {quoteError}
           </p>
         ) : null}
 
@@ -50,7 +69,7 @@ export function StockChartPanel({ symbol }: StockChartPanelProps) {
             <div>
               <dt className="text-slate-500 dark:text-slate-400">P/E ratio</dt>
               <dd className="font-medium text-slate-900 dark:text-slate-100">
-                {quote.peRatio.toFixed(2)}
+                {quote.peRatio > 0 ? quote.peRatio.toFixed(2) : '—'}
               </dd>
             </div>
             <div>
@@ -60,12 +79,41 @@ export function StockChartPanel({ symbol }: StockChartPanelProps) {
           </dl>
         ) : null}
 
-        <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center dark:border-slate-600 dark:bg-slate-950/40">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Chart coming soon</p>
-          <p className="mt-2 max-w-sm text-xs text-slate-500 dark:text-slate-400">
-            Historical price data will appear here. The live quote above refreshes when you select a
-            stock.
-          </p>
+        <div className="flex flex-wrap gap-1">
+          {STOCK_HISTORY_RANGES.map((option) => {
+            const isActive = range === option
+
+            return (
+              <Button
+                key={option}
+                variant={isActive ? 'tabActive' : 'tab'}
+                onClick={() => setRange(option)}
+                aria-current={isActive ? 'true' : undefined}
+              >
+                {option}
+              </Button>
+            )
+          })}
+        </div>
+
+        <div className="flex min-h-[16rem] flex-1 flex-col rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-950/40">
+          {isHistoryLoading ? <LoadingSpinner label="Loading price history…" /> : null}
+
+          {historyError ? (
+            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
+              {historyError}
+            </p>
+          ) : null}
+
+          {!isHistoryLoading && !historyError && history && history.points.length > 0 ? (
+            <StockPriceChart points={history.points} isDarkMode={isDarkMode} />
+          ) : null}
+
+          {!isHistoryLoading && !historyError && history?.points.length === 0 ? (
+            <p className="flex flex-1 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+              No historical data available for this range.
+            </p>
+          ) : null}
         </div>
       </div>
     </section>

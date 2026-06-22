@@ -32,3 +32,7 @@ export {
 
 export type { StockQuote, SearchStockResult } from './stock'
 
+export type { StockHistory, StockHistoryPoint, StockHistoryRange } from './stockHistory'
+
+export { STOCK_HISTORY_RANGES, isStockHistoryRange } from './stockHistory'
+

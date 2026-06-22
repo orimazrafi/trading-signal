@@ -1,5 +1,5 @@
-import { ApiError, api } from '../../api/client'
-import type { AuthResponse, AuthUser, LogoutResponse } from '../../types/auth'
+import { ApiError, api } from './client'
+import type { AuthResponse, AuthUser, LogoutResponse } from '../types/auth'
 
 /** Returns the current session user, or null when unauthenticated. */
 export async function fetchMe(): Promise<AuthUser | null> {

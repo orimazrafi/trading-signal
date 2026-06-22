@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { queryKeys } from '../../api/queryKeys'
 import type { AuthUser } from '../../types/auth'
-import { fetchMe, login, logout, signup } from './authApi'
+import { fetchMe, login, logout, signup } from '../../api/auth'
 
 /** Manages login, signup, logout, and session state via React Query. */
 export function useAuth() {

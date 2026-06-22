@@ -18,6 +18,7 @@ export const env = {
     process.env.GOOGLE_CALLBACK_URL ?? "http://localhost:3000/api/auth/google/callback"
   ).trim(),
   stockCacheTtlSeconds: 60,
+  stockHistoryCacheTtlSeconds: Number(process.env.STOCK_HISTORY_CACHE_TTL_SECONDS) || 3600,
   twelveDataApiKey: process.env.TWELVE_DATA_API_KEY,
   rabbitmqUrl: process.env.RABBITMQ_URL ?? "amqp://localhost:5672",
   stockTicksQueue: "stock_ticks",

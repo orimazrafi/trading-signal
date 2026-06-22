@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import { log } from "../lib/logger.js";
+import { parseStockHistoryQuery } from "../lib/parseStockHistoryQuery.js";
+import { getStockHistory } from "../services/stock-history.service.js";
 import {
   getStockQuote,
   getTrendingStocks,
@@ -9,6 +11,25 @@ import {
 /** Returns API health status. */
 export function getHealth(_req: Request, res: Response): void {
   res.json({ status: "ok", service: "trading-signal-server" });
+}
+
+/** Returns historical OHLCV bars for the requested symbol. */
+export async function getStockHistoryBySymbol(req: Request, res: Response): Promise<void> {
+  const symbol = req.params.symbol?.trim();
+  if (!symbol) {
+    res.status(400).json({ error: "Stock symbol is required" });
+    return;
+  }
+
+  const { range } = parseStockHistoryQuery(req.query);
+
+  try {
+    const history = await getStockHistory(symbol, range);
+    res.json(history);
+  } catch (error) {
+    log.error("Controller endpoint execution failed", error, { path: req.path, range });
+    res.status(500).json({ error: "Unable to fetch stock history" });
+  }
 }
 
 /** Returns a stock quote for the requested symbol. */
