@@ -6,6 +6,7 @@ import {
   addStockToWatchlist,
   createWatchlist,
   fetchWatchlists,
+  removeStockFromWatchlist,
 } from '../../../api/watchlists'
 
 /** Manages watchlist fetch, active view selection, and create/save mutations. */
@@ -26,6 +27,11 @@ export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOpti
   const saveStockMutation = useMutation({
     mutationFn: ({ watchlistId, symbol }: { watchlistId: string; symbol: string }) =>
       addStockToWatchlist(watchlistId, symbol),
+  })
+
+  const removeStockMutation = useMutation({
+    mutationFn: ({ watchlistId, signalId }: { watchlistId: string; signalId: string }) =>
+      removeStockFromWatchlist(watchlistId, signalId),
   })
 
   const watchlists = watchlistsQuery.data ?? []
@@ -59,6 +65,12 @@ export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOpti
     await refreshWatchlists()
   }
 
+  /** Removes a stock from a view and refreshes the list. */
+  const handleRemoveStockFromWatchlist = async (watchlistId: string, signalId: string) => {
+    await removeStockMutation.mutateAsync({ watchlistId, signalId })
+    await refreshWatchlists()
+  }
+
   const queryError =
     watchlistsQuery.error instanceof Error ? watchlistsQuery.error.message : null
 
@@ -69,9 +81,11 @@ export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOpti
     loading: watchlistsQuery.isLoading,
     creating: createMutation.isPending,
     saving: saveStockMutation.isPending,
+    removing: removeStockMutation.isPending,
     error: queryError,
     handleCreateWatchlist,
     handleSaveStockToWatchlist,
+    handleRemoveStockFromWatchlist,
     reload: () => watchlistsQuery.refetch(),
   }
 }

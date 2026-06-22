@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { toast } from '../../../components/Toast'
 import type { AuthUser } from '../../../types/auth'
 import { WatchlistTabs } from '../../watchlists/components/WatchlistTabs'
 import { useWatchlists } from '../../watchlists/hooks/useWatchlists'
@@ -20,9 +21,11 @@ export function WatchlistTab({ user }: WatchlistTabProps) {
     loading: watchlistsLoading,
     creating,
     saving,
+    removing,
     error: watchlistError,
     handleCreateWatchlist,
     handleSaveStockToWatchlist,
+    handleRemoveStockFromWatchlist,
   } = useWatchlists({ userId: user.userId })
 
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
@@ -45,6 +48,24 @@ export function WatchlistTab({ user }: WatchlistTabProps) {
 
     await handleSaveStockToWatchlist(activeWatchlistId, symbol)
     setSelectedSymbol(symbol)
+  }
+
+  /** Removes a stock from the active custom view. */
+  const handleRemoveStock = async (signalId: string, symbol: string) => {
+    if (!activeWatchlistId) {
+      toast.error('Select a custom view before removing a stock.')
+      return
+    }
+
+    try {
+      await handleRemoveStockFromWatchlist(activeWatchlistId, signalId)
+      toast.success(`${symbol} removed from watchlist.`)
+      if (selectedSymbol === symbol) {
+        setSelectedSymbol(null)
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Unable to remove stock from this view.')
+    }
   }
 
   return (
@@ -106,6 +127,8 @@ export function WatchlistTab({ user }: WatchlistTabProps) {
                       signal={signal}
                       isSelected={selectedSymbol === signal.symbol}
                       onSelect={handleSelectSymbol}
+                      onRemove={(signalId) => void handleRemoveStock(signalId, signal.symbol)}
+                      removing={removing}
                     />
                   </li>
                 ))}

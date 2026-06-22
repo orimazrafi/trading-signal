@@ -6,4 +6,5 @@ dist
 **/client_secret*.json
 **/credentials*.json
 *.log
+*.tsbuildinfo
 .DS_Store

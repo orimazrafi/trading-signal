@@ -6,6 +6,7 @@ import {
   findWatchlistByIdAndUser,
   getUserWatchlists,
   isSignalInWatchlist,
+  removeStockFromWatchlist,
 } from "../repositories/watchlist.repository.js";
 import {
   findLatestSignalByUserAndSymbol,
@@ -179,4 +180,18 @@ export async function saveStockToView(
     changePercent: item.signal.changePercent,
     createdAt: item.signal.createdAt,
   };
+}
+
+/** Removes a linked stock signal from a user-owned custom view. */
+export async function removeStockFromView(
+  userId: string,
+  watchlistId: string,
+  signalId: string,
+): Promise<void> {
+  await assertWatchlistOwned(userId, watchlistId);
+
+  const result = await removeStockFromWatchlist(watchlistId, signalId);
+  if (result.count === 0) {
+    throw new WatchlistError("Stock not found in watchlist", 404);
+  }
 }

@@ -2,6 +2,7 @@ import axios from "axios";
 import { env } from "../config/env.js";
 import { log } from "../lib/logger.js";
 import { parseStockHistory } from "../lib/parseStockHistory.js";
+import { buildTwelveDataApiUrl, TWELVE_DATA_ENDPOINTS } from "../lib/twelveData.js";
 import { redis } from "../config/redis.js";
 import type { StockHistory, StockHistoryPoint, StockHistoryRange } from "../types/stockHistory.js";
 
@@ -49,15 +50,13 @@ function buildHistoryCacheKey(symbol: string, range: StockHistoryRange): string 
 
 /** Builds the Twelve Data time series URL for a symbol. */
 function buildTimeSeriesUrl(symbol: string, range: StockHistoryRange, apiKey: string): string {
-  const params = new URLSearchParams({
+  return buildTwelveDataApiUrl(TWELVE_DATA_ENDPOINTS.timeSeries, {
     symbol,
     interval: HISTORY_INTERVAL,
     outputsize: String(resolveOutputSize(range)),
     apikey: apiKey,
     order: "ASC",
   });
-
-  return `https://api.twelvedata.com/time_series?${params.toString()}`;
 }
 
 /** Maps a Twelve Data bar to an internal history point. */

@@ -4,6 +4,7 @@ import {
   WatchlistError,
   createWatchlistView,
   getWatchlistsForUser,
+  removeStockFromView,
   saveStockToView,
 } from "../services/watchlist.service.js";
 
@@ -80,6 +81,29 @@ export async function postWatchlistStock(req: Request, res: Response): Promise<v
   try {
     const stock = await saveStockToView(userId, watchlistId, symbol);
     res.status(201).json({ stock });
+  } catch (error) {
+    handleWatchlistError(res, error, req.path);
+  }
+}
+
+/** Removes a stock signal from a specific custom view. */
+export async function deleteWatchlistStock(req: Request, res: Response): Promise<void> {
+  const userId = getAuthenticatedUserId(req, res);
+  if (!userId) {
+    return;
+  }
+
+  const watchlistId = req.params.id?.trim() ?? "";
+  const signalId = req.params.signalId?.trim() ?? "";
+
+  if (!watchlistId || !signalId) {
+    res.status(400).json({ error: "Watchlist id and signal id are required" });
+    return;
+  }
+
+  try {
+    await removeStockFromView(userId, watchlistId, signalId);
+    res.status(204).send();
   } catch (error) {
     handleWatchlistError(res, error, req.path);
   }

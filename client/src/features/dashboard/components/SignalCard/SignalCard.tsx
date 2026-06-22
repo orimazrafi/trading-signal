@@ -5,10 +5,18 @@ export type SignalCardProps = {
   signal: Signal
   isSelected?: boolean
   onSelect?: (symbol: string) => void
+  onRemove?: (signalId: string) => void
+  removing?: boolean
 }
 
 /** Renders a saved watchlist stock row, optionally selectable. */
-export function SignalCard({ signal, isSelected = false, onSelect }: SignalCardProps) {
+export function SignalCard({
+  signal,
+  isSelected = false,
+  onSelect,
+  onRemove,
+  removing = false,
+}: SignalCardProps) {
   const isInteractive = Boolean(onSelect)
 
   /** Selects this stock when the card is clicked. */
@@ -22,6 +30,13 @@ export function SignalCard({ signal, isSelected = false, onSelect }: SignalCardP
       event.preventDefault()
       onSelect?.(signal.symbol)
     }
+  }
+
+  /** Removes this stock from the current watchlist without selecting it. */
+  const handleRemove = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+    onRemove?.(signal.id)
   }
 
   return (
@@ -51,6 +66,16 @@ export function SignalCard({ signal, isSelected = false, onSelect }: SignalCardP
         ${signal.price.toFixed(2)}
       </p>
       <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Saved price · tap to view chart</p>
+      {onRemove ? (
+        <button
+          type="button"
+          onClick={handleRemove}
+          disabled={removing}
+          className="mt-3 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/30"
+        >
+          {removing ? 'Removing…' : 'Remove'}
+        </button>
+      ) : null}
     </article>
   )
 }

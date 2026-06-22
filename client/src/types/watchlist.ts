@@ -60,3 +60,8 @@ export type WatchlistResponse = {
 export type AddStockResponse = {
   stock: ApiWatchlistStock
 }
+
+/** Response body for DELETE /api/watchlists/:id/stocks/:signalId. */
+export type RemoveStockResponse = {
+  ok: boolean
+}

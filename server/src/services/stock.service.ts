@@ -1,6 +1,10 @@
-import axios from "axios";
 import { env } from "../config/env.js";
 import { log } from "../lib/logger.js";
+import {
+  requestTwelveDataPrice,
+  requestTwelveDataProfile,
+  requestTwelveDataStatistics,
+} from "../lib/twelveDataClient.js";
 import { redis } from "../config/redis.js";
 import {
   createSignal,
@@ -14,6 +18,11 @@ import type {
   TrendingStock,
 } from "../types/stock.js";
 import { parseStockQuote } from "../types/stock.js";
+import {
+  isTwelveDataErrorPayload,
+  type TwelveDataProfileResponse,
+  type TwelveDataStatisticsResponse,
+} from "../types/twelveData.js";
 
 /** Normalizes a ticker symbol to uppercase. */
 function normalizeSymbol(symbol: string): string {
@@ -47,48 +56,38 @@ export async function getCachedStockQuote(symbol: string): Promise<StockQuote | 
   return readCachedQuote(symbol);
 }
 
-/** Builds the Twelve Data quote URL for a symbol. */
-function buildTwelveDataQuoteUrl(symbol: string, apiKey: string): string {
-  return `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(apiKey)}`;
-}
-
-/** Returns true when Twelve Data responded with an error payload. */
-function isTwelveDataErrorPayload(data: unknown): boolean {
-  return isRecord(data) && ("code" in data || "status" in data) && !("close" in data || "price" in data);
-}
-
-/** Returns true when value is a non-null object record. */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-/** Builds the Twelve Data profile URL for a symbol. */
-function buildTwelveDataProfileUrl(symbol: string, apiKey: string): string {
-  return `https://api.twelvedata.com/profile?symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(apiKey)}`;
-}
-
-type TwelveDataProfileResponse = {
-  name?: string;
-  sector?: string;
-  industry?: string;
-  code?: number;
-  message?: string;
-  status?: string;
-};
-
-/** Maps a Twelve Data API payload to a StockQuote. */
+/** Maps Twelve Data responses to a StockQuote. */
 function mapTwelveDataQuote(
   symbol: string,
-  data: Record<string, unknown>,
-  profile?: TwelveDataProfileResponse,
+  price: number,
+  profile: TwelveDataProfileResponse | null,
+  statistics: TwelveDataStatisticsResponse | null,
 ): StockQuote {
+  const peRatio = statistics?.statistics?.valuations_metrics?.trailing_pe ?? 0;
+
   return {
     symbol,
-    name: String(profile?.name ?? data.name ?? `${symbol} Inc.`),
-    price: Number(data.close ?? data.price ?? 0),
-    peRatio: Number(data.pe ?? data.trailing_pe ?? 0),
-    sector: String(profile?.sector ?? profile?.industry ?? data.sector ?? data.industry ?? "Unknown"),
+    name: String(profile?.name ?? statistics?.meta?.name ?? `${symbol} Inc.`),
+    price,
+    peRatio: Number.isFinite(peRatio) ? peRatio : 0,
+    sector: String(profile?.sector ?? profile?.industry ?? "Unknown"),
   };
+}
+
+/** Fetches the latest trade price from Twelve Data. */
+async function fetchPriceFromApi(symbol: string, apiKey: string): Promise<number> {
+  const response = await requestTwelveDataPrice(symbol, apiKey);
+
+  if (isTwelveDataErrorPayload(response.data)) {
+    throw new Error(response.data.message ?? `Twelve Data price failed for ${symbol}`);
+  }
+
+  const price = Number(response.data.price);
+  if (!Number.isFinite(price) || price <= 0) {
+    throw new Error(`Twelve Data returned an invalid price for ${symbol}`);
+  }
+
+  return price;
 }
 
 /** Fetches company profile metadata used to enrich quote responses. */
@@ -97,18 +96,34 @@ async function fetchProfileFromApi(
   apiKey: string,
 ): Promise<TwelveDataProfileResponse | null> {
   try {
-    const response = await axios.get<TwelveDataProfileResponse>(
-      buildTwelveDataProfileUrl(symbol, apiKey),
-      { timeout: 8000 },
-    );
+    const response = await requestTwelveDataProfile(symbol, apiKey);
 
-    if (response.data.code || response.data.status === "error") {
+    if (isTwelveDataErrorPayload(response.data)) {
       throw new Error(response.data.message ?? `Twelve Data profile failed for ${symbol}`);
     }
 
     return response.data;
   } catch (error) {
     log.error("External API fetch failed", error, { provider: "Twelve Data", symbol, endpoint: "profile" });
+    return null;
+  }
+}
+
+/** Fetches valuation statistics used to enrich quote responses. */
+async function fetchStatisticsFromApi(
+  symbol: string,
+  apiKey: string,
+): Promise<TwelveDataStatisticsResponse | null> {
+  try {
+    const response = await requestTwelveDataStatistics(symbol, apiKey);
+
+    if (isTwelveDataErrorPayload(response.data)) {
+      throw new Error(response.data.message ?? `Twelve Data statistics failed for ${symbol}`);
+    }
+
+    return response.data;
+  } catch (error) {
+    log.error("External API fetch failed", error, { provider: "Twelve Data", symbol, endpoint: "statistics" });
     return null;
   }
 }
@@ -121,16 +136,13 @@ async function fetchQuoteFromApi(symbol: string): Promise<StockQuote> {
     throw new Error("TWELVE_DATA_API_KEY not configured");
   }
 
-  const [quoteResponse, profile] = await Promise.all([
-    axios.get(buildTwelveDataQuoteUrl(symbol, apiKey), { timeout: 8000 }),
+  const [price, profile, statistics] = await Promise.all([
+    fetchPriceFromApi(symbol, apiKey),
     fetchProfileFromApi(symbol, apiKey),
+    fetchStatisticsFromApi(symbol, apiKey),
   ]);
 
-  if (isTwelveDataErrorPayload(quoteResponse.data)) {
-    throw new Error(`Twelve Data error: ${JSON.stringify(quoteResponse.data)}`);
-  }
-
-  return mapTwelveDataQuote(symbol, quoteResponse.data as Record<string, unknown>, profile ?? undefined);
+  return mapTwelveDataQuote(symbol, price, profile, statistics);
 }
 
 /** Writes a quote to Redis with TTL; logs but does not throw on failure. */

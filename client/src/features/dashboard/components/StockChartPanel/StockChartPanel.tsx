@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '../../../../components/Button'
 import { usePrefersDarkMode } from '../../../../hooks/usePrefersDarkMode'
 import { useStockHistory } from '../../../stocks/hooks/useStockHistory'
@@ -6,6 +6,7 @@ import { useStockQuote } from '../../../stocks/hooks/useStockQuote'
 import { STOCK_HISTORY_RANGES, type StockHistoryRange } from '../../../../types/stockHistory'
 import { LoadingSpinner } from '../LoadingSpinner'
 import { StockPriceChart } from '../StockPriceChart'
+import { mergeLivePriceIntoHistory } from '../StockPriceChart/stockChartUtils'
 
 const QUOTE_REFETCH_MS = 60_000
 
@@ -25,6 +26,18 @@ export function StockChartPanel({ symbol }: StockChartPanelProps) {
     isLoading: isHistoryLoading,
     error: historyError,
   } = useStockHistory(symbol, range)
+
+  const chartPoints = useMemo(() => {
+    if (!history?.points) {
+      return []
+    }
+
+    if (!quote?.price) {
+      return history.points
+    }
+
+    return mergeLivePriceIntoHistory(history.points, quote.price)
+  }, [history?.points, quote?.price])
 
   if (!symbol) {
     return (
@@ -61,7 +74,7 @@ export function StockChartPanel({ symbol }: StockChartPanelProps) {
               <dd className="font-medium text-slate-900 dark:text-slate-100">{quote.name}</dd>
             </div>
             <div>
-              <dt className="text-slate-500 dark:text-slate-400">Price</dt>
+              <dt className="text-slate-500 dark:text-slate-400">Live price</dt>
               <dd className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 ${quote.price.toFixed(2)}
               </dd>
@@ -105,8 +118,8 @@ export function StockChartPanel({ symbol }: StockChartPanelProps) {
             </p>
           ) : null}
 
-          {!isHistoryLoading && !historyError && history && history.points.length > 0 ? (
-            <StockPriceChart points={history.points} isDarkMode={isDarkMode} />
+          {!isHistoryLoading && !historyError && chartPoints.length > 0 ? (
+            <StockPriceChart points={chartPoints} isDarkMode={isDarkMode} />
           ) : null}
 
           {!isHistoryLoading && !historyError && history?.points.length === 0 ? (

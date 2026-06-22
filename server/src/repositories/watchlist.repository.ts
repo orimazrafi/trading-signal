@@ -46,6 +46,13 @@ export async function addStockToWatchlist(watchlistId: string, signalId: string)
   });
 }
 
+/** Removes a linked signal from a custom view. */
+export async function removeStockFromWatchlist(watchlistId: string, signalId: string) {
+  return prisma.watchlistItem.deleteMany({
+    where: { watchlistId, signalId },
+  });
+}
+
 /** Returns true when the signal is already linked to the watchlist. */
 export async function isSignalInWatchlist(watchlistId: string, signalId: string): Promise<boolean> {
   const existing = await prisma.watchlistItem.findUnique({

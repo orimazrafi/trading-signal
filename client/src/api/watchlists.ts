@@ -4,6 +4,7 @@ import type {
   AddStockResponse,
   ApiWatchlist,
   ApiWatchlistStock,
+  RemoveStockResponse,
   Signal,
   Watchlist,
   WatchlistResponse,
@@ -57,4 +58,12 @@ export async function addStockToWatchlist(
   })
 
   return mapApiStockToSignal(data.stock)
+}
+
+/** Removes a saved stock signal from a specific custom view. */
+export async function removeStockFromWatchlist(
+  watchlistId: string,
+  signalId: string,
+): Promise<void> {
+  await api.delete<RemoveStockResponse>(`/watchlists/${watchlistId}/stocks/${signalId}`)
 }

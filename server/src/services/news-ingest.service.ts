@@ -2,6 +2,11 @@ import axios from "axios";
 import { env } from "../config/env.js";
 import { redis } from "../config/redis.js";
 import { log } from "../lib/logger.js";
+import {
+  buildTwelveDataApiUrl,
+  buildTwelveDataPressReleaseArticleUrl,
+  TWELVE_DATA_ENDPOINTS,
+} from "../lib/twelveData.js";
 import { publishNewsArticle } from "../queue/publishers/news.publisher.js";
 import type { IncomingNewsArticle } from "../types/news.js";
 
@@ -32,20 +37,18 @@ function buildFallbackArticleId(title: string, publishedAt: string): string {
 
 /** Builds a Twelve Data press releases URL for a symbol. */
 function buildPressReleasesUrl(symbol: string, apiKey: string): string {
-  const params = new URLSearchParams({
+  return buildTwelveDataApiUrl(TWELVE_DATA_ENDPOINTS.pressReleases, {
     symbol,
     outputsize: String(env.newsIngestBatchSize),
     apikey: apiKey,
   });
-
-  return `https://api.twelvedata.com/press_releases?${params.toString()}`;
 }
 
 /** Maps a Twelve Data press release to an incoming queue article. */
 function mapPressRelease(symbol: string, release: TwelveDataPressRelease): IncomingNewsArticle {
   return {
     title: release.title,
-    url: `https://twelvedata.com/press_releases?symbol=${encodeURIComponent(symbol)}#${encodeURIComponent(release.id)}`,
+    url: buildTwelveDataPressReleaseArticleUrl(symbol, release.id),
     source: `Twelve Data · ${symbol}`,
     publishedAt: release.datetime,
   };
