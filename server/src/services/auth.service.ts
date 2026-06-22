@@ -5,6 +5,7 @@ import jwt, { type SignOptions } from "jsonwebtoken";
 import type { Response } from "express";
 import type { AuthenticatedUser } from "../types/auth.js";
 import { env } from "../config/env.js";
+import { log } from "../lib/logger.js";
 import {
   createUserWithPassword,
   findUserByEmail,
@@ -286,16 +287,10 @@ function mapGoogleTokenError(body: GoogleOAuthErrorBody | undefined): AuthError 
 
 /** Logs a Google token exchange failure without exposing secrets. */
 function logGoogleTokenExchangeFailure(error: unknown, body: GoogleOAuthErrorBody | undefined): void {
-  if (axios.isAxiosError(error)) {
-    console.error(
-      "[auth] Google token exchange failed:",
-      body?.error ?? error.message,
-      body?.error_description ?? "",
-    );
-    return;
-  }
-
-  console.error("[auth] Google token exchange failed:", error);
+  log.error("Google token exchange failed", error, {
+    errorCode: body?.error,
+    description: body?.error_description,
+  });
 }
 
 /** Builds the Google token exchange request body. */

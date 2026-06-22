@@ -1,4 +1,5 @@
 import { env } from "../../config/env.js";
+import { log } from "../../lib/logger.js";
 import type { StockTickMessage } from "../../types/stock.js";
 import { connectRabbitMq, getRabbitChannel } from "../rabbit/connection.js";
 
@@ -11,5 +12,9 @@ export async function publishStockTick(tick: StockTickMessage): Promise<void> {
 
   const payload = Buffer.from(JSON.stringify(tick));
   channel.sendToQueue(env.stockTicksQueue, payload, { persistent: true });
-  console.log(`[publisher] Sent tick for ${tick.symbol} @ ${tick.price}`);
+  log.info("Published stock tick to queue", {
+    queue: env.stockTicksQueue,
+    symbol: tick.symbol,
+    price: tick.price,
+  });
 }

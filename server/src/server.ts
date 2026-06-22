@@ -3,6 +3,7 @@ import cors from "cors";
 import express from "express";
 import { connectServerInfrastructure } from "./config/bootstrap.js";
 import { env } from "./config/env.js";
+import { log } from "./lib/logger.js";
 import { apiRoutes } from "./routes/index.js";
 
 /** Boots infrastructure connections and starts the Express API server. */
@@ -16,11 +17,11 @@ async function startServer(): Promise<void> {
   app.use("/api", apiRoutes);
 
   app.listen(env.port, () => {
-    console.log(`[server] API listening on port ${env.port}`);
+    log.info("API listening", { port: env.port });
   });
 }
 
 startServer().catch((error) => {
-  console.error("[server] Fatal startup error:", error);
+  log.error("Fatal startup error", error);
   process.exit(1);
 });

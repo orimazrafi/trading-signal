@@ -2,7 +2,6 @@ import { Router } from "express";
 import { requireAuth } from "../controllers/auth.controller.js";
 import {
   getHealth,
-  getNews,
   getStockBySymbol,
   getTrending,
   searchStockBySymbol,
@@ -15,4 +14,3 @@ stockRoutes.get("/health", getHealth);
 stockRoutes.get("/stock/:symbol", getStockBySymbol);
 stockRoutes.get("/stocks/:symbol/search", requireAuth, searchStockBySymbol);
 stockRoutes.get("/dashboard/trending", requireAuth, getTrending);
-stockRoutes.get("/dashboard/news", getNews);

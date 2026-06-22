@@ -1,8 +1,9 @@
-import { prisma } from "./prisma.js";
-import { redis } from "./redis.js";
+import { ensureUserExists } from "../repositories/user.repository.js";
+import { log } from "../lib/logger.js";
 import { env } from "./env.js";
 import { logGoogleOAuthCredentialStatus } from "./googleOAuthCheck.js";
-import { ensureUserExists } from "../repositories/user.repository.js";
+import { prisma } from "./prisma.js";
+import { redis } from "./redis.js";
 
 /** Connects Redis and PostgreSQL for the API server process. */
 export async function connectServerInfrastructure(): Promise<void> {
@@ -10,23 +11,23 @@ export async function connectServerInfrastructure(): Promise<void> {
 
   try {
     await redis.connect();
-    console.log("[server] Connected to Redis");
+    log.info("Connected to Redis", { process: "server" });
 
     step = "PostgreSQL";
     await prisma.$connect();
 
     if (env.authAllowMock) {
       await ensureUserExists(env.mockUser.userId, env.mockUser.email);
-      console.log("[server] Mock user enabled for development");
+      log.info("Mock user enabled for development", { process: "server" });
     }
 
-    console.log("[server] Connected to PostgreSQL");
+    log.info("Connected to PostgreSQL", { process: "server" });
 
     if (env.nodeEnv === "development" && env.googleClientId) {
       await logGoogleOAuthCredentialStatus();
     }
   } catch (error) {
-    console.error(`[server] Failed during ${step} setup:`, error);
+    log.error(`Failed during ${step} setup`, error, { process: "server" });
     process.exit(1);
   }
 }
@@ -37,13 +38,13 @@ export async function connectWorkerInfrastructure(): Promise<void> {
 
   try {
     await redis.connect();
-    console.log("[worker] Connected to Redis");
+    log.info("Connected to Redis", { process: "worker" });
 
     step = "PostgreSQL";
     await prisma.$connect();
-    console.log("[worker] Connected to PostgreSQL");
+    log.info("Connected to PostgreSQL", { process: "worker" });
   } catch (error) {
-    console.error(`[worker] Failed during ${step} setup:`, error);
+    log.error(`Failed during ${step} setup`, error, { process: "worker" });
     process.exit(1);
   }
 }

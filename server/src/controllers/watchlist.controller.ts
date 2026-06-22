@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { log } from "../lib/logger.js";
 import {
   WatchlistError,
   createWatchlistView,
@@ -19,13 +20,13 @@ function getAuthenticatedUserId(req: Request, res: Response): string | null {
 }
 
 /** Maps watchlist service errors to HTTP responses. */
-function handleWatchlistError(res: Response, error: unknown): void {
+function handleWatchlistError(res: Response, error: unknown, path: string): void {
   if (error instanceof WatchlistError) {
     res.status(error.statusCode).json({ error: error.message });
     return;
   }
 
-  console.error("[watchlist] Unexpected error:", error);
+  log.error("Controller endpoint execution failed", error, { path });
   res.status(500).json({ error: "Watchlist request failed" });
 }
 
@@ -42,7 +43,7 @@ export async function postWatchlist(req: Request, res: Response): Promise<void> 
     const watchlist = await createWatchlistView(userId, name);
     res.status(201).json({ watchlist });
   } catch (error) {
-    handleWatchlistError(res, error);
+    handleWatchlistError(res, error, req.path);
   }
 }
 
@@ -57,7 +58,7 @@ export async function getWatchlists(req: Request, res: Response): Promise<void> 
     const watchlists = await getWatchlistsForUser(userId);
     res.json({ watchlists });
   } catch (error) {
-    handleWatchlistError(res, error);
+    handleWatchlistError(res, error, req.path);
   }
 }
 
@@ -80,6 +81,6 @@ export async function postWatchlistStock(req: Request, res: Response): Promise<v
     const stock = await saveStockToView(userId, watchlistId, symbol);
     res.status(201).json({ stock });
   } catch (error) {
-    handleWatchlistError(res, error);
+    handleWatchlistError(res, error, req.path);
   }
 }

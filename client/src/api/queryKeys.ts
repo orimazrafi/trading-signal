@@ -7,4 +7,7 @@ export const queryKeys = {
   watchlists: {
     list: (userId: string) => ['watchlists', userId] as const,
   },
+  dashboard: {
+    news: ['dashboard', 'news'] as const,
+  },
 } as const

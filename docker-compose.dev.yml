@@ -39,6 +39,10 @@ services:
       DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://rabbitmq:5672
+      TWELVE_DATA_API_KEY: ${TWELVE_DATA_API_KEY}
+      NEWS_INGEST_ENABLED: "true"
+      NEWS_INGEST_INTERVAL_MS: "300000"
+      NEWS_INGEST_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL"
     depends_on:
       - server
 

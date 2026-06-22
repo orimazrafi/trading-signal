@@ -1,3 +1,4 @@
+import { log, type LogMeta } from "../../lib/logger.js";
 import {
   formatRabbitError,
   isFatalRabbitError,
@@ -11,18 +12,18 @@ export const MAX_RECONNECT_DELAY_MS = 30_000;
 export type ReconnectTryResult = { ok: true } | { ok: false; reason: string };
 
 /** Logs a RabbitMQ warning with a consistent prefix. */
-export function printWarning(...params: unknown[]): void {
-  console.warn("[rabbit]", ...params);
+export function printWarning(message: string, meta?: LogMeta): void {
+  log.warn(message, meta);
 }
 
 /** Logs a RabbitMQ error with a consistent prefix. */
-export function printError(...params: unknown[]): void {
-  console.error("[rabbit]", ...params);
+export function printError(message: string, error?: unknown, meta?: LogMeta): void {
+  log.error(message, error, meta);
 }
 
 /** Logs a RabbitMQ info message with a consistent prefix. */
-export function printLog(...params: unknown[]): void {
-  console.log("[rabbit]", ...params);
+export function printLog(message: string, meta?: LogMeta): void {
+  log.info(message, meta);
 }
 
 /** Waits before the next reconnect attempt using exponential backoff. */
@@ -54,9 +55,12 @@ export async function waitBeforeReconnect(
   isShuttingDown: () => boolean,
 ): Promise<boolean> {
   const delayMs = getReconnectDelayMs(attempt);
-  printWarning(
-    `Reconnecting in ${delayMs}ms (attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS}): ${reason}`,
-  );
+  printWarning(`Reconnecting in ${delayMs}ms (attempt ${attempt}/${MAX_RECONNECT_ATTEMPTS}): ${reason}`, {
+    attempt,
+    maxAttempts: MAX_RECONNECT_ATTEMPTS,
+    delayMs,
+    reason,
+  });
 
   await sleep(delayMs);
   return !isShuttingDown();

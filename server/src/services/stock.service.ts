@@ -1,5 +1,6 @@
 import axios from "axios";
 import { env } from "../config/env.js";
+import { log } from "../lib/logger.js";
 import { redis } from "../config/redis.js";
 import {
   createSignal,
@@ -7,8 +8,6 @@ import {
 } from "../repositories/signal.repository.js";
 import { ensureUserExists } from "../repositories/user.repository.js";
 import type {
-  NewsItem,
-  NewsSentiment,
   SearchStockResult,
   StockQuote,
   StockTickMessage,
@@ -36,10 +35,9 @@ async function readCachedQuote(symbol: string): Promise<StockQuote | null> {
       return null;
     }
 
-    console.log(`[stock] Cache hit for ${symbol}`);
     return parseStockQuote(JSON.parse(cached));
   } catch (error) {
-    console.error(`[stock] Redis read failed for ${symbol}:`, error);
+    log.error("Redis read failed", error, { symbol, cacheKey });
     return null;
   }
 }
@@ -99,10 +97,7 @@ async function fetchQuoteWithFallback(symbol: string): Promise<StockQuote> {
   try {
     return await fetchQuoteFromApi(symbol);
   } catch (error) {
-    console.warn(
-      `[stock] External API unavailable for ${symbol}, using mock payload:`,
-      error,
-    );
+    log.error("External API fetch failed", error, { provider: "Twelve Data", symbol });
     return buildMockQuote(symbol);
   }
 }
@@ -113,9 +108,9 @@ async function cacheQuote(symbol: string, quote: StockQuote): Promise<void> {
 
   try {
     await redis.set(cacheKey, JSON.stringify(quote), "EX", env.stockCacheTtlSeconds);
-    console.log(`[stock] Cached ${symbol} for ${env.stockCacheTtlSeconds}s`);
+    log.info("Cached stock quote in Redis", { symbol, ttlSeconds: env.stockCacheTtlSeconds });
   } catch (error) {
-    console.error(`[stock] Redis write failed for ${symbol}:`, error);
+    log.error("Redis write failed", error, { symbol, cacheKey });
   }
 }
 
@@ -127,6 +122,10 @@ export async function getStockQuote(symbol: string): Promise<StockQuote> {
   if (cached) {
     return cached;
   }
+
+  log.warn("Cache miss for dynamic data, fetching from external provider", {
+    symbol: normalizedSymbol,
+  });
 
   const quote = await fetchQuoteWithFallback(normalizedSymbol);
   await cacheQuote(normalizedSymbol, quote);
@@ -158,6 +157,12 @@ async function persistSearchSignal(
     price: quote.price,
     previousPrice,
     changePercent,
+  });
+
+  log.info("Persisted search signal to PostgreSQL", {
+    userId,
+    symbol: quote.symbol,
+    signalId: signal.id,
   });
 
   return {
@@ -204,38 +209,6 @@ export async function getTrendingStocks(userId: string): Promise<TrendingStock[]
   return trending;
 }
 
-/** Derives sentiment from simple bullish/bearish keyword matching. */
-function scoreSentiment(headline: string): NewsSentiment {
-  const text = headline.toLowerCase();
-  const positiveKeywords = ["surge", "gain", "rally", "beat", "growth", "record", "upgrade"];
-  const negativeKeywords = ["drop", "fall", "loss", "miss", "decline", "downgrade", "selloff"];
-
-  const positiveHits = positiveKeywords.filter((word) => text.includes(word)).length;
-  const negativeHits = negativeKeywords.filter((word) => text.includes(word)).length;
-
-  if (positiveHits > negativeHits) return "POSITIVE";
-  if (negativeHits > positiveHits) return "NEGATIVE";
-  return "NEUTRAL";
-}
-
-/** Returns mocked financial headlines with basic sentiment scoring. */
-export function getMarketNews(): NewsItem[] {
-  const headlines = [
-    "Tech stocks surge as earnings beat analyst expectations",
-    "Energy sector faces decline amid global demand concerns",
-    "Major bank reports record quarterly growth in trading revenue",
-    "Retail giants miss earnings targets, shares fall sharply",
-    "Healthcare rally continues after positive FDA approval news",
-  ];
-
-  return headlines.map((headline, index) => ({
-    headline,
-    source: "Trading Signal Wire",
-    publishedAt: new Date(Date.now() - index * 3_600_000).toISOString(),
-    sentiment: scoreSentiment(headline),
-  }));
-}
-
 /** Calculates percent change between previous and current price. */
 function calculateChangePercent(previousPrice: number, currentPrice: number): number {
   if (previousPrice <= 0) return 0;
@@ -256,13 +229,6 @@ function buildLeaderboardKey(userId: string): string {
 async function readPreviousPrice(symbol: string, fallbackPrice: number): Promise<number> {
   const raw = await redis.get(buildLastPriceKey(symbol));
   return raw ? Number(raw) : fallbackPrice;
-}
-
-/** Logs an incoming tick with its change vs the last price. */
-function logTickReceived(tick: StockTickMessage, changePercent: number): void {
-  console.log(
-    `[worker] Tick ${tick.symbol} @ ${tick.price} (${changePercent.toFixed(2)}% vs last)`,
-  );
 }
 
 /** Returns true when the price change meets the surge threshold. */
@@ -294,9 +260,12 @@ async function persistSurgeSignal(
     changePercent,
   });
 
-  console.log(
-    `[worker] Signal created for ${tick.symbol}: ${recommendation} (${changePercent.toFixed(2)}%)`,
-  );
+  log.info("Persisted surge signal to PostgreSQL", {
+    userId: tick.userId,
+    symbol: tick.symbol,
+    recommendation,
+    changePercent,
+  });
 }
 
 /** Updates last price and leaderboard score for the tick. */
@@ -309,7 +278,13 @@ async function updatePriceAndLeaderboard(
 
   await redis.set(lastPriceKey, String(tick.price));
   await redis.zadd(leaderboardKey, changePercent, tick.symbol);
-  console.log(`[worker] Updated leaderboard ${leaderboardKey} for ${tick.symbol}`);
+
+  log.info("Updated tick leaderboard in Redis", {
+    userId: tick.userId,
+    symbol: tick.symbol,
+    leaderboardKey,
+    changePercent,
+  });
 }
 
 /** Processes one stock tick: detect surge, persist signal, update leaderboard. */
@@ -317,7 +292,11 @@ export async function processStockTick(tick: StockTickMessage): Promise<void> {
   const previousPrice = await readPreviousPrice(tick.symbol, tick.price);
   const changePercent = calculateChangePercent(previousPrice, tick.price);
 
-  logTickReceived(tick, changePercent);
+  log.info("Processing stock tick", {
+    symbol: tick.symbol,
+    price: tick.price,
+    changePercent,
+  });
 
   if (isSurgeDetected(changePercent)) {
     await persistSurgeSignal(tick, previousPrice, changePercent);

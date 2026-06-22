@@ -21,6 +21,16 @@ export const env = {
   twelveDataApiKey: process.env.TWELVE_DATA_API_KEY,
   rabbitmqUrl: process.env.RABBITMQ_URL ?? "amqp://localhost:5672",
   stockTicksQueue: "stock_ticks",
+  marketNewsQueue: "market_news",
+  dashboardNewsRedisKey: "dashboard:news",
+  newsMaxArticles: 20,
+  newsIngestEnabled: process.env.NEWS_INGEST_ENABLED !== "false",
+  newsIngestIntervalMs: Number(process.env.NEWS_INGEST_INTERVAL_MS) || 300_000,
+  newsIngestBatchSize: Number(process.env.NEWS_INGEST_BATCH_SIZE) || 5,
+  newsIngestSymbols: (process.env.NEWS_INGEST_SYMBOLS ?? "AAPL,MSFT,TSLA,NVDA,GOOGL")
+    .split(",")
+    .map((symbol) => symbol.trim().toUpperCase())
+    .filter(Boolean),
   surgeThresholdPercent: 1.5,
   mockUser: {
     userId: "user-mock-default",

@@ -11,12 +11,13 @@ export async function establishConnection(): Promise<Channel> {
   const channel = await connection.createChannel();
 
   await channel.assertQueue(env.stockTicksQueue, { durable: true });
+  await channel.assertQueue(env.marketNewsQueue, { durable: true });
   await channel.prefetch(10);
 
   attachConnectionHandlers(connection, channel);
   setConnectionState(connection, channel);
 
-  printLog(`Connected to queue: ${env.stockTicksQueue}`);
+  printLog(`Connected to queues: ${env.stockTicksQueue}, ${env.marketNewsQueue}`);
   return channel;
 }
 

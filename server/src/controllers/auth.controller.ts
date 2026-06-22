@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
+import { log } from "../lib/logger.js";
 import {
   AUTH_COOKIE_NAME,
   AuthError,
@@ -42,19 +43,19 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     req.user = user;
     next();
   } catch (error) {
-    console.error("[auth] Invalid auth cookie:", error);
+    log.error("Invalid auth cookie", error, { path: req.path });
     res.status(401).json({ error: "Unauthorized" });
   }
 }
 
 /** Maps auth service errors to HTTP responses. */
-function handleAuthError(res: Response, error: unknown): void {
+function handleAuthError(res: Response, error: unknown, path: string): void {
   if (error instanceof AuthError) {
     res.status(error.statusCode).json({ error: error.message });
     return;
   }
 
-  console.error("[auth] Unexpected auth error:", error);
+  log.error("Controller endpoint execution failed", error, { path });
   res.status(500).json({ error: "Authentication failed" });
 }
 
@@ -68,7 +69,7 @@ export async function postSignup(req: Request, res: Response): Promise<void> {
     setAuthCookie(res, user);
     res.status(201).json({ user });
   } catch (error) {
-    handleAuthError(res, error);
+    handleAuthError(res, error, req.path);
   }
 }
 
@@ -82,7 +83,7 @@ export async function postLogin(req: Request, res: Response): Promise<void> {
     setAuthCookie(res, user);
     res.json({ user });
   } catch (error) {
-    handleAuthError(res, error);
+    handleAuthError(res, error, req.path);
   }
 }
 
@@ -103,7 +104,7 @@ export function getMe(req: Request, res: Response): void {
 }
 
 /** Redirects the browser to Google OAuth consent. */
-export function getGoogleAuth(_req: Request, res: Response): void {
+export function getGoogleAuth(req: Request, res: Response): void {
   try {
     const state = createOAuthState();
 
@@ -117,7 +118,7 @@ export function getGoogleAuth(_req: Request, res: Response): void {
 
     res.redirect(buildGoogleAuthUrl(state));
   } catch (error) {
-    handleAuthError(res, error);
+    handleAuthError(res, error, req.path);
   }
 }
 
@@ -140,13 +141,13 @@ export async function getGoogleCallback(req: Request, res: Response): Promise<vo
     res.redirect(env.clientUrl);
   } catch (error) {
     if (error instanceof AuthError) {
-      console.error("[auth] Google callback failed:", error.message);
+      log.error("Google callback failed", error, { path: req.path, code: error.code });
       const authError = error.code ?? "google_sign_in_failed";
       res.redirect(`${env.clientUrl}/?authError=${encodeURIComponent(authError)}`);
       return;
     }
 
-    console.error("[auth] Google callback failed:", error);
+    log.error("Google callback failed", error, { path: req.path });
     res.redirect(`${env.clientUrl}/?authError=google_sign_in_failed`);
   }
 }

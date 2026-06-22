@@ -1,5 +1,6 @@
 import type { Channel, ConsumeMessage } from "amqplib";
 import { env } from "../../config/env.js";
+import { log } from "../../lib/logger.js";
 import { processStockTick } from "../../services/stock.service.js";
 import { parseStockTickMessage } from "../../types/stock.js";
 import { formatRabbitError, isFatalRabbitError } from "../rabbit/errors.js";
@@ -7,12 +8,20 @@ import {
   connectRabbitMq,
   getRabbitChannel,
   retryRabbitConnection,
-  setRabbitReconnectHandler,
 } from "../rabbit/connection.js";
+import { iterateQueueMessages } from "../rabbit/consumeQueue.js";
+import { parseQueueMessage } from "../rabbit/parseQueueMessage.js";
+
+const QUEUE_NAME = env.stockTicksQueue;
 
 /** Parses and validates an incoming tick payload from RabbitMQ. */
 function parseTickMessage(message: ConsumeMessage) {
-  const payload: unknown = JSON.parse(message.content.toString());
+  const payload = parseQueueMessage<unknown>(message);
+
+  if (!payload) {
+    throw new Error("Invalid tick payload: message body is not valid JSON");
+  }
+
   const tick = parseStockTickMessage(payload);
 
   if (!tick) {
@@ -22,39 +31,41 @@ function parseTickMessage(message: ConsumeMessage) {
   return tick;
 }
 
-/** Subscribes to stock tick messages on the given channel. */
-async function registerConsumer(channel: Channel): Promise<void> {
-  await channel.consume(env.stockTicksQueue, async (message) => {
-    const activeChannel = getRabbitChannel();
-    if (!message || !activeChannel) return;
+/** Processes stock tick messages until the channel closes. */
+async function runStockConsumerLoop(channel: Channel): Promise<void> {
+  for await (const message of iterateQueueMessages(channel, QUEUE_NAME)) {
+    const rabbitChannel = getRabbitChannel();
+    if (!rabbitChannel) {
+      return;
+    }
 
     try {
+      log.info("Received queue message", { queue: QUEUE_NAME });
+
       const tick = parseTickMessage(message);
       await processStockTick(tick);
-      activeChannel.ack(message);
-      console.log(`[consumer] Acknowledged tick for ${tick.symbol}`);
-    } catch (error) {
-      console.error("[consumer] Failed to process tick, message will be requeued:", error);
-      activeChannel.nack(message, false, true);
+      rabbitChannel.ack(message);
+      log.info("Processed queue message", { queue: QUEUE_NAME, symbol: tick.symbol });
+    } catch (err) {
+      log.error("Failed to process queue message", err, { queue: QUEUE_NAME });
+      rabbitChannel.nack(message, false, false);
     }
-  });
+  }
 }
 
-/** Connects if needed and subscribes to the stock ticks queue. */
-async function startConsuming(): Promise<void> {
-  const channel = getRabbitChannel() ?? (await connectRabbitMq());
-  await registerConsumer(channel);
-  console.log("[consumer] Stock tick consumer is running");
+/** Subscribes to stock tick messages on the given channel. */
+export async function registerStockConsumer(channel: Channel): Promise<void> {
+  void runStockConsumerLoop(channel);
+  log.info("Stock tick consumer is running", { queue: QUEUE_NAME });
 }
 
 /** Starts consuming stock tick messages from RabbitMQ. */
 export async function startStockConsumer(): Promise<void> {
-  setRabbitReconnectHandler(startConsuming);
-
   try {
-    await startConsuming();
+    const channel = getRabbitChannel() ?? (await connectRabbitMq());
+    await registerStockConsumer(channel);
   } catch (error) {
-    console.error("[worker] Failed during RabbitMQ setup:", error);
+    log.error("Failed during RabbitMQ setup", error, { queue: QUEUE_NAME });
 
     if (isFatalRabbitError(error)) {
       process.exit(1);

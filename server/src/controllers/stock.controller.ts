@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
+import { log } from "../lib/logger.js";
 import {
-  getMarketNews,
   getStockQuote,
   getTrendingStocks,
   searchStock,
@@ -23,7 +23,7 @@ export async function getStockBySymbol(req: Request, res: Response): Promise<voi
     const quote = await getStockQuote(symbol);
     res.json(quote);
   } catch (error) {
-    console.error(`[stock] Failed to resolve quote for ${symbol}:`, error);
+    log.error("Controller endpoint execution failed", error, { path: req.path });
     res.status(500).json({ error: "Unable to fetch stock data" });
   }
 }
@@ -47,7 +47,7 @@ export async function searchStockBySymbol(req: Request, res: Response): Promise<
     const result = await searchStock(userId, symbol);
     res.json(result);
   } catch (error) {
-    console.error(`[stock] Failed to search ${symbol} for ${userId}:`, error);
+    log.error("Controller endpoint execution failed", error, { path: req.path });
     res.status(500).json({ error: "Unable to search stock" });
   }
 }
@@ -65,17 +65,7 @@ export async function getTrending(req: Request, res: Response): Promise<void> {
     const trending = await getTrendingStocks(userId);
     res.json({ userId, trending });
   } catch (error) {
-    console.error(`[dashboard] Failed to load trending for ${userId}:`, error);
+    log.error("Controller endpoint execution failed", error, { path: req.path });
     res.status(500).json({ error: "Unable to load trending stocks" });
-  }
-}
-
-/** Returns mocked market news headlines with sentiment scores. */
-export function getNews(_req: Request, res: Response): void {
-  try {
-    res.json({ news: getMarketNews() });
-  } catch (error) {
-    console.error("[dashboard] Failed to load news:", error);
-    res.status(500).json({ error: "Unable to load market news" });
   }
 }

@@ -5,6 +5,8 @@ import type { SearchStockResult } from '../../../types/stock'
 import { searchStock } from '../../stocks/stockService'
 import { WatchlistTabs } from '../../watchlists/components/WatchlistTabs'
 import { useWatchlists } from '../../watchlists/hooks/useWatchlists'
+import { NewsFeed } from '../components/NewsFeed'
+import { useNewsFeed } from '../hooks/useNewsFeed'
 import type { DashboardProps } from '../types'
 
 /** Returns Tailwind classes for a recommendation action badge. */
@@ -92,6 +94,7 @@ export function DashboardLayout({ user, onLogout }: DashboardProps) {
     handleCreateWatchlist,
     handleSaveStockToWatchlist,
   } = useWatchlists({ userId: user.userId })
+  const { news, isLoading: newsLoading, error: newsError } = useNewsFeed()
 
   const [symbolInput, setSymbolInput] = useState('')
   const [searchResult, setSearchResult] = useState<SearchStockResult | null>(null)
@@ -180,8 +183,8 @@ export function DashboardLayout({ user, onLogout }: DashboardProps) {
         />
       </section>
 
-      <div className="grid flex-1 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-900/40">
+      <div className="grid flex-1 gap-6 lg:grid-cols-12">
+        <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 lg:col-span-7 dark:border-slate-700 dark:bg-slate-900/40">
           <header className="mb-4 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
@@ -221,7 +224,8 @@ export function DashboardLayout({ user, onLogout }: DashboardProps) {
           )}
         </section>
 
-        <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="flex flex-col gap-6 lg:col-span-5">
+          <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Stock search</h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Look up a symbol to get a live quote and recommendation.
@@ -325,7 +329,10 @@ export function DashboardLayout({ user, onLogout }: DashboardProps) {
               ) : null}
             </article>
           ) : null}
-        </aside>
+          </aside>
+
+          <NewsFeed news={news} isLoading={newsLoading} error={newsError} />
+        </div>
       </div>
     </main>
   )
