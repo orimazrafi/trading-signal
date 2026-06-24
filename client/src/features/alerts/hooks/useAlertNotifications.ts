@@ -1,9 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/api/queryKeys'
 import { fetchAlertNotifications, markAlertNotificationRead } from '@/api/alerts'
+import {
+  getFirstApiErrorMessage,
+  runMutationAndInvalidate,
+} from '@/features/alerts/lib/alertQueryUtils'
+import type { UseAlertNotificationsOptions } from '@/features/alerts/types'
 
 /** Loads alert notification history for the authenticated user. */
-export function useAlertNotifications(enabled = true) {
+export function useAlertNotifications({ enabled = true }: UseAlertNotificationsOptions = {}) {
   const queryClient = useQueryClient()
 
   const notificationsQuery = useQuery({
@@ -13,22 +18,16 @@ export function useAlertNotifications(enabled = true) {
   })
 
   const readMutation = useMutation({
-    mutationFn: (notificationId: string) => markAlertNotificationRead(notificationId),
+    mutationFn: markAlertNotificationRead,
   })
 
-  /** Refetches notifications after marking one as read. */
-  const refreshNotifications = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.alerts.notifications })
-
   /** Marks a notification read and refreshes the list. */
-  const markRead = async (notificationId: string) => {
-    const notification = await readMutation.mutateAsync(notificationId)
-    await refreshNotifications()
-    return notification
-  }
+  const markRead = (notificationId: string) =>
+    runMutationAndInvalidate(queryClient, queryKeys.alerts.notifications, () =>
+      readMutation.mutateAsync(notificationId),
+    )
 
-  const error =
-    notificationsQuery.error instanceof Error ? notificationsQuery.error.message : null
+  const error = getFirstApiErrorMessage([notificationsQuery.error, readMutation.error])
 
   return {
     notifications: notificationsQuery.data ?? [],

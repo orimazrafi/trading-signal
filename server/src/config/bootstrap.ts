@@ -1,8 +1,8 @@
 import { startAlertNotificationSubscriber } from "../lib/alertNotificationSubscriber.js";
 import { ensureUserExists } from "../repositories/user.repository.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import { env } from "./env.js";
-import { logGoogleOAuthCredentialStatus } from "./googleOAuthCheck.js";
+import { logGoogleOAuthCredentialStatus } from "./googleOAuthCheck/index.js";
 import { prisma } from "./prisma.js";
 import { redis } from "./redis.js";
 

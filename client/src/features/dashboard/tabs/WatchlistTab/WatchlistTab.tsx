@@ -4,16 +4,12 @@ import { EmptyState } from '@/components/EmptyState'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Panel } from '@/components/Panel'
 import { toast } from '@/components/Toast'
-import type { AuthUser } from '@/types/auth'
 import { WatchlistTabs } from '@/features/watchlists/components/WatchlistTabs'
 import { useWatchlists } from '@/features/watchlists/hooks/useWatchlists'
 import { SignalCard } from '@/features/dashboard/components/SignalCard'
 import { StockChartPanel } from '@/features/dashboard/components/StockChartPanel'
 import { StockSearch } from '@/features/dashboard/components/StockSearch'
-
-export type WatchlistTabProps = {
-  user: AuthUser
-}
+import type { WatchlistTabProps } from './types'
 
 /** Watchlist tab with custom views, stock search, and chart panel on selection. */
 function WatchlistTab({ user }: WatchlistTabProps) {

@@ -1,5 +1,5 @@
 import type { ConsumeMessage } from "amqplib";
-import { log } from "../../lib/logger.js";
+import { log } from "../../lib/logger/index.js";
 
 /** Parses a RabbitMQ message body as JSON, or null when parsing fails. */
 export function parseQueueMessage<T>(message: ConsumeMessage): T | null {

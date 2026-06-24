@@ -5,7 +5,7 @@ import jwt, { type SignOptions } from "jsonwebtoken";
 import type { Response } from "express";
 import type { AuthenticatedUser } from "../types/auth.js";
 import { env } from "../config/env.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import {
   createUserWithPassword,
   findUserByEmail,

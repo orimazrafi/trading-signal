@@ -2,24 +2,9 @@ import {
   isRecommendationAction,
   isRecommendationSource,
   type RecommendationFactor,
-  type RecommendationAction,
-  type RecommendationSource,
   type StockRecommendation,
-} from "../types/recommendation.js";
-
-type StockRecommendationFields = {
-  id: string;
-  symbol: string;
-  name: string;
-  sector: string;
-  action: RecommendationAction;
-  price: number;
-  confidence: number;
-  primarySource: RecommendationSource;
-  summary: string;
-  factors: unknown[];
-  generatedAt: string;
-};
+} from "../../types/recommendation.js";
+import type { RecommendationFactorFields, StockRecommendationFields } from "./types.js";
 
 /** Returns true when value is a non-null object record. */
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -76,12 +61,6 @@ function parseStockRecommendationFields(
     generatedAt,
   };
 }
-
-type RecommendationFactorFields = {
-  source: RecommendationSource;
-  label: string;
-  value: string;
-};
 
 /** Validates required recommendation factor fields from cached Redis JSON. */
 function parseRecommendationFactorFields(

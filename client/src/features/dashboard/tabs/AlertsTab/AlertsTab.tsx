@@ -2,10 +2,7 @@ import { AlertHistoryPanel } from '@/features/alerts/components/AlertHistoryPane
 import { PriceAlertsPanel } from '@/features/alerts/components/PriceAlertsPanel'
 import { useAlertNotifications } from '@/features/alerts/hooks/useAlertNotifications'
 import { usePriceAlerts } from '@/features/alerts/hooks/usePriceAlerts'
-
-export type AlertsTabProps = {
-  userEmail: string
-}
+import type { AlertsTabProps } from './types'
 
 /** Alerts tab for configuring price alerts and reviewing history. */
 function AlertsTab({ userEmail }: AlertsTabProps) {
@@ -16,8 +13,9 @@ function AlertsTab({ userEmail }: AlertsTabProps) {
     updating,
     deleting,
     error,
-    createAlert,
-    updateAlert,
+    createAlertFromFields,
+    toggleAlertEnabled,
+    toggleAlertEmail,
     deleteAlert,
   } = usePriceAlerts()
 
@@ -29,21 +27,6 @@ function AlertsTab({ userEmail }: AlertsTabProps) {
     markRead,
   } = useAlertNotifications()
 
-  /** Creates a configured alert for the signed-in user. */
-  const handleCreate = async (symbol: string, thresholdPercent: number, emailEnabled: boolean) => {
-    await createAlert({ symbol, thresholdPercent, emailEnabled })
-  }
-
-  /** Toggles whether an alert is active. */
-  const handleToggleEnabled = async (alert: { id: string }, enabled: boolean) => {
-    await updateAlert(alert.id, { enabled })
-  }
-
-  /** Toggles whether alert emails are sent. */
-  const handleToggleEmail = async (alert: { id: string }, emailEnabled: boolean) => {
-    await updateAlert(alert.id, { emailEnabled })
-  }
-
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <PriceAlertsPanel
@@ -54,9 +37,9 @@ function AlertsTab({ userEmail }: AlertsTabProps) {
         updating={updating}
         deleting={deleting}
         error={error}
-        onCreate={handleCreate}
-        onToggleEnabled={handleToggleEnabled}
-        onToggleEmail={handleToggleEmail}
+        onCreate={createAlertFromFields}
+        onToggleEnabled={toggleAlertEnabled}
+        onToggleEmail={toggleAlertEmail}
         onDelete={deleteAlert}
       />
 

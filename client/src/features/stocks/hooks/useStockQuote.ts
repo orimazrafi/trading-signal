@@ -1,10 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/api/queryKeys'
 import { fetchStockQuote } from '@/api/stocks'
-
-type UseStockQuoteOptions = {
-  refetchIntervalMs?: number
-}
+import type { UseStockQuoteOptions } from '@/features/stocks/types'
 
 /** Loads a live stock quote for the given symbol via React Query. */
 export function useStockQuote(symbol: string | null, options: UseStockQuoteOptions = {}) {

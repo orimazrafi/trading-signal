@@ -1,11 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { AreaSeries, ColorType, createChart, type IChartApi, type ISeriesApi } from 'lightweight-charts'
-import type { StockHistoryPoint } from '@/types/stockHistory'
-
-export type StockPriceChartProps = {
-  points: StockHistoryPoint[]
-  isDarkMode?: boolean
-}
+import type { StockHistoryPoint } from '@/types/stock'
+import type { StockPriceChartProps } from './types'
 
 /** Maps OHLCV points to area-series values for Lightweight Charts. */
 function toAreaSeriesData(points: StockHistoryPoint[]) {

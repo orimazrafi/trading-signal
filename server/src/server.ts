@@ -3,7 +3,7 @@ import cors from "cors";
 import express from "express";
 import { connectServerInfrastructure } from "./config/bootstrap.js";
 import { env } from "./config/env.js";
-import { log } from "./lib/logger.js";
+import { log } from "./lib/logger/index.js";
 import { apiRoutes } from "./routes/index.js";
 
 /** Boots infrastructure connections and starts the Express API server. */

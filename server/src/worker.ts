@@ -6,7 +6,7 @@ import {
   startRecommendationsJob,
   stopRecommendationsJob,
 } from "./jobs/recommendations.job.js";
-import { log } from "./lib/logger.js";
+import { log } from "./lib/logger/index.js";
 import { registerAllConsumers } from "./queue/consumers/registerConsumers.js";
 import {
   closeRabbitConnection,

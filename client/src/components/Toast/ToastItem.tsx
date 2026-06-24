@@ -1,12 +1,7 @@
-import type { Toast } from './types'
-
-export type ToastItemProps = {
-  toast: Toast
-  onDismiss: (id: string) => void
-}
+import type { ToastItemProps, ToastVariant } from './types'
 
 /** Returns Tailwind classes for a toast variant. */
-function variantClassName(variant: Toast['variant']): string {
+function variantClassName(variant: ToastVariant): string {
   switch (variant) {
     case 'success':
       return 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'

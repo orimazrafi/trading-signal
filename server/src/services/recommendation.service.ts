@@ -3,8 +3,8 @@ import {
   RECOMMENDATIONS_EMPTY_MESSAGE,
   RECOMMENDATIONS_UNAVAILABLE_MESSAGE,
 } from "../lib/recommendationConstants.js";
-import { log } from "../lib/logger.js";
-import { parseStockRecommendations } from "../lib/parseRecommendations.js";
+import { log } from "../lib/logger/index.js";
+import { parseStockRecommendations } from "../lib/parseRecommendations/index.js";
 import { redis } from "../config/redis.js";
 import { getStockQuote } from "./stock.service.js";
 import type { StockQuote } from "../types/stock.js";

@@ -1,9 +1,5 @@
-import type { StockHistoryRange } from "../types/stockHistory.js";
-import { isStockHistoryRange } from "../types/stockHistory.js";
-
-export type StockHistoryQuery = {
-  range: StockHistoryRange;
-};
+import { isStockHistoryRange } from "../../types/stockHistory.js";
+import type { StockHistoryQuery } from "./types.js";
 
 /** Maps stock history query params to a normalized range value. */
 export function parseStockHistoryQuery(query: Record<string, unknown>): StockHistoryQuery {

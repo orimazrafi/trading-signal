@@ -1,11 +1,7 @@
 import type { Response } from "express";
-import { log } from "../lib/logger.js";
-import type { AlertNotificationEvent } from "../types/alert.js";
-
-type AlertStreamClient = {
-  userId: string;
-  response: Response;
-};
+import { log } from "../logger/index.js";
+import type { AlertNotificationEvent } from "../../types/alert.js";
+import type { AlertStreamClient } from "./types.js";
 
 const clients = new Set<AlertStreamClient>();
 

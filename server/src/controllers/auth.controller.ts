@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import {
   AUTH_COOKIE_NAME,
   AuthError,

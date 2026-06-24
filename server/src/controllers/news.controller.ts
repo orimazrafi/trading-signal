@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import { newsService } from "../services/news.service.js";
 
 /** Returns market news filtered to the authenticated user's watchlist when possible. */

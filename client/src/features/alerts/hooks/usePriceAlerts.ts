@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getApiErrorMessage } from '@/api/client'
 import { queryKeys } from '@/api/queryKeys'
 import {
   createPriceAlert,
@@ -7,26 +6,26 @@ import {
   fetchPriceAlerts,
   updatePriceAlert,
 } from '@/api/alerts'
-import type { CreatePriceAlertInput, UpdatePriceAlertInput } from '@/types/alert'
-
-/** Returns the first error message from a list of query/mutation errors. */
-function getFirstErrorMessage(errors: unknown[]): string | null {
-  const firstError = errors.find((error) => error != null)
-  return firstError == null ? null : getApiErrorMessage(firstError)
-}
+import {
+  getFirstApiErrorMessage,
+  runMutationAndInvalidate,
+} from '@/features/alerts/lib/alertQueryUtils'
+import type { UsePriceAlertsOptions } from '@/features/alerts/types'
+import type { CreatePriceAlertInput, PriceAlert, UpdatePriceAlertInput } from '@/types/alert'
 
 /** Manages price alert CRUD for the authenticated user. */
-export function usePriceAlerts(enabled = true) {
+export function usePriceAlerts({ enabled = true }: UsePriceAlertsOptions = {}) {
   const queryClient = useQueryClient()
+  const alertsQueryKey = queryKeys.alerts.list
 
   const alertsQuery = useQuery({
-    queryKey: queryKeys.alerts.list,
+    queryKey: alertsQueryKey,
     queryFn: fetchPriceAlerts,
     enabled,
   })
 
   const createMutation = useMutation({
-    mutationFn: (input: CreatePriceAlertInput) => createPriceAlert(input),
+    mutationFn: createPriceAlert,
   })
 
   const updateMutation = useMutation({
@@ -35,34 +34,41 @@ export function usePriceAlerts(enabled = true) {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (alertId: string) => deletePriceAlert(alertId),
+    mutationFn: deletePriceAlert,
   })
 
-  /** Refetches alerts after a successful mutation. */
-  const refreshAlerts = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.alerts.list })
-
   /** Creates an alert and refreshes the list. */
-  const createAlert = async (input: CreatePriceAlertInput) => {
-    const alert = await createMutation.mutateAsync(input)
-    await refreshAlerts()
-    return alert
-  }
+  const createAlert = (input: CreatePriceAlertInput) =>
+    runMutationAndInvalidate(queryClient, alertsQueryKey, () => createMutation.mutateAsync(input))
+
+  /** Creates an alert from panel form fields and refreshes the list. */
+  const createAlertFromFields = (
+    symbol: string,
+    thresholdPercent: number,
+    emailEnabled: boolean,
+  ) => createAlert({ symbol, thresholdPercent, emailEnabled })
 
   /** Updates an alert and refreshes the list. */
-  const updateAlert = async (alertId: string, input: UpdatePriceAlertInput) => {
-    const alert = await updateMutation.mutateAsync({ alertId, input })
-    await refreshAlerts()
-    return alert
-  }
+  const updateAlert = (alertId: string, input: UpdatePriceAlertInput) =>
+    runMutationAndInvalidate(queryClient, alertsQueryKey, () =>
+      updateMutation.mutateAsync({ alertId, input }),
+    )
 
   /** Deletes an alert and refreshes the list. */
-  const deleteAlert = async (alertId: string) => {
-    await deleteMutation.mutateAsync(alertId)
-    await refreshAlerts()
-  }
+  const deleteAlert = (alertId: string) =>
+    runMutationAndInvalidate(queryClient, alertsQueryKey, () =>
+      deleteMutation.mutateAsync(alertId),
+    )
 
-  const error = getFirstErrorMessage([
+  /** Toggles whether an alert is active. */
+  const toggleAlertEnabled = (alert: PriceAlert, enabled: boolean) =>
+    updateAlert(alert.id, { enabled })
+
+  /** Toggles whether alert emails are sent. */
+  const toggleAlertEmail = (alert: PriceAlert, emailEnabled: boolean) =>
+    updateAlert(alert.id, { emailEnabled })
+
+  const error = getFirstApiErrorMessage([
     alertsQuery.error,
     createMutation.error,
     updateMutation.error,
@@ -77,8 +83,11 @@ export function usePriceAlerts(enabled = true) {
     deleting: deleteMutation.isPending,
     error,
     createAlert,
+    createAlertFromFields,
     updateAlert,
     deleteAlert,
+    toggleAlertEnabled,
+    toggleAlertEmail,
     reload: () => alertsQuery.refetch(),
   }
 }

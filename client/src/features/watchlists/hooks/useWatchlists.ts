@@ -1,13 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { queryKeys } from '@/api/queryKeys'
-import type { UseWatchlistsOptions } from '@/features/watchlists/types'
 import {
   addStockToWatchlist,
   createWatchlist,
   fetchWatchlists,
   removeStockFromWatchlist,
 } from '@/api/watchlists'
+import {
+  mapApiStockToSignal,
+  mapApiWatchlist,
+  mapApiWatchlists,
+} from '@/features/watchlists/lib/watchlistMappers'
+import type { UseWatchlistsOptions } from '@/features/watchlists/types'
 
 /** Manages watchlist fetch, active view selection, and create/save mutations. */
 export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOptions = {}) {
@@ -16,17 +21,17 @@ export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOpti
 
   const watchlistsQuery = useQuery({
     queryKey: queryKeys.watchlists.list(userId),
-    queryFn: () => fetchWatchlists(userId),
+    queryFn: async () => mapApiWatchlists(await fetchWatchlists(), userId),
     enabled,
   })
 
   const createMutation = useMutation({
-    mutationFn: (name: string) => createWatchlist(name, userId),
+    mutationFn: async (name: string) => mapApiWatchlist(await createWatchlist(name), userId),
   })
 
   const saveStockMutation = useMutation({
-    mutationFn: ({ watchlistId, symbol }: { watchlistId: string; symbol: string }) =>
-      addStockToWatchlist(watchlistId, symbol),
+    mutationFn: async ({ watchlistId, symbol }: { watchlistId: string; symbol: string }) =>
+      mapApiStockToSignal(await addStockToWatchlist(watchlistId, symbol)),
   })
 
   const removeStockMutation = useMutation({

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { env } from "../config/env.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import { parseStockHistory } from "../lib/parseStockHistory.js";
 import { buildTwelveDataApiUrl, requireTwelveDataApiKey, TWELVE_DATA_ENDPOINTS } from "../lib/twelveData.js";
 import { redis } from "../config/redis.js";

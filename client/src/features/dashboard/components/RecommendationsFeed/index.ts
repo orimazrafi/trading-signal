@@ -1,4 +1,6 @@
 export { default } from './RecommendationsFeed'
 export { default as RecommendationsFeed } from './RecommendationsFeed'
+export type { RecommendationsFeedProps } from './types'
 export { default as RecommendationCard } from './RecommendationCard'
+export type { RecommendationCardProps } from './RecommendationCard'
 export { default as RecommendationFactors } from './RecommendationFactors'

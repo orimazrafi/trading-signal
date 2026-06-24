@@ -1,5 +1,5 @@
 import { redis } from "../config/redis.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import { recommendationService } from "../services/recommendation.service.js";
 
 /** Runs a one-shot recommendations refresh and writes results to Redis. */

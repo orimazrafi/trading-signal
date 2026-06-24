@@ -1,5 +1,5 @@
 import { env } from "../config/env.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import { redis } from "../config/redis.js";
 import { parseProcessedNewsArticles } from "../lib/parseNews.js";
 import { getWatchlistSymbolsForUser } from "../services/watchlist.service.js";

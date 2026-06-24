@@ -13,15 +13,14 @@ import {
 import { usePrefersDarkMode } from '@/hooks/usePrefersDarkMode'
 import { useStockHistory } from '@/features/stocks/hooks/useStockHistory'
 import { useStockQuote } from '@/features/stocks/hooks/useStockQuote'
-import { STOCK_HISTORY_RANGES, isStockHistoryRange, type StockHistoryRange } from '@/types/stockHistory'
+import { STOCK_HISTORY_RANGES } from '@/lib/stockHistoryConstants'
+import { isStockHistoryRange } from '@/lib/stockHistoryUtils'
+import type { StockHistoryRange } from '@/types/stock'
 import { StockPriceChart } from '@/features/dashboard/components/StockPriceChart'
 import { mergeLivePriceIntoHistory } from '@/features/dashboard/components/StockPriceChart/stockChartUtils'
+import type { StockChartPanelProps } from './types'
 
 const QUOTE_REFETCH_MS = 60_000
-
-export type StockChartPanelProps = {
-  symbol: string | null
-}
 
 /** Shows live quote details and a historical price chart for the selected symbol. */
 function StockChartPanel({ symbol }: StockChartPanelProps) {

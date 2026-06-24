@@ -1,10 +1,5 @@
 import ToastItem from './ToastItem'
-import type { Toast } from './types'
-
-export type ToastContainerProps = {
-  toasts: Toast[]
-  onDismiss: (id: string) => void
-}
+import type { ToastContainerProps } from './types'
 
 /** Fixed stack of toast notifications in the bottom-right corner. */
 function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {

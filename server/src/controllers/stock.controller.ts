@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import { log } from "../lib/logger.js";
-import { parseStockHistoryQuery } from "../lib/parseStockHistoryQuery.js";
+import { log } from "../lib/logger/index.js";
+import { parseStockHistoryQuery } from "../lib/parseStockHistoryQuery/index.js";
 import { getStockHistory } from "../services/stock-history.service.js";
 import {
   getStockQuote,

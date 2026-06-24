@@ -1,20 +1,13 @@
-import type { StockRecommendation } from '@/types/recommendation'
 import { Badge } from '@/components/Badge'
 import { Card } from '@/components/Card'
 import { AddToWatchlistButton } from '@/features/watchlists/components/AddToWatchlistButton'
-import RecommendationFactors from './RecommendationFactors'
+import RecommendationFactors from '../RecommendationFactors'
 import {
   formatRecommendationAction,
   formatRecommendationSource,
   recommendationBadgeVariant,
-} from './recommendationUtils'
-
-export type RecommendationCardProps = {
-  recommendation: StockRecommendation
-  onAddToWatchlist?: (symbol: string) => Promise<void>
-  saving?: boolean
-  watchlistName?: string | null
-}
+} from '../recommendationUtils'
+import type { RecommendationCardProps } from './types'
 
 /** Renders a single market idea card with factor breakdown. */
 function RecommendationCard({

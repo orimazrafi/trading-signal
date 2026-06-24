@@ -30,9 +30,9 @@ export {
 
 } from './recommendation'
 
-export type { StockQuote, SearchStockResult } from './stock'
+export type { StockQuote, SearchStockResult, StockHistory, StockHistoryPoint, StockHistoryRange } from './stock'
 
-export type { StockHistory, StockHistoryPoint, StockHistoryRange } from './stockHistory'
+export { STOCK_HISTORY_RANGES } from '@/lib/stockHistoryConstants'
 
-export { STOCK_HISTORY_RANGES, isStockHistoryRange } from './stockHistory'
+export { isStockHistoryRange } from '@/lib/stockHistoryUtils'
 

@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import {
   WatchlistError,
   createWatchlistView,

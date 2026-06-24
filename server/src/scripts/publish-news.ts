@@ -1,5 +1,5 @@
 import { redis } from "../config/redis.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import { closeRabbitConnection, connectRabbitMq } from "../queue/rabbit/connection.js";
 import { ingestLatestNews } from "../services/news-ingest.service.js";
 

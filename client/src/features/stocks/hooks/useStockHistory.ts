@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/api/queryKeys'
-import type { StockHistoryRange } from '@/types/stockHistory'
+import type { StockHistoryRange } from '@/types/stock'
 import { fetchStockHistory } from '@/api/stocks'
 
 /** Loads daily OHLCV history for charting via React Query. */

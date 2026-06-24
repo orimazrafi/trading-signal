@@ -1,11 +1,32 @@
 import axios from "axios";
-import { log } from "../lib/logger.js";
-import { env } from "./env.js";
+import { log } from "../../lib/logger/index.js";
+import { env } from "../env.js";
+import type { GoogleTokenErrorBody } from "./types.js";
 
-type GoogleTokenErrorBody = {
-  error?: string;
-  error_description?: string;
-};
+/** Returns true when value is a non-null object record. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+/** Parses a Google OAuth token error response body when present. */
+function parseGoogleTokenErrorBody(value: unknown): GoogleTokenErrorBody | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const { error, error_description } = value;
+  const body: GoogleTokenErrorBody = {};
+
+  if (typeof error === "string") {
+    body.error = error;
+  }
+
+  if (typeof error_description === "string") {
+    body.error_description = error_description;
+  }
+
+  return body;
+}
 
 /** Probes Google's token endpoint; invalid_grant means id + secret are accepted. */
 export async function logGoogleOAuthCredentialStatus(): Promise<void> {
@@ -37,7 +58,7 @@ export async function logGoogleOAuthCredentialStatus(): Promise<void> {
       return;
     }
 
-    const body = error.response?.data as GoogleTokenErrorBody | undefined;
+    const body = parseGoogleTokenErrorBody(error.response?.data);
 
     if (body?.error === "invalid_grant") {
       log.info("Google OAuth credentials OK");

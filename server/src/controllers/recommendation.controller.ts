@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import { parseRecommendationQuery } from "../lib/parseRecommendationQuery.js";
 import { recommendationService } from "../services/recommendation.service.js";
 

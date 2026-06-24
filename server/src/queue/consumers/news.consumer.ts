@@ -1,6 +1,6 @@
 import type { Channel, ConsumeMessage } from "amqplib";
 import { env } from "../../config/env.js";
-import { log } from "../../lib/logger.js";
+import { log } from "../../lib/logger/index.js";
 import { parseIncomingNewsArticle } from "../../lib/parseNews.js";
 import { newsService } from "../../services/news.service.js";
 import { formatRabbitError, isFatalRabbitError } from "../rabbit/errors.js";

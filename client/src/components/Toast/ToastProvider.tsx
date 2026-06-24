@@ -1,10 +1,7 @@
-import { useSyncExternalStore, type ReactNode } from 'react'
+import { useSyncExternalStore } from 'react'
 import ToastContainer from './ToastContainer'
 import { dismissToast, getToasts, subscribeToToasts } from './toastStore'
-
-export type ToastProviderProps = {
-  children: ReactNode
-}
+import type { ToastProviderProps } from './types'
 
 /** Mounts the global toast stack and exposes the imperative toast API. */
 function ToastProvider({ children }: ToastProviderProps) {

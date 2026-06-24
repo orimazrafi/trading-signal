@@ -1,8 +1,8 @@
 import { Redis } from "ioredis";
 import { env } from "../config/env.js";
 import { ALERT_REDIS_CHANNEL } from "../lib/alertConstants.js";
-import { pushAlertNotificationToUser } from "../lib/alertStreamRegistry.js";
-import { log } from "../lib/logger.js";
+import { pushAlertNotificationToUser } from "../lib/alertStreamRegistry/index.js";
+import { log } from "../lib/logger/index.js";
 import { parseAlertNotificationPubSubPayload } from "./parseAlertNotification.js";
 
 let subscriber: Redis | null = null;

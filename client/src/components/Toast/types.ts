@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 /** Supported toast visual variants. */
 export const TOAST_VARIANTS = ['success', 'error', 'info', 'warning'] as const
 
@@ -17,4 +19,18 @@ export type Toast = {
 /** Options when enqueueing a toast. */
 export type ToastOptions = {
   durationMs?: number
+}
+
+export type ToastContainerProps = {
+  toasts: Toast[]
+  onDismiss: (id: string) => void
+}
+
+export type ToastItemProps = {
+  toast: Toast
+  onDismiss: (id: string) => void
+}
+
+export type ToastProviderProps = {
+  children: ReactNode
 }

@@ -1,6 +1,6 @@
 import axios, { isAxiosError } from "axios";
 import { env } from "../config/env.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 
 const RESEND_EMAILS_URL = "https://api.resend.com/emails";
 

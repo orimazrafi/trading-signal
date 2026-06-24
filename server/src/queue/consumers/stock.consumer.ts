@@ -1,6 +1,6 @@
 import type { Channel, ConsumeMessage } from "amqplib";
 import { env } from "../../config/env.js";
-import { log } from "../../lib/logger.js";
+import { log } from "../../lib/logger/index.js";
 import { processStockTick } from "../../services/stock.service.js";
 import { parseStockTickMessage } from "../../types/stock.js";
 import { formatRabbitError, isFatalRabbitError } from "../rabbit/errors.js";

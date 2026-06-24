@@ -1,5 +1,5 @@
 import { env } from "../config/env.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import { requireTwelveDataApiKey } from "../lib/twelveData.js";
 import {
   requestTwelveDataPrice,

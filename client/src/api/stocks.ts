@@ -1,6 +1,5 @@
 import { api } from './client'
-import type { SearchStockResult, StockQuote } from '@/types/stock'
-import type { StockHistory, StockHistoryRange } from '@/types/stockHistory'
+import type { SearchStockResult, StockHistory, StockHistoryRange, StockQuote } from '@/types/stock'
 
 /** Normalizes a ticker symbol to uppercase. */
 function normalizeSymbol(symbol: string): string {

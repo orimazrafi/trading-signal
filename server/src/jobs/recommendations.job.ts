@@ -7,7 +7,7 @@
  *   3. Cache actionable picks in Redis
  */
 import { env } from "../config/env.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import { recommendationService } from "../services/recommendation.service.js";
 
 /** Active interval handle, or null when the job is stopped. */

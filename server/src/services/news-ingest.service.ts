@@ -1,7 +1,7 @@
 import axios from "axios";
 import { env } from "../config/env.js";
 import { redis } from "../config/redis.js";
-import { log } from "../lib/logger.js";
+import { log } from "../lib/logger/index.js";
 import {
   buildTwelveDataApiUrl,
   buildTwelveDataPressReleaseArticleUrl,

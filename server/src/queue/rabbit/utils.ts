@@ -1,4 +1,4 @@
-import { log, type LogMeta } from "../../lib/logger.js";
+import { log, type LogMeta } from "../../lib/logger/index.js";
 import {
   formatRabbitError,
   isFatalRabbitError,

@@ -1,11 +1,6 @@
 import { RecommendationsFeed } from '@/features/dashboard/components/RecommendationsFeed'
 import { useRecommendations } from '@/features/dashboard/hooks/useRecommendations'
-
-export type RecommendationsTabProps = {
-  onAddToWatchlist?: (symbol: string) => Promise<void>
-  savingSymbol?: string | null
-  watchlistName?: string | null
-}
+import type { RecommendationsTabProps } from './types'
 
 /** Market ideas tab backed by the dashboard recommendations API. */
 function RecommendationsTab({
