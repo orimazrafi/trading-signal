@@ -1,0 +1,138 @@
+/**
+ * Design tokens — single source for semantic colors, radii, and typography.
+ * Shadcn primitives and app components read from these CSS variables.
+ */
+
+:root {
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1rem;
+
+  --background: #ffffff;
+  --foreground: #08060d;
+  --card: #ffffff;
+  --card-foreground: #08060d;
+  --popover: #ffffff;
+  --popover-foreground: #08060d;
+
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+
+  --secondary: #334155;
+  --secondary-foreground: #ffffff;
+
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+
+  --accent: rgba(170, 59, 255, 0.12);
+  --accent-foreground: #6b21a8;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --border: #e5e4e7;
+  --input: #e2e8f0;
+  --ring: #aa3bff;
+
+  --positive: #059669;
+  --positive-muted: #d1fae5;
+  --negative: #dc2626;
+  --negative-muted: #fee2e2;
+  --warning: #d97706;
+  --warning-muted: #fef3c7;
+
+  --shadow-panel: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  /* Legacy aliases used by global layout styles */
+  --text: var(--muted-foreground);
+  --text-h: var(--foreground);
+  --bg: var(--background);
+  --code-bg: #f4f3ec;
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow: var(--shadow-panel);
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #16171d;
+    --foreground: #f3f4f6;
+    --card: #1f2028;
+    --card-foreground: #f3f4f6;
+    --popover: #1f2028;
+    --popover-foreground: #f3f4f6;
+
+    --primary: #a855f7;
+    --primary-foreground: #ffffff;
+
+    --secondary: #334155;
+    --secondary-foreground: #f1f5f9;
+
+    --muted: #2e303a;
+    --muted-foreground: #9ca3af;
+
+    --accent: rgba(192, 132, 252, 0.15);
+    --accent-foreground: #e9d5ff;
+
+    --destructive: #f87171;
+    --destructive-foreground: #ffffff;
+
+    --border: #2e303a;
+    --input: #3f4250;
+    --ring: #c084fc;
+
+    --positive: #34d399;
+    --positive-muted: rgba(6, 78, 59, 0.4);
+    --negative: #f87171;
+    --negative-muted: rgba(127, 29, 29, 0.4);
+    --warning: #fbbf24;
+    --warning-muted: rgba(120, 53, 15, 0.4);
+
+    --code-bg: #1f2028;
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow-panel:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+}
+
+@theme inline {
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-positive: var(--positive);
+  --color-positive-muted: var(--positive-muted);
+  --color-negative: var(--negative);
+  --color-negative-muted: var(--negative-muted);
+  --color-warning: var(--warning);
+  --color-warning-muted: var(--warning-muted);
+}

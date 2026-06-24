@@ -140,6 +140,8 @@ services:
       - ./client/src:/app/src
       - ./client/index.html:/app/index.html
       - ./client/vite.config.ts:/app/vite.config.ts
+      - ./client/package.json:/app/package.json
+      - ./client/package-lock.json:/app/package-lock.json
       - ./client/public:/app/public
     environment:
       API_PROXY_TARGET: http://server:3000

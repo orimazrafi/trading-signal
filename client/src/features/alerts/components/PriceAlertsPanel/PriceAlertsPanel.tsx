@@ -1,8 +1,20 @@
 import { type FormEvent, useState } from 'react'
+import { Badge } from '@/components/Badge'
 import { Button } from '@/components/Button'
+import { Card } from '@/components/Card'
 import { CheckboxField } from '@/components/CheckboxField'
+import { EmptyState } from '@/components/EmptyState'
+import { ErrorMessage } from '@/components/ErrorMessage'
 import { FormField } from '@/components/FormField'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Panel } from '@/components/Panel'
 import { toast } from '@/components/Toast'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   ALERT_MAX_THRESHOLD_PERCENT,
   ALERT_MIN_THRESHOLD_PERCENT,
@@ -64,20 +76,12 @@ function PriceAlertsPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <header className="mb-4">
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Price alerts</h2>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Configure up to {MAX_PRICE_ALERTS} active symbols. Checked every 5 minutes during US
-          market hours. Each alert fires once when the threshold is crossed.
-        </p>
-      </header>
-
-      {error ? (
-        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
-          {error}
-        </p>
-      ) : null}
+    <Panel
+      title="Price alerts"
+      description={`Configure up to ${MAX_PRICE_ALERTS} active symbols. Checked every 5 minutes during US market hours. Each alert fires once when the threshold is crossed.`}
+      variant="section"
+    >
+      {error ? <ErrorMessage message={error} className="mb-4" /> : null}
 
       {canAddMore ? (
         <form className="mb-5 space-y-3" onSubmit={(event) => void handleSubmit(event)}>
@@ -121,12 +125,10 @@ function PriceAlertsPanel({
         </p>
       )}
 
-      {loading ? <p className="text-sm text-slate-500 dark:text-slate-400">Loading alerts…</p> : null}
+      {loading ? <LoadingSpinner label="Loading alerts…" /> : null}
 
       {!loading && alerts.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-600 dark:border-slate-600 dark:text-slate-300">
-          No alerts yet. Add a symbol and threshold to get started.
-        </p>
+        <EmptyState message="No alerts yet. Add a symbol and threshold to get started." />
       ) : null}
 
       <ul className="space-y-3">
@@ -134,65 +136,69 @@ function PriceAlertsPanel({
           const wasSent = alert.lastTriggeredAt !== null
 
           return (
-            <li
-              key={alert.id}
-              className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/40"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    {alert.symbol}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Alert when price moves ±{alert.thresholdPercent.toFixed(2)}% from $
-                    {alert.baselinePrice.toFixed(2)}
-                  </p>
-                  {wasSent && alert.lastTriggeredAt ? (
-                    <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">
-                      Sent · {new Date(alert.lastTriggeredAt).toLocaleString()}
-                      {alert.emailEnabled ? ' · Email enabled' : ' · In-app only'}
+            <li key={alert.id}>
+              <Card variant="muted" className="shadow-none">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {alert.symbol}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Alert when price moves ±{alert.thresholdPercent.toFixed(2)}% from $
+                      {alert.baselinePrice.toFixed(2)}
                     </p>
-                  ) : null}
+                    {wasSent && alert.lastTriggeredAt ? (
+                      <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+                        Sent · {new Date(alert.lastTriggeredAt).toLocaleString()}
+                        {alert.emailEnabled ? ' · Email enabled' : ' · In-app only'}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {wasSent ? (
+                    <Badge variant="warning">Sent</Badge>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" variant="secondary" disabled={deleting}>
+                          Actions
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => void handleDelete(alert)}
+                        >
+                          Remove alert
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
 
-                {wasSent ? (
-                  <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-                    Sent
-                  </span>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="danger"
-                    disabled={deleting}
-                    onClick={() => void handleDelete(alert)}
-                  >
-                    Remove
-                  </Button>
-                )}
-              </div>
+                {!wasSent ? (
+                  <div className="mt-4 flex flex-wrap gap-4">
+                    <CheckboxField
+                      label="Enabled"
+                      checked={alert.enabled}
+                      disabled={updating}
+                      onChange={(checked) => void onToggleEnabled(alert, checked)}
+                    />
 
-              {!wasSent ? (
-                <div className="mt-4 flex flex-wrap gap-4">
-                  <CheckboxField
-                    label="Enabled"
-                    checked={alert.enabled}
-                    disabled={updating}
-                    onChange={(checked) => void onToggleEnabled(alert, checked)}
-                  />
-
-                  <CheckboxField
-                    label={`Email me (${userEmail})`}
-                    checked={alert.emailEnabled}
-                    disabled={updating}
-                    onChange={(checked) => void onToggleEmail(alert, checked)}
-                  />
-                </div>
-              ) : null}
+                    <CheckboxField
+                      label={`Email me (${userEmail})`}
+                      checked={alert.emailEnabled}
+                      disabled={updating}
+                      onChange={(checked) => void onToggleEmail(alert, checked)}
+                    />
+                  </div>
+                ) : null}
+              </Card>
             </li>
           )
         })}
       </ul>
-    </section>
+    </Panel>
   )
 }
 

@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
+import { ErrorMessage } from '@/components/ErrorMessage'
+import { EmptyState } from '@/components/EmptyState'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Panel } from '@/components/Panel'
 import { toast } from '@/components/Toast'
 import type { AuthUser } from '@/types/auth'
 import { WatchlistTabs } from '@/features/watchlists/components/WatchlistTabs'
 import { useWatchlists } from '@/features/watchlists/hooks/useWatchlists'
-import { LoadingSpinner } from '@/features/dashboard/components/LoadingSpinner'
 import { SignalCard } from '@/features/dashboard/components/SignalCard'
 import { StockChartPanel } from '@/features/dashboard/components/StockChartPanel'
 import { StockSearch } from '@/features/dashboard/components/StockSearch'
@@ -68,16 +71,15 @@ function WatchlistTab({ user }: WatchlistTabProps) {
     }
   }
 
+  const watchlistDescription = activeWatchlist
+    ? `Tap a stock to load its chart · ${activeWatchlist.signals.length} saved`
+    : 'Tap a stock to load its chart'
+
   return (
     <div className="flex flex-col gap-6">
       <section className="space-y-3">
         {watchlistsLoading ? <LoadingSpinner label="Loading your custom views…" /> : null}
-
-        {watchlistError ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
-            {watchlistError}
-          </p>
-        ) : null}
+        {watchlistError ? <ErrorMessage message={watchlistError} /> : null}
 
         <WatchlistTabs
           watchlists={watchlists}
@@ -90,35 +92,16 @@ function WatchlistTab({ user }: WatchlistTabProps) {
 
       <div className="grid flex-1 gap-6 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-5">
-          <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-900/40">
-            <header className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                  {activeWatchlist ? activeWatchlist.name : 'Active view'}
-                </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Tap a stock to load its chart
-                </p>
-              </div>
-              {activeWatchlist ? (
-                <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                  {activeWatchlist.signals.length} saved
-                </span>
-              ) : null}
-            </header>
-
+          <Panel
+            title={activeWatchlist ? activeWatchlist.name : 'Active view'}
+            description={watchlistDescription}
+            variant="section"
+            className="bg-slate-50/80 dark:bg-slate-900/40"
+          >
             {!activeWatchlist ? (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center dark:border-slate-600 dark:bg-slate-900">
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  Create a custom view with the + button above to start saving stocks.
-                </p>
-              </div>
+              <EmptyState message="Create a custom view with the + button above to start saving stocks." />
             ) : activeWatchlist.signals.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center dark:border-slate-600 dark:bg-slate-900">
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  No stocks saved yet. Search below or use Add to watchlist on News and Market Ideas.
-                </p>
-              </div>
+              <EmptyState message="No stocks saved yet. Search below or use Add to watchlist on News and Market Ideas." />
             ) : (
               <ul className="space-y-3">
                 {activeWatchlist.signals.map((signal) => (
@@ -134,7 +117,7 @@ function WatchlistTab({ user }: WatchlistTabProps) {
                 ))}
               </ul>
             )}
-          </section>
+          </Panel>
 
           <StockSearch
             activeWatchlistId={activeWatchlistId}

@@ -12,14 +12,36 @@ alwaysApply: false
 client/src/
   api/           # HTTP clients, queryKeys.ts
   components/    # Shared UI (cross-feature)
+  components/ui/ # Shadcn/Radix primitives (dialog, select, tooltip, …)
   features/[name]/
     components/
     hooks/
     lib/         # Feature-specific pure helpers
     tabs/
   hooks/         # App-wide hooks
+  lib/           # Shared pure helpers (utils, badgeVariants, surfaceClasses)
+  styles/        # Design tokens (tokens.css)
   types/         # Shared API/domain types
 ```
+
+## Design tokens
+
+Semantic colors and radii live in `src/styles/tokens.css` and are exposed to Tailwind via `@theme inline`.
+
+| Token class | Use for |
+|-------------|---------|
+| `bg-background`, `text-foreground` | Page/surface base |
+| `bg-card`, `text-card-foreground` | Cards, panels |
+| `text-muted-foreground` | Secondary labels, hints |
+| `border-border`, `border-input` | Borders, form controls |
+| `bg-primary`, `text-primary-foreground` | Primary actions (brand purple) |
+| `text-positive`, `text-negative`, `text-warning` | Market direction, sentiment |
+| `bg-destructive`, `text-destructive` | Errors, delete actions |
+
+- **Do** use semantic tokens (`text-foreground`, `border-border`) in new/changed UI.
+- **Do not** add raw `slate-*`, `violet-*`, or hex colors in feature components — extend tokens in `tokens.css` if a new semantic is needed.
+- Use `cn()` from `@/lib/utils` when merging conditional classes.
+- Reuse `PANEL_SHELL_CLASS` / `CARD_BASE_CLASS` from `@/lib/surfaceClasses` for shells (or use `Panel` / `Card`).
 
 ## Must
 
@@ -29,18 +51,22 @@ client/src/
 - **React Query:** cache keys in `@/api/queryKeys.ts` only.
 - **Mutations:** no `onSuccess` on `useMutation` — call `mutateAsync`, then `invalidateQueries` in the hook wrapper (see `usePriceAlerts`).
 - **Shared UI:** use components from `@/components/` instead of raw `<button>` / labeled `<input>` when a match exists.
+- **Do not duplicate** panel shells, error banners, empty states, or badge markup — use the shared components below.
+- **Primitives:** use `@/components/ui/*` for dialogs, dropdowns, tooltips, selects, skeletons. Use `@/components/Button` for app actions (do not import `@/components/ui/button` in features).
+- **Overlays:** use `Dialog` from `@/components/ui/dialog` — no hand-rolled `fixed inset-0` modals.
 
 ## Component folder pattern
 
-Each component module:
+Each app component module:
 
 ```
 Component/
   Component.tsx   # export default the component
-  Component.module.css
   types.ts        # named type exports
-  index.ts        # public barrel; wrap memo() here when profiling shows benefit
+  index.ts        # public barrel
 ```
+
+Shadcn primitives live in `components/ui/*.tsx` (generated/owned; edit in place when needed). Optional `Component.module.css` only when Tailwind tokens are not sufficient.
 
 `index.ts` barrel:
 
@@ -50,9 +76,19 @@ export { default as Component } from './Component'
 export type { ComponentProps } from './types'
 ```
 
-CSS Modules: apply multiple classes in TS (e.g. `styles.base` + `styles.primary`). Do not use `composes`.
+## Shadcn primitives (`@/components/ui/`)
 
-## Shared component inventory
+| Component | Use for |
+|-----------|---------|
+| `dialog` | Modals, confirmations, create forms |
+| `dropdown-menu` | Row actions, overflow menus |
+| `tooltip` | Hints on weights, icons (app wrapped in `TooltipProvider` in `main.tsx`) |
+| `select` | Single-choice pickers (chart range, enums) |
+| `skeleton` | Loading placeholders |
+
+Add more with `npx shadcn@latest add <name> -c client` from the repo root.
+
+## App shared components (`@/components/`)
 
 | Component | Use for |
 |-----------|---------|
@@ -61,6 +97,26 @@ CSS Modules: apply multiple classes in TS (e.g. `styles.base` + `styles.primary`
 | `CheckboxField` | Boolean options (e.g. email alerts) |
 | `StatusCard` | API health display |
 | `Toast` / `ToastProvider` | Notifications (wired in `main.tsx`) |
+| `Badge` | Status/label pills — use `variant` from `@/lib/badgeVariants` via domain helpers |
+| `Panel` | Titled section shells (`section`, `feed`, `page` variants) |
+| `Card` | Bordered content surfaces (`default`, `muted`, `interactive`, `selected`, `highlight`, `unread`) |
+| `EmptyState` | No-data placeholders |
+| `ErrorMessage` | Inline API/validation error banners |
+| `LoadingSpinner` | Inline loading indicator with label |
+| `AsyncListPanel` | Feed/list panels with loading, error, empty, and item render props |
+
+## Shared lib helpers
+
+| Module | Use for |
+|--------|---------|
+| `@/lib/utils` | `cn()` — merge Tailwind classes |
+| `@/lib/surfaceClasses` | `PANEL_SHELL_CLASS`, `CARD_BASE_CLASS` |
+| `@/lib/badgeVariants` | `BadgeVariant`, `badgeClassName()` |
+| `@/lib/formatDate` | `formatPublishedAt()` and other date display |
+| `@/lib/signalUtils` | Watchlist signal actions, change % formatting |
+| Feature `*Utils.ts` | Domain-specific badge variant mappers (e.g. `sentimentBadgeVariant`) |
+
+Map domain values to `BadgeVariant` in feature utils; render with `<Badge variant={...}>` — do not copy Tailwind badge classes.
 
 ## Examples
 
@@ -74,21 +130,41 @@ const { alerts, createAlert } = usePriceAlerts()
 ```
 
 ```tsx
+// ❌ duplicated panel markup
+<section className="rounded-2xl border ...">
+  <header>...</header>
+</section>
+
+// ✅ shared Panel
+import { Panel } from '@/components/Panel'
+<Panel title="Price alerts" description="..." variant="section">...</Panel>
+```
+
+```tsx
+// ❌ inline error styles
+<p className="rounded-lg border border-red-200 bg-red-50 ...">{error}</p>
+
+// ✅ ErrorMessage
+import { ErrorMessage } from '@/components/ErrorMessage'
+<ErrorMessage message={error} />
+```
+
+```tsx
+// ❌ raw badge spans with duplicated classes
+<span className="rounded-full px-3 py-1 text-xs font-semibold bg-emerald-100 ...">
+
+// ✅ Badge + domain variant helper
+import { Badge } from '@/components/Badge'
+import { signalActionBadgeVariant } from '@/lib/signalUtils'
+<Badge variant={signalActionBadgeVariant(action)}>{action}</Badge>
+```
+
+```tsx
 // ❌ deep relative import
 import { Button } from '../../../../components/Button'
 
 // ✅ path alias
 import { Button } from '@/components/Button'
-```
-
-```tsx
-// ❌ named export in component file
-export function Button() { ... }
-
-// ✅ default export; barrel re-exports
-// Button.tsx
-function Button() { ... }
-export default Button
 ```
 
 ```tsx
@@ -99,7 +175,35 @@ type FormState = { symbol: string }
 export type PriceAlertFormState = { symbol: string }
 ```
 
+```tsx
+// ❌ hand-rolled modal overlay
+{open ? <div className="fixed inset-0 z-50 ...">...</div> : null}
+
+// ✅ Dialog
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+<Dialog open={open} onOpenChange={setOpen}>...</Dialog>
+```
+
+```tsx
+// ❌ raw slate colors
+<p className="text-slate-500 dark:text-slate-400">Hint</p>
+
+// ✅ semantic token
+<p className="text-muted-foreground">Hint</p>
+```
+
 ## Prefer
 
 - Short JSDoc on every function/component/hook.
 - Feature `lib/*Utils.ts` for pure formatting/validation logic.
+- `AsyncListPanel` for tab feeds that load a list with loading/error/empty states.
+- Extract to `@/components/` when the same UI pattern appears **3+ times**.
+
+## Avoid
+
+- Copy-pasting panel shells — use `Panel` or `PANEL_SHELL_CLASS`.
+- Raw `slate-*` / `violet-*` / hex in feature UI — use design tokens.
+- Hand-rolled modals, dropdowns, or tooltips — use `@/components/ui/*`.
+- New one-off spinner/error/empty markup in feature components.
+- Domain-specific badge Tailwind in feature components — map to `BadgeVariant` instead.
+- Importing `@/components/ui/button` in features — use `@/components/Button`.

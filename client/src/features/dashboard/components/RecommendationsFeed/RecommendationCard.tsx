@@ -1,10 +1,12 @@
 import type { StockRecommendation } from '@/types/recommendation'
+import { Badge } from '@/components/Badge'
+import { Card } from '@/components/Card'
 import { AddToWatchlistButton } from '@/features/watchlists/components/AddToWatchlistButton'
 import RecommendationFactors from './RecommendationFactors'
 import {
   formatRecommendationAction,
   formatRecommendationSource,
-  recommendationBadgeClass,
+  recommendationBadgeVariant,
 } from './recommendationUtils'
 
 export type RecommendationCardProps = {
@@ -24,12 +26,9 @@ function RecommendationCard({
   const isHoldIdea = recommendation.action === 'HOLD'
 
   return (
-    <article
-      className={`rounded-xl border p-4 ${
-        isHoldIdea
-          ? 'border-slate-200 bg-slate-100/80 dark:border-slate-700 dark:bg-slate-900/60'
-          : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950/40'
-      }`}
+    <Card
+      variant="muted"
+      className={`shadow-none ${isHoldIdea ? 'bg-slate-100/80 dark:bg-slate-900/60' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -40,11 +39,9 @@ function RecommendationCard({
             {recommendation.name} · {recommendation.sector}
           </p>
         </div>
-        <span
-          className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${recommendationBadgeClass(recommendation.action)}`}
-        >
+        <Badge variant={recommendationBadgeVariant(recommendation.action)}>
           {formatRecommendationAction(recommendation.action)}
-        </span>
+        </Badge>
       </div>
 
       <p className="mt-3 text-sm text-slate-700 dark:text-slate-200">{recommendation.summary}</p>
@@ -82,7 +79,7 @@ function RecommendationCard({
           />
         </div>
       ) : null}
-    </article>
+    </Card>
   )
 }
 

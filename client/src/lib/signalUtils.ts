@@ -1,10 +1,5 @@
+import type { BadgeVariant } from '@/lib/badgeVariants'
 import { SIGNAL_ACTIONS, type SignalAction } from '@/types/watchlist'
-
-const ACTION_BADGE_CLASSES: Record<SignalAction, string> = {
-  BUY: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  SELL: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-  HOLD: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-}
 
 const SIGNAL_REASONS: Record<SignalAction, string> = {
   BUY: 'PE ratio is within the buy threshold (0–25).',
@@ -19,9 +14,17 @@ function isSignalAction(value: string): value is SignalAction {
   return signalActionValues.has(value)
 }
 
-/** Returns Tailwind classes for a watchlist signal action badge. */
-export function actionBadgeClass(action: SignalAction): string {
-  return ACTION_BADGE_CLASSES[action]
+/** Maps a watchlist signal action to a shared badge variant. */
+export function signalActionBadgeVariant(action: SignalAction): BadgeVariant {
+  if (action === SIGNAL_ACTIONS.BUY) {
+    return 'positive'
+  }
+
+  if (action === SIGNAL_ACTIONS.SELL) {
+    return 'negative'
+  }
+
+  return 'warning'
 }
 
 /** Formats a signed percent change for display. */
@@ -33,14 +36,14 @@ export function formatChangePercent(changePercent: number): string {
 /** Returns Tailwind classes for a positive or negative price change. */
 export function changePercentClass(changePercent: number): string {
   if (changePercent > 0) {
-    return 'text-emerald-600 dark:text-emerald-400'
+    return 'text-positive'
   }
 
   if (changePercent < 0) {
-    return 'text-red-600 dark:text-red-400'
+    return 'text-negative'
   }
 
-  return 'text-slate-500 dark:text-slate-400'
+  return 'text-muted-foreground'
 }
 
 /** Maps a server recommendation string to a client signal action. */

@@ -1,4 +1,4 @@
-import styles from './FormField.module.css'
+import { cn } from '@/lib/utils'
 import type { FormFieldProps } from './types'
 
 /** Labeled text input used by auth and other forms. */
@@ -16,10 +16,13 @@ function FormField({
   step,
 }: FormFieldProps) {
   return (
-    <label className={styles.field}>
+    <label className="flex flex-col gap-1.5 text-left text-sm font-medium text-foreground">
       {label}
       <input
-        className={styles.input}
+        className={cn(
+          'rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground',
+          'placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+        )}
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}

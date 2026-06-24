@@ -1,22 +1,20 @@
+import type { BadgeVariant } from '@/lib/badgeVariants'
 import {
   RECOMMENDATION_ACTIONS,
   type RecommendationAction,
 } from '@/types/recommendation'
 
-const RECOMMENDATION_BADGE_CLASSES: Record<RecommendationAction, string> = {
-  [RECOMMENDATION_ACTIONS.STRONG_BUY]:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  [RECOMMENDATION_ACTIONS.BUY]:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  [RECOMMENDATION_ACTIONS.SELL]:
-    'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
-  [RECOMMENDATION_ACTIONS.HOLD]:
-    'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-}
+/** Maps a recommendation action to a shared badge variant. */
+export function recommendationBadgeVariant(action: RecommendationAction): BadgeVariant {
+  if (action === RECOMMENDATION_ACTIONS.STRONG_BUY || action === RECOMMENDATION_ACTIONS.BUY) {
+    return 'positive'
+  }
 
-/** Returns Tailwind classes for a recommendation action badge. */
-export function recommendationBadgeClass(action: RecommendationAction): string {
-  return RECOMMENDATION_BADGE_CLASSES[action]
+  if (action === RECOMMENDATION_ACTIONS.SELL) {
+    return 'negative'
+  }
+
+  return 'warning'
 }
 
 /** Formats a recommendation action for display. */

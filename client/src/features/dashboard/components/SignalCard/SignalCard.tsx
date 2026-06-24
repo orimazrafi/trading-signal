@@ -1,5 +1,11 @@
 import { Button } from '@/components/Button'
-import { actionBadgeClass, changePercentClass, formatChangePercent } from '@/lib/signalUtils'
+import { Badge } from '@/components/Badge'
+import { Card } from '@/components/Card'
+import {
+  changePercentClass,
+  formatChangePercent,
+  signalActionBadgeVariant,
+} from '@/lib/signalUtils'
 import type { SignalCardProps } from './types'
 
 /** Renders a saved watchlist stock row, optionally selectable. */
@@ -33,12 +39,8 @@ function SignalCard({
   }
 
   return (
-    <article
-      className={`rounded-xl border p-4 text-left shadow-sm transition ${
-        isSelected
-          ? 'border-violet-400 bg-violet-50 ring-2 ring-violet-300 dark:border-violet-500 dark:bg-violet-950/30 dark:ring-violet-500/40'
-          : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'
-      } ${isInteractive ? 'cursor-pointer hover:border-violet-300 dark:hover:border-violet-500/50' : ''}`}
+    <Card
+      variant={isSelected ? 'selected' : isInteractive ? 'interactive' : 'default'}
       onClick={isInteractive ? handleClick : undefined}
       onKeyDown={isInteractive ? handleKeyDown : undefined}
       role={isInteractive ? 'button' : undefined}
@@ -49,11 +51,7 @@ function SignalCard({
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{signal.symbol}</h3>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{signal.reason}</p>
         </div>
-        <span
-          className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${actionBadgeClass(signal.action)}`}
-        >
-          {signal.action}
-        </span>
+        <Badge variant={signalActionBadgeVariant(signal.action)}>{signal.action}</Badge>
       </div>
       <div className="mt-3 flex items-end justify-between gap-3">
         <div>
@@ -80,7 +78,7 @@ function SignalCard({
           Remove
         </Button>
       ) : null}
-    </article>
+    </Card>
   )
 }
 

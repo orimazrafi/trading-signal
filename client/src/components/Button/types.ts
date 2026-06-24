@@ -8,4 +8,4 @@ export type ButtonProps = {
   loading?: boolean
   loadingLabel?: string
   children: ReactNode
-} & Pick<ButtonHTMLAttributes<HTMLButtonElement>, 'type' | 'disabled' | 'onClick' | 'aria-current'>
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'>

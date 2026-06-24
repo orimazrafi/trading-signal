@@ -1,6 +1,15 @@
 import { type FormEvent, useState } from 'react'
 import { Button } from '@/components/Button'
+import { ErrorMessage } from '@/components/ErrorMessage'
 import { FormField } from '@/components/FormField'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import type { WatchlistTabsProps } from './types'
 
 /** Horizontal tabs for switching custom dashboard views with a create-view dialog. */
@@ -31,6 +40,15 @@ function WatchlistTabs({
     setFormError(null)
   }
 
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      openModal()
+      return
+    }
+
+    closeModal()
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -52,10 +70,10 @@ function WatchlistTabs({
 
   return (
     <>
-      <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200 pb-2 dark:border-slate-700">
+      <div className="flex items-center gap-2 overflow-x-auto border-b border-border pb-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {watchlists.length === 0 ? (
-            <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+            <p className="px-3 py-2 text-sm text-muted-foreground">
               No custom views yet. Create one to get started.
             </p>
           ) : (
@@ -82,53 +100,36 @@ function WatchlistTabs({
         </Button>
       </div>
 
-      {isModalOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
-          role="presentation"
-          onClick={closeModal}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="create-watchlist-title"
-            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2
-              id="create-watchlist-title"
-              className="text-lg font-semibold text-slate-900 dark:text-slate-100"
-            >
-              Create custom view
-            </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+      <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
+        <DialogContent className="sm:max-w-md" showCloseButton={!creating}>
+          <DialogHeader>
+            <DialogTitle>Create custom view</DialogTitle>
+            <DialogDescription>
               Name your layout (e.g. Tech Stocks, Dividends).
-            </p>
+            </DialogDescription>
+          </DialogHeader>
 
-            <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
-              <FormField
-                label="View name"
-                value={viewName}
-                onChange={setViewName}
-                placeholder="My watchlist"
-              />
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <FormField
+              label="View name"
+              value={viewName}
+              onChange={setViewName}
+              placeholder="My watchlist"
+            />
 
-              {formError ? (
-                <p className="text-left text-sm text-red-600 dark:text-red-400">{formError}</p>
-              ) : null}
+            {formError ? <ErrorMessage message={formError} /> : null}
 
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="secondary" disabled={creating} onClick={closeModal}>
-                  Cancel
-                </Button>
-                <Button type="submit" loading={creating} loadingLabel="Creating…">
-                  Create view
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
+            <DialogFooter className="border-0 bg-transparent p-0 sm:justify-end">
+              <Button type="button" variant="secondary" disabled={creating} onClick={closeModal}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={creating} loadingLabel="Creating…">
+                Create view
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

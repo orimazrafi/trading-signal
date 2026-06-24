@@ -1,10 +1,14 @@
 import { type FormEvent } from 'react'
+import { Badge } from '@/components/Badge'
 import { Button } from '@/components/Button'
+import { Card } from '@/components/Card'
+import { ErrorMessage } from '@/components/ErrorMessage'
 import { FormField } from '@/components/FormField'
-import { actionBadgeClass } from '@/lib/signalUtils'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { Panel } from '@/components/Panel'
+import { signalActionBadgeVariant } from '@/lib/signalUtils'
 import { useSearchStock } from '@/features/stocks/hooks/useSearchStock'
 import { useWatchlistSaveFeedback } from '@/features/watchlists/hooks/useWatchlistSaveFeedback'
-import { LoadingSpinner } from '@/features/dashboard/components/LoadingSpinner'
 import type { StockSearchProps } from './types'
 
 /** Stock lookup form with quote preview and save-to-watchlist action. */
@@ -47,13 +51,12 @@ function StockSearch({
   }
 
   return (
-    <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Stock search</h2>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-        Look up a symbol to get a live quote and recommendation.
-      </p>
-
-      <form className="mt-4 space-y-3" onSubmit={handleSearch}>
+    <Panel
+      title="Stock search"
+      description="Look up a symbol to get a live quote and recommendation."
+      variant="section"
+    >
+      <form className="space-y-3" onSubmit={handleSearch}>
         <FormField
           label="Symbol"
           value={symbolInput}
@@ -73,13 +76,13 @@ function StockSearch({
       ) : null}
 
       {searchError ? (
-        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300">
-          {searchError}
-        </p>
+        <div className="mt-4">
+          <ErrorMessage message={searchError} />
+        </div>
       ) : null}
 
       {searchResult && searchAction && searchReason ? (
-        <article className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/50">
+        <Card variant="muted" className="mt-5 shadow-none">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -87,11 +90,7 @@ function StockSearch({
               </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">{searchResult.quote.name}</p>
             </div>
-            <span
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${actionBadgeClass(searchAction)}`}
-            >
-              {searchAction}
-            </span>
+            <Badge variant={signalActionBadgeVariant(searchAction)}>{searchAction}</Badge>
           </div>
 
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -143,9 +142,9 @@ function StockSearch({
           {saveSuccess ? (
             <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-300">{saveSuccess}</p>
           ) : null}
-        </article>
+        </Card>
       ) : null}
-    </aside>
+    </Panel>
   )
 }
 

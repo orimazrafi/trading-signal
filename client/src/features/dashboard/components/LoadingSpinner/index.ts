@@ -1,2 +1,1 @@
-export { default } from './LoadingSpinner'
-export { default as LoadingSpinner } from './LoadingSpinner'
+export { LoadingSpinner as default, LoadingSpinner } from '@/components/LoadingSpinner'
