@@ -1,6 +1,11 @@
 import type { AuthenticatedUser } from "../types/auth.js";
 import { parseDurationToMs } from "../lib/parseDurationToMs.js";
 
+/** Trims an optional env string; empty when unset or whitespace-only. */
+function trimEnv(value: string | undefined): string {
+  return (value ?? "").trim();
+}
+
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN ?? "1h";
 
 /** Centralized environment configuration and app constants. */
@@ -19,7 +24,7 @@ export const env = {
   ).trim(),
   stockCacheTtlSeconds: 60,
   stockHistoryCacheTtlSeconds: Number(process.env.STOCK_HISTORY_CACHE_TTL_SECONDS) || 3600,
-  twelveDataApiKey: process.env.TWELVE_DATA_API_KEY,
+  twelveDataApiKey: trimEnv(process.env.TWELVE_DATA_API_KEY),
   rabbitmqUrl: process.env.RABBITMQ_URL ?? "amqp://localhost:5672",
   stockTicksQueue: "stock_ticks",
   marketNewsQueue: "market_news",
@@ -45,6 +50,10 @@ export const env = {
     .map((symbol) => symbol.trim().toUpperCase())
     .filter(Boolean),
   surgeThresholdPercent: 1.5,
+  redisUrl: process.env.REDIS_URL ?? "redis://localhost:6379",
+  resendApiKey: trimEnv(process.env.RESEND_API_KEY),
+  emailFrom: trimEnv(process.env.EMAIL_FROM),
+  alertCheckIntervalMs: Number(process.env.ALERT_CHECK_INTERVAL_MS) || 300_000,
   mockUser: {
     userId: "user-mock-default",
     email: "demo@trading-signal.local",

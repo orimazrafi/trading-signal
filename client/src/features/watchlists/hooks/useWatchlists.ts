@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { queryKeys } from '../../../api/queryKeys'
-import type { UseWatchlistsOptions } from '../types'
+import { queryKeys } from '@/api/queryKeys'
+import type { UseWatchlistsOptions } from '@/features/watchlists/types'
 import {
   addStockToWatchlist,
   createWatchlist,
   fetchWatchlists,
   removeStockFromWatchlist,
-} from '../../../api/watchlists'
+} from '@/api/watchlists'
 
 /** Manages watchlist fetch, active view selection, and create/save mutations. */
 export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOptions = {}) {

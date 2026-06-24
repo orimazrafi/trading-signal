@@ -1,5 +1,5 @@
 /** Inline loading spinner for async dashboard actions. */
-export function LoadingSpinner({ label }: { label: string }) {
+function LoadingSpinner({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
       <span
@@ -10,3 +10,5 @@ export function LoadingSpinner({ label }: { label: string }) {
     </div>
   )
 }
+
+export default LoadingSpinner

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Button } from '../Button'
-import { FormField } from '../FormField'
+import { Button } from '@/components/Button'
+import { FormField } from '@/components/FormField'
 import styles from './SignupForm.module.css'
 import type { SignupFormProps } from './types'
 
 /** Email and password registration form. */
-export function SignupForm({ onSubmit }: SignupFormProps) {
+function SignupForm({ onSubmit }: SignupFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -67,3 +67,4 @@ export function SignupForm({ onSubmit }: SignupFormProps) {
   )
 }
 
+export default SignupForm

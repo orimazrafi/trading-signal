@@ -1,35 +1,12 @@
-# Front-End & Back-End Architectural Rules for this Project
+# Trading Signal — project rules
 
-You are an expert full-stack engineer working on a high-performance B2C trading/SaaS web application. You must strictly follow these coding guidelines and architectural standards in every single response. Do not compromise architecture for speed.
+Scoped rules live in `.cursor/rules/`:
 
----
+| File | When it applies |
+|------|-----------------|
+| `core.mdc` | Always |
+| `client.mdc` | `client/**` |
+| `server.mdc` | `server/**` |
+| `alerts-runner.mdc` | `alerts-runner/**` |
 
-## 1. Directory Structure & Layers
-- Maintain the established Feature-Based Directory Structure.
-- **Client:** Features live in `src/features/[feature_name]/` (components, hooks, services).
-- **Backend:** Maintain clean separation between Controllers (HTTP), Services (Business Logic), and Consumers/Publishers (Queue/RabbitMQ).
-- **Worker Processes:** Keep the background processes (`worker.ts`) physically separated from the API routing (`server.ts`).
-
-## 2. Strict Type & Interface Separation
-- NEVER declare TypeScript interfaces or types inline within a component, service, or controller.
-- All shared types must be exported from dedicated type files (`types/index.ts` or `src/features/[feature_name]/types.ts`).
-- Ensure type alignment between backend response models and client-side ingestion layers.
-
-## 3. No Magic Strings or Numbers
-- Avoid magic strings or numbers. If a configuration, string, action type, or status value is used more than once, it MUST be extracted into a shared `const` object, an `enum`, or environment configuration.
-- System configurations (like intervals, queue names, cache keys) must read from centralized environment utilities (`env.ts`).
-
-## 4. Reusability & Generic Code
-- Prioritize dry code. Custom hooks, utility functions, data-fetching routines, and generic layouts must be designed abstractly to maximize reuse across different features.
-- Create generic wrapper utilities (e.g., Queue message parsers, API fetchers) rather than repeating native execution patterns.
-
-## 5. Clean Separation of Concerns (SoC)
-- **UI Components:** Responsible ONLY for rendering layout and handling basic user interaction. They must not contain data-fetching logic or raw business calculation.
-- **Custom Hooks:** Responsible for managing component state, loading indicators, and orchestrating the data lifecycle (e.g., polling, effects).
-- **Services:** Responsible for raw business logic, algorithmic operations (e.g., sentiment analysis), and direct API communications.
-
-## 6. Logging, Error Handling & System Stability
-- NEVER use raw `console.log` or `console.error` anywhere in the codebase.
-- Use our production-grade structured logging engine via `import { log } from '../lib/logger';`.
-- Always implement explicit structured arguments: `log.info(message, meta)` and `log.error(message, error, meta)`.
-- Wrap asynchronous processes, controller endpoints, and queue consumers in robust `try/catch` blocks to prevent unhandled rejections and system crashes.
+Stack: client (Vite/React), server (Express/Prisma), alerts-runner (Go). Docker: `docker-compose.dev.yml` (local) or `docker-compose.prod.yml` (production builds).

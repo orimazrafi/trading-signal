@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchRecommendations } from '../../../api/dashboard'
-import { queryKeys } from '../../../api/queryKeys'
+import { fetchRecommendations } from '@/api/dashboard'
+import { queryKeys } from '@/api/queryKeys'
 
 /** Loads dashboard stock recommendations via React Query. */
 export function useRecommendations() {

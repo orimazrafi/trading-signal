@@ -1,4 +1,4 @@
-import type { NewsSentiment } from '../../../../types/news'
+import type { NewsSentiment } from '@/types/news'
 
 /** Returns Tailwind classes for a sentiment badge. */
 export function sentimentBadgeClass(sentiment: NewsSentiment): string {

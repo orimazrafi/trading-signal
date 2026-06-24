@@ -1,4 +1,4 @@
-import type { StockHistoryPoint } from '../../../../types/stockHistory'
+import type { StockHistoryPoint } from '@/types/stockHistory'
 
 /** Appends or updates today's bar so the chart ends at the live quote price. */
 export function mergeLivePriceIntoHistory(

@@ -1,6 +1,6 @@
-import { AuthPage, useAuth } from './features/auth'
-import { Dashboard } from './features/dashboard'
-import { useOAuthRedirectError } from './hooks/useOAuthRedirectError'
+import { AuthPage, useAuth } from '@/features/auth'
+import { Dashboard } from '@/features/dashboard'
+import { useOAuthRedirectError } from '@/hooks/useOAuthRedirectError'
 import styles from './App.module.css'
 
 /** Root app shell with authentication gate. */

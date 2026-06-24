@@ -1,9 +1,9 @@
-import type { MarketNewsArticle } from '../../../../types/news'
+import type { MarketNewsArticle } from '@/types/news'
 import { formatPublishedAt, sentimentBadgeClass } from './newsFeedUtils'
 import type { NewsFeedProps } from './types'
 
 /** Scrollable market news panel with sentiment badges and external article links. */
-export function NewsFeed({ news, isLoading, error, variant = 'panel' }: NewsFeedProps) {
+function NewsFeed({ news, isLoading, error, variant = 'panel' }: NewsFeedProps) {
   const isPage = variant === 'page'
 
   return (
@@ -76,3 +76,5 @@ export function NewsFeed({ news, isLoading, error, variant = 'panel' }: NewsFeed
     </section>
   )
 }
+
+export default NewsFeed

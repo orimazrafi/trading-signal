@@ -1,2 +1,2 @@
-export { StockPriceChart } from './StockPriceChart'
-export type { StockPriceChartProps } from './StockPriceChart'
+export { default } from './StockPriceChart'
+export { default as StockPriceChart } from './StockPriceChart'

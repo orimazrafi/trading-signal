@@ -8,13 +8,15 @@ datasource db {
 }
 
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  passwordHash String?
-  googleId     String?     @unique
-  signals      Signal[]
-  watchlists   Watchlist[]
-  createdAt    DateTime    @default(now())
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  passwordHash       String?
+  googleId           String?             @unique
+  signals            Signal[]
+  watchlists         Watchlist[]
+  priceAlerts        PriceAlert[]
+  alertNotifications AlertNotification[]
+  createdAt          DateTime            @default(now())
 }
 
 model Signal {
@@ -55,4 +57,41 @@ model WatchlistItem {
 
   @@unique([watchlistId, signalId])
   @@index([watchlistId])
+}
+
+model PriceAlert {
+  id               String              @id @default(cuid())
+  userId           String
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol           String
+  thresholdPercent Float
+  baselinePrice    Float
+  enabled          Boolean             @default(true)
+  emailEnabled     Boolean             @default(true)
+  lastTriggeredAt  DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  notifications    AlertNotification[]
+
+  @@unique([userId, symbol])
+  @@index([enabled, symbol])
+  @@index([userId])
+}
+
+model AlertNotification {
+  id            String     @id @default(cuid())
+  alertId       String
+  alert         PriceAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol        String
+  changePercent Float
+  price         Float
+  baselinePrice Float
+  emailSent     Boolean    @default(false)
+  readAt        DateTime?
+  createdAt     DateTime   @default(now())
+
+  @@index([userId, createdAt])
+  @@index([alertId])
 }

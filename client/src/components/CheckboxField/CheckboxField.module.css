@@ -1,0 +1,12 @@
+.field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.field:has(input:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

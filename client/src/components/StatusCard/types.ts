@@ -1,4 +1,4 @@
-import type { HealthResponse } from '../../types/health'
+import type { HealthResponse } from '@/types/health'
 
 export type StatusCardProps = {
   health: HealthResponse | undefined

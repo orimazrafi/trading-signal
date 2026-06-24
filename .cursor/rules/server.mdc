@@ -1,0 +1,70 @@
+---
+description: Node API — layers, logging, queues, workers
+globs: server/**
+alwaysApply: false
+---
+
+# Server (Node / Express)
+
+## Layering
+
+```
+routes/        → wire HTTP paths only
+controllers/   → parse request, call service, map status/response
+services/      → business logic, orchestration
+repositories/  → Prisma / DB access only
+lib/           → pure helpers (parsers, constants, registries)
+types/         → shared TypeScript types
+config/        → env, prisma, redis, bootstrap
+queue/         → RabbitMQ publishers, consumers, parsers
+```
+
+**Must:** controllers stay thin; no raw SQL/Prisma in controllers; no HTTP concerns in repositories.
+
+## HTTP
+
+- Use **axios** for outbound HTTP. Do not use `fetch`.
+- Exceptions: none for new code; migrate existing `fetch` call sites to axios.
+
+## Worker separation
+
+- `server.ts` — HTTP API only.
+- `worker.ts` — background queue consumers; separate process from API.
+
+Price-alert **checking** runs in **alerts-runner** (Go), not in Node — do not add cron/check logic to the Express server.
+
+## Logging
+
+- **Must not** use `console.log` / `console.error` in app code.
+- Use `import { log } from "../lib/logger.js"` (path relative to caller).
+- Shape: `log.info(message, meta)`, `log.error(message, error, meta)`.
+- Exception: `lib/logger.ts` itself may write to console.
+
+## Error handling
+
+- Wrap async controllers, services, and queue consumers in `try/catch`.
+- Return typed HTTP errors from controllers; throw domain errors from services.
+
+## Examples
+
+```ts
+// ❌ Prisma in controller
+const row = await prisma.priceAlert.findMany(...)
+
+// ✅ controller → service → repository
+const alerts = await getAlertsForUser(userId)
+```
+
+```ts
+// ❌ inline request body type + parsing in handler
+app.patch('/alerts/:id', (req, res) => { const x = req.body.threshold... })
+
+// ✅ named parser helper in controller file or lib/
+const input = parseUpdatePriceAlertBody(req.body)
+```
+
+## Prefer
+
+- Request/query parsing in `lib/parse*.ts` helpers.
+- Domain constants in `lib/*Constants.ts`.
+- Config values from `server/src/config/env.ts`, not hardcoded.

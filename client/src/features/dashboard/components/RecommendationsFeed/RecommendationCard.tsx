@@ -1,5 +1,5 @@
-import type { StockRecommendation } from '../../../../types/recommendation'
-import { RecommendationFactors } from './RecommendationFactors'
+import type { StockRecommendation } from '@/types/recommendation'
+import RecommendationFactors from './RecommendationFactors'
 import {
   formatRecommendationAction,
   formatRecommendationSource,
@@ -11,7 +11,7 @@ export type RecommendationCardProps = {
 }
 
 /** Renders a single stock recommendation card with factor breakdown. */
-export function RecommendationCard({ recommendation }: RecommendationCardProps) {
+function RecommendationCard({ recommendation }: RecommendationCardProps) {
   return (
     <article className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/40">
       <div className="flex items-start justify-between gap-3">
@@ -57,3 +57,5 @@ export function RecommendationCard({ recommendation }: RecommendationCardProps) 
     </article>
   )
 }
+
+export default RecommendationCard

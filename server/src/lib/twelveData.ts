@@ -1,5 +1,16 @@
+import { env } from "../config/env.js";
+
 /** Twelve Data REST API base URL. */
 export const TWELVE_DATA_API_BASE_URL = "https://api.twelvedata.com";
+
+/** Returns the configured Twelve Data API key or throws when missing. */
+export function requireTwelveDataApiKey(): string {
+  if (!env.twelveDataApiKey) {
+    throw new Error("TWELVE_DATA_API_KEY not configured");
+  }
+
+  return env.twelveDataApiKey;
+}
 
 /** Twelve Data public website base URL. */
 export const TWELVE_DATA_WEB_BASE_URL = "https://twelvedata.com";

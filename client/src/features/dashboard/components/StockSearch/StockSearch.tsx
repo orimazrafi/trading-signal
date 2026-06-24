@@ -1,18 +1,14 @@
 import { type FormEvent } from 'react'
-import { actionBadgeClass } from '../../../../lib/signalUtils'
-import { useSearchStock } from '../../../stocks/hooks/useSearchStock'
-import { useWatchlistSaveFeedback } from '../../../watchlists/hooks/useWatchlistSaveFeedback'
-import { LoadingSpinner } from '../LoadingSpinner'
-
-export type StockSearchProps = {
-  activeWatchlistId: string | null
-  activeWatchlistName?: string
-  saving: boolean
-  onSave: (symbol: string) => Promise<void>
-}
+import { Button } from '@/components/Button'
+import { FormField } from '@/components/FormField'
+import { actionBadgeClass } from '@/lib/signalUtils'
+import { useSearchStock } from '@/features/stocks/hooks/useSearchStock'
+import { useWatchlistSaveFeedback } from '@/features/watchlists/hooks/useWatchlistSaveFeedback'
+import { LoadingSpinner } from '@/features/dashboard/components/LoadingSpinner'
+import type { StockSearchProps } from './types'
 
 /** Stock lookup form with quote preview and save-to-watchlist action. */
-export function StockSearch({
+function StockSearch({
   activeWatchlistId,
   activeWatchlistName,
   saving,
@@ -58,24 +54,16 @@ export function StockSearch({
       </p>
 
       <form className="mt-4 space-y-3" onSubmit={handleSearch}>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
-          Symbol
-          <input
-            type="text"
-            value={symbolInput}
-            onChange={(event) => handleSymbolInputChange(event.target.value)}
-            placeholder="AAPL, TSLA…"
-            className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none ring-violet-500 focus:ring-2 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
-          />
-        </label>
+        <FormField
+          label="Symbol"
+          value={symbolInput}
+          onChange={handleSymbolInputChange}
+          placeholder="AAPL, TSLA…"
+        />
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isLoading ? 'Searching…' : 'Search'}
-        </button>
+        <Button type="submit" fullWidth loading={isLoading} loadingLabel="Searching…">
+          Search
+        </Button>
       </form>
 
       {isLoading ? (
@@ -129,14 +117,18 @@ export function StockSearch({
 
           <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{searchReason}</p>
 
-          <button
-            type="button"
-            onClick={() => void handleSave()}
-            disabled={!activeWatchlistId || saving}
-            className="mt-4 w-full rounded-lg border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-800 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-violet-500/40 dark:bg-violet-950/30 dark:text-violet-200 dark:hover:bg-violet-900/40"
-          >
-            {saving ? 'Saving…' : 'Save to current view'}
-          </button>
+          <div className="mt-4">
+            <Button
+              type="button"
+              fullWidth
+              disabled={!activeWatchlistId}
+              loading={saving}
+              loadingLabel="Saving…"
+              onClick={() => void handleSave()}
+            >
+              Save to current view
+            </Button>
+          </div>
 
           {!activeWatchlistId ? (
             <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
@@ -156,3 +148,5 @@ export function StockSearch({
     </aside>
   )
 }
+
+export default StockSearch

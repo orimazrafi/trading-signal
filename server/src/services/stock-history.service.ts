@@ -2,7 +2,7 @@ import axios from "axios";
 import { env } from "../config/env.js";
 import { log } from "../lib/logger.js";
 import { parseStockHistory } from "../lib/parseStockHistory.js";
-import { buildTwelveDataApiUrl, TWELVE_DATA_ENDPOINTS } from "../lib/twelveData.js";
+import { buildTwelveDataApiUrl, requireTwelveDataApiKey, TWELVE_DATA_ENDPOINTS } from "../lib/twelveData.js";
 import { redis } from "../config/redis.js";
 import type { StockHistory, StockHistoryPoint, StockHistoryRange } from "../types/stockHistory.js";
 
@@ -123,11 +123,7 @@ async function fetchHistoryFromApi(
   symbol: string,
   range: StockHistoryRange,
 ): Promise<StockHistory> {
-  const apiKey = env.twelveDataApiKey?.trim();
-
-  if (!apiKey) {
-    throw new Error("TWELVE_DATA_API_KEY not configured");
-  }
+  const apiKey = requireTwelveDataApiKey();
 
   const { data } = await axios.get<TwelveDataTimeSeriesResponse>(
     buildTimeSeriesUrl(symbol, range, apiKey),

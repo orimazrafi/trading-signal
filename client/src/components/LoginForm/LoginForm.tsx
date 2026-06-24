@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Button } from '../Button'
-import { FormField } from '../FormField'
+import { Button } from '@/components/Button'
+import { FormField } from '@/components/FormField'
 import styles from './LoginForm.module.css'
 import type { LoginFormProps } from './types'
 
 /** Email and password login form. */
-export function LoginForm({ onSubmit }: LoginFormProps) {
+function LoginForm({ onSubmit }: LoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -47,3 +47,4 @@ export function LoginForm({ onSubmit }: LoginFormProps) {
   )
 }
 
+export default LoginForm

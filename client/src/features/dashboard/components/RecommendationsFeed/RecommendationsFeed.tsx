@@ -1,6 +1,6 @@
-import type { StockRecommendation } from '../../../../types/recommendation'
-import { LoadingSpinner } from '../LoadingSpinner'
-import { RecommendationCard } from './RecommendationCard'
+import type { StockRecommendation } from '@/types/recommendation'
+import { LoadingSpinner } from '@/features/dashboard/components/LoadingSpinner'
+import RecommendationCard from './RecommendationCard'
 
 export type RecommendationsFeedProps = {
   recommendations: StockRecommendation[]
@@ -9,7 +9,7 @@ export type RecommendationsFeedProps = {
 }
 
 /** Renders the dashboard recommendations list with factor breakdowns. */
-export function RecommendationsFeed({
+function RecommendationsFeed({
   recommendations,
   isLoading,
   error,
@@ -57,3 +57,5 @@ export function RecommendationsFeed({
     </section>
   )
 }
+
+export default RecommendationsFeed

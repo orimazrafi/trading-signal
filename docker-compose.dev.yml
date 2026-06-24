@@ -1,11 +1,50 @@
+# Local development stack (hot reload, Vite on :5173).
+# Run: docker compose -f docker-compose.dev.yml up -d --build
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: trading
+      POSTGRES_PASSWORD: trading
+      POSTGRES_DB: trading_signal
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trading -d trading_signal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
   server:
     build:
+      context: ./server
+      dockerfile: Dockerfile
       target: dev
       cache_from:
         - trading-signal-server:dev
     image: trading-signal-server:dev
     command: ["sh", "-c", "npx prisma db push --accept-data-loss && npm run dev"]
+    ports:
+      - "3000:3000"
     volumes:
       - ./server/src:/app/src
       - ./server/prisma:/app/prisma
@@ -23,9 +62,18 @@ services:
       CLIENT_URL: http://localhost:5173
       GOOGLE_CALLBACK_URL: http://localhost:5173/api/auth/google/callback
       AUTH_ALLOW_MOCK: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   worker:
     build:
+      context: ./server
+      dockerfile: Dockerfile
       target: dev
       cache_from:
         - trading-signal-worker:dev
@@ -49,10 +97,39 @@ services:
       RECOMMENDATIONS_INTERVAL_MS: "300000"
       RECOMMENDATION_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL,AMZN,META,JPM,XOM"
     depends_on:
-      - server
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      server:
+        condition: service_started
+
+  alerts-runner:
+    build:
+      context: ./alerts-runner
+      dockerfile: Dockerfile
+    image: trading-signal-alerts-runner:dev
+    env_file:
+      - ./server/.env
+    environment:
+      DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
+      REDIS_URL: redis://redis:6379
+      ALERT_CHECK_INTERVAL_MS: "300000"
+      STOCK_CACHE_TTL_SECONDS: "60"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      server:
+        condition: service_started
 
   client:
     build:
+      context: ./client
+      dockerfile: Dockerfile
       target: dev
       cache_from:
         - trading-signal-client:dev
@@ -70,3 +147,6 @@ services:
       - "5173:5173"
     depends_on:
       - server
+
+volumes:
+  postgres_data:

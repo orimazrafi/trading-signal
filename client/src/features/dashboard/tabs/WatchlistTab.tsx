@@ -1,19 +1,19 @@
 import { useMemo, useState } from 'react'
-import { toast } from '../../../components/Toast'
-import type { AuthUser } from '../../../types/auth'
-import { WatchlistTabs } from '../../watchlists/components/WatchlistTabs'
-import { useWatchlists } from '../../watchlists/hooks/useWatchlists'
-import { LoadingSpinner } from '../components/LoadingSpinner'
-import { SignalCard } from '../components/SignalCard'
-import { StockChartPanel } from '../components/StockChartPanel'
-import { StockSearch } from '../components/StockSearch'
+import { toast } from '@/components/Toast'
+import type { AuthUser } from '@/types/auth'
+import { WatchlistTabs } from '@/features/watchlists/components/WatchlistTabs'
+import { useWatchlists } from '@/features/watchlists/hooks/useWatchlists'
+import { LoadingSpinner } from '@/features/dashboard/components/LoadingSpinner'
+import { SignalCard } from '@/features/dashboard/components/SignalCard'
+import { StockChartPanel } from '@/features/dashboard/components/StockChartPanel'
+import { StockSearch } from '@/features/dashboard/components/StockSearch'
 
 export type WatchlistTabProps = {
   user: AuthUser
 }
 
 /** Watchlist tab with custom views, stock search, and chart panel on selection. */
-export function WatchlistTab({ user }: WatchlistTabProps) {
+function WatchlistTab({ user }: WatchlistTabProps) {
   const {
     watchlists,
     activeWatchlistId,
@@ -151,3 +151,5 @@ export function WatchlistTab({ user }: WatchlistTabProps) {
     </div>
   )
 }
+
+export default WatchlistTab

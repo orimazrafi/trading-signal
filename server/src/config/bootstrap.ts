@@ -1,3 +1,4 @@
+import { startAlertNotificationSubscriber } from "../lib/alertNotificationSubscriber.js";
 import { ensureUserExists } from "../repositories/user.repository.js";
 import { log } from "../lib/logger.js";
 import { env } from "./env.js";
@@ -22,6 +23,8 @@ export async function connectServerInfrastructure(): Promise<void> {
     }
 
     log.info("Connected to PostgreSQL", { process: "server" });
+
+    await startAlertNotificationSubscriber();
 
     if (env.nodeEnv === "development" && env.googleClientId) {
       await logGoogleOAuthCredentialStatus();

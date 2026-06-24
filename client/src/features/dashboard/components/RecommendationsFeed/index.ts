@@ -1,4 +1,4 @@
-export { RecommendationsFeed } from './RecommendationsFeed'
-export { RecommendationCard } from './RecommendationCard'
-export type { RecommendationsFeedProps } from './RecommendationsFeed'
-export type { RecommendationCardProps } from './RecommendationCard'
+export { default } from './RecommendationsFeed'
+export { default as RecommendationsFeed } from './RecommendationsFeed'
+export { default as RecommendationCard } from './RecommendationCard'
+export { default as RecommendationFactors } from './RecommendationFactors'

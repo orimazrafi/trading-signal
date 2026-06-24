@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { UseWatchlistSaveFeedbackOptions } from '../types'
+import type { UseWatchlistSaveFeedbackOptions } from '@/features/watchlists/types'
 
 /** Wraps watchlist save actions with success and error feedback messages. */
 export function useWatchlistSaveFeedback({

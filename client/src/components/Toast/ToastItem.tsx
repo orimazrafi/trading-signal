@@ -20,7 +20,7 @@ function variantClassName(variant: Toast['variant']): string {
 }
 
 /** Renders one dismissible toast message. */
-export function ToastItem({ toast, onDismiss }: ToastItemProps) {
+function ToastItem({ toast, onDismiss }: ToastItemProps) {
   /** Dismisses this toast when the user clicks it. */
   const handleClick = () => {
     onDismiss(toast.id)
@@ -47,3 +47,5 @@ export function ToastItem({ toast, onDismiss }: ToastItemProps) {
     </button>
   )
 }
+
+export default ToastItem

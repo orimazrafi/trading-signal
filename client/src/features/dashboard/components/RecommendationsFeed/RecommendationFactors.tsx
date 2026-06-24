@@ -1,4 +1,4 @@
-import type { RecommendationFactor } from '../../../../types/recommendation'
+import type { RecommendationFactor } from '@/types/recommendation'
 import { formatRecommendationSource } from './recommendationUtils'
 
 export type RecommendationFactorsProps = {
@@ -6,7 +6,7 @@ export type RecommendationFactorsProps = {
 }
 
 /** Lists scoring factors for a single recommendation card. */
-export function RecommendationFactors({ factors }: RecommendationFactorsProps) {
+function RecommendationFactors({ factors }: RecommendationFactorsProps) {
   if (factors.length === 0) {
     return null
   }
@@ -27,3 +27,5 @@ export function RecommendationFactors({ factors }: RecommendationFactorsProps) {
     </ul>
   )
 }
+
+export default RecommendationFactors

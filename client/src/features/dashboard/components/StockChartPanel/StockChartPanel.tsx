@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Button } from '../../../../components/Button'
-import { usePrefersDarkMode } from '../../../../hooks/usePrefersDarkMode'
-import { useStockHistory } from '../../../stocks/hooks/useStockHistory'
-import { useStockQuote } from '../../../stocks/hooks/useStockQuote'
-import { STOCK_HISTORY_RANGES, type StockHistoryRange } from '../../../../types/stockHistory'
-import { LoadingSpinner } from '../LoadingSpinner'
-import { StockPriceChart } from '../StockPriceChart'
-import { mergeLivePriceIntoHistory } from '../StockPriceChart/stockChartUtils'
+import { Button } from '@/components/Button'
+import { usePrefersDarkMode } from '@/hooks/usePrefersDarkMode'
+import { useStockHistory } from '@/features/stocks/hooks/useStockHistory'
+import { useStockQuote } from '@/features/stocks/hooks/useStockQuote'
+import { STOCK_HISTORY_RANGES, type StockHistoryRange } from '@/types/stockHistory'
+import { LoadingSpinner } from '@/features/dashboard/components/LoadingSpinner'
+import { StockPriceChart } from '@/features/dashboard/components/StockPriceChart'
+import { mergeLivePriceIntoHistory } from '@/features/dashboard/components/StockPriceChart/stockChartUtils'
 
 const QUOTE_REFETCH_MS = 60_000
 
@@ -15,7 +15,7 @@ export type StockChartPanelProps = {
 }
 
 /** Shows live quote details and a historical price chart for the selected symbol. */
-export function StockChartPanel({ symbol }: StockChartPanelProps) {
+function StockChartPanel({ symbol }: StockChartPanelProps) {
   const [range, setRange] = useState<StockHistoryRange>('3M')
   const isDarkMode = usePrefersDarkMode()
   const { quote, isLoading: isQuoteLoading, error: quoteError } = useStockQuote(symbol, {
@@ -132,3 +132,5 @@ export function StockChartPanel({ symbol }: StockChartPanelProps) {
     </section>
   )
 }
+
+export default StockChartPanel

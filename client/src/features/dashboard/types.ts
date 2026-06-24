@@ -1,4 +1,4 @@
-import type { AuthUser } from '../../types/auth'
+import type { AuthUser } from '@/types/auth'
 
 export type DashboardProps = {
   user: AuthUser

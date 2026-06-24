@@ -1,9 +1,9 @@
-import { Button } from '../Button'
+import { Button } from '@/components/Button'
 import styles from './AppHeader.module.css'
 import type { AppHeaderProps } from './types'
 
 /** Top bar showing the signed-in user and sign-out action. */
-export function AppHeader({ email, onLogout }: AppHeaderProps) {
+function AppHeader({ email, onLogout }: AppHeaderProps) {
   return (
     <header className={styles.header}>
       <div>
@@ -17,3 +17,4 @@ export function AppHeader({ email, onLogout }: AppHeaderProps) {
   )
 }
 
+export default AppHeader

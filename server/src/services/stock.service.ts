@@ -1,5 +1,6 @@
 import { env } from "../config/env.js";
 import { log } from "../lib/logger.js";
+import { requireTwelveDataApiKey } from "../lib/twelveData.js";
 import {
   requestTwelveDataPrice,
   requestTwelveDataProfile,
@@ -130,11 +131,7 @@ async function fetchStatisticsFromApi(
 
 /** Fetches a quote from Twelve Data; throws when the API key is missing or the request fails. */
 async function fetchQuoteFromApi(symbol: string): Promise<StockQuote> {
-  const apiKey = env.twelveDataApiKey?.trim();
-
-  if (!apiKey) {
-    throw new Error("TWELVE_DATA_API_KEY not configured");
-  }
+  const apiKey = requireTwelveDataApiKey();
 
   const [price, profile, statistics] = await Promise.all([
     fetchPriceFromApi(symbol, apiKey),
@@ -155,6 +152,33 @@ async function cacheQuote(symbol: string, quote: StockQuote): Promise<void> {
   } catch (error) {
     log.error("Redis write failed", error, { symbol, cacheKey });
   }
+}
+
+/** Returns the latest stock price using cache or a single Twelve Data price call. */
+export async function getStockPrice(symbol: string): Promise<number> {
+  const normalizedSymbol = normalizeSymbol(symbol);
+  const cached = await readCachedQuote(normalizedSymbol);
+
+  if (cached && cached.price > 0) {
+    return cached.price;
+  }
+
+  const apiKey = requireTwelveDataApiKey();
+
+  log.warn("Cache miss for stock price, fetching from external provider", {
+    symbol: normalizedSymbol,
+  });
+
+  const price = await fetchPriceFromApi(normalizedSymbol, apiKey);
+  await cacheQuote(normalizedSymbol, {
+    symbol: normalizedSymbol,
+    name: normalizedSymbol,
+    price,
+    peRatio: 0,
+    sector: "Unknown",
+  });
+
+  return price;
 }
 
 /** Returns cached stock quote or fetches live data from Twelve Data. */

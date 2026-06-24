@@ -1,4 +1,4 @@
-import { SIGNAL_ACTIONS, type SignalAction } from '../types/watchlist'
+import { SIGNAL_ACTIONS, type SignalAction } from '@/types/watchlist'
 
 const ACTION_BADGE_CLASSES: Record<SignalAction, string> = {
   BUY: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',

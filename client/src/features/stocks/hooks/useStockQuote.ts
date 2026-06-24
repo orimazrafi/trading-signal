@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { queryKeys } from '../../../api/queryKeys'
-import { fetchStockQuote } from '../../../api/stocks'
+import { queryKeys } from '@/api/queryKeys'
+import { fetchStockQuote } from '@/api/stocks'
 
 type UseStockQuoteOptions = {
   refetchIntervalMs?: number

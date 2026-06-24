@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { AreaSeries, ColorType, createChart, type IChartApi, type ISeriesApi } from 'lightweight-charts'
-import type { StockHistoryPoint } from '../../../../types/stockHistory'
+import type { StockHistoryPoint } from '@/types/stockHistory'
 
 export type StockPriceChartProps = {
   points: StockHistoryPoint[]
@@ -39,7 +39,7 @@ function buildChartColors(isDarkMode: boolean) {
 }
 
 /** Renders a responsive area chart for daily close prices. */
-export function StockPriceChart({ points, isDarkMode = false }: StockPriceChartProps) {
+function StockPriceChart({ points, isDarkMode = false }: StockPriceChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null)
@@ -116,3 +116,5 @@ export function StockPriceChart({ points, isDarkMode = false }: StockPriceChartP
 
   return <div ref={containerRef} className="h-full min-h-[16rem] w-full" />
 }
+
+export default StockPriceChart

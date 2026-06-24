@@ -1,4 +1,4 @@
-import { ToastItem } from './ToastItem'
+import ToastItem from './ToastItem'
 import type { Toast } from './types'
 
 export type ToastContainerProps = {
@@ -7,7 +7,7 @@ export type ToastContainerProps = {
 }
 
 /** Fixed stack of toast notifications in the bottom-right corner. */
-export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
+function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   if (toasts.length === 0) {
     return null
   }
@@ -25,3 +25,5 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
     </div>
   )
 }
+
+export default ToastContainer

@@ -1,3 +1,5 @@
+# Production-style stack (built images, client on :8080).
+# Run: docker compose -f docker-compose.prod.yml up -d --build
 services:
   postgres:
     image: postgres:16-alpine
@@ -82,6 +84,26 @@ services:
       redis:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      server:
+        condition: service_started
+
+  alerts-runner:
+    build:
+      context: ./alerts-runner
+      dockerfile: Dockerfile
+    image: trading-signal-alerts-runner:latest
+    env_file:
+      - ./server/.env
+    environment:
+      DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
+      REDIS_URL: redis://redis:6379
+      ALERT_CHECK_INTERVAL_MS: "300000"
+      STOCK_CACHE_TTL_SECONDS: "60"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       server:
         condition: service_started

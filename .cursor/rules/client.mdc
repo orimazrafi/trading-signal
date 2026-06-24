@@ -1,0 +1,105 @@
+---
+description: React client — features, hooks, API, shared UI
+globs: client/**
+alwaysApply: false
+---
+
+# Client (React)
+
+## Directory layout
+
+```
+client/src/
+  api/           # HTTP clients, queryKeys.ts
+  components/    # Shared UI (cross-feature)
+  features/[name]/
+    components/
+    hooks/
+    lib/         # Feature-specific pure helpers
+    tabs/
+  hooks/         # App-wide hooks
+  types/         # Shared API/domain types
+```
+
+## Must
+
+- **SoC:** components render UI only; hooks own state, effects, and data lifecycle; `api/` owns HTTP calls.
+- **HTTP:** use the shared axios client (`@/api/client.ts`). No raw `fetch` in features, hooks, or components. (SSE via `EventSource` is the exception.)
+- **Imports:** use `@/` path aliases (e.g. `@/components/Button`). No `../` chains across modules.
+- **React Query:** cache keys in `@/api/queryKeys.ts` only.
+- **Mutations:** no `onSuccess` on `useMutation` — call `mutateAsync`, then `invalidateQueries` in the hook wrapper (see `usePriceAlerts`).
+- **Shared UI:** use components from `@/components/` instead of raw `<button>` / labeled `<input>` when a match exists.
+
+## Component folder pattern
+
+Each component module:
+
+```
+Component/
+  Component.tsx   # export default the component
+  Component.module.css
+  types.ts        # named type exports
+  index.ts        # public barrel; wrap memo() here when profiling shows benefit
+```
+
+`index.ts` barrel:
+
+```ts
+export { default } from './Component'
+export { default as Component } from './Component'
+export type { ComponentProps } from './types'
+```
+
+CSS Modules: apply multiple classes in TS (e.g. `styles.base` + `styles.primary`). Do not use `composes`.
+
+## Shared component inventory
+
+| Component | Use for |
+|-----------|---------|
+| `Button` | All clickable actions (`primary`, `secondary`, `danger`, `tab`, `tabActive`) |
+| `FormField` | Labeled text/number inputs |
+| `CheckboxField` | Boolean options (e.g. email alerts) |
+| `StatusCard` | API health display |
+| `Toast` / `ToastProvider` | Notifications (wired in `main.tsx`) |
+
+## Examples
+
+```tsx
+// ❌ fetch in component
+useEffect(() => { fetch('/api/alerts').then(...) }, [])
+
+// ✅ api module + hook
+import { api } from '@/api/client'
+const { alerts, createAlert } = usePriceAlerts()
+```
+
+```tsx
+// ❌ deep relative import
+import { Button } from '../../../../components/Button'
+
+// ✅ path alias
+import { Button } from '@/components/Button'
+```
+
+```tsx
+// ❌ named export in component file
+export function Button() { ... }
+
+// ✅ default export; barrel re-exports
+// Button.tsx
+function Button() { ... }
+export default Button
+```
+
+```tsx
+// ❌ inline type in component file
+type FormState = { symbol: string }
+
+// ✅ features/alerts/types.ts (or narrower sibling types.ts)
+export type PriceAlertFormState = { symbol: string }
+```
+
+## Prefer
+
+- Short JSDoc on every function/component/hook.
+- Feature `lib/*Utils.ts` for pure formatting/validation logic.

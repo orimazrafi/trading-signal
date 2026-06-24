@@ -1,4 +1,4 @@
-import type { Watchlist } from '../../../../types/watchlist'
+import type { Watchlist } from '@/types/watchlist'
 
 /** Props for the watchlist tab bar and create-view dialog. */
 export type WatchlistTabsProps = {

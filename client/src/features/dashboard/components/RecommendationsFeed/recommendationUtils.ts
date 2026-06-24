@@ -1,7 +1,7 @@
 import {
   RECOMMENDATION_ACTIONS,
   type RecommendationAction,
-} from '../../../../types/recommendation'
+} from '@/types/recommendation'
 
 const RECOMMENDATION_BADGE_CLASSES: Record<RecommendationAction, string> = {
   [RECOMMENDATION_ACTIONS.STRONG_BUY]:

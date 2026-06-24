@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchMarketNews } from '../../../api/dashboard'
-import { queryKeys } from '../../../api/queryKeys'
+import { fetchMarketNews } from '@/api/dashboard'
+import { queryKeys } from '@/api/queryKeys'
 
 /** Loads market news via React Query and exposes loading and error state. */
 export function useNewsFeed() {

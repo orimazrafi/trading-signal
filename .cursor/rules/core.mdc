@@ -1,0 +1,60 @@
+---
+description: Core coding standards — types, constants, minimal diffs
+alwaysApply: true
+---
+
+# Core standards
+
+## Stack
+
+Monorepo: **client** (Vite/React), **server** (Express/Prisma), **alerts-runner** (Go), Docker Compose.
+
+## Must
+
+- **Minimal diffs** — only change what the task requires; match surrounding code.
+- **No shared/exported types inline** — put types in dedicated `types.ts` files (see placement table below).
+- **No `as` type assertions** — do not cast with `value as SomeType`. Use narrowing (type guards, `typeof`/`in` checks), validated parsers, or generics instead. (`as const` and import aliases like `import { x as y }` are fine.)
+- **No magic strings/numbers** used more than once — extract to `const` objects, enums, or env config.
+- **Promote types** when a second importer appears (module → feature → `src/types/`).
+
+## Prefer
+
+- Reuse existing hooks, utilities, and shared components before adding new ones.
+- Pure functions in `lib/` or `*Utils.ts`; avoid mutating inputs.
+- **Single level of abstraction** — push parsing/validation into named helpers (e.g. `parseUpdatePriceAlertBody()` in controllers).
+- Declarative array methods over imperative loops when readability is equal.
+
+## Avoid
+
+- Over-abstraction (tiny one-off helpers, premature generics).
+- Duplicating the same type shape in multiple files.
+- `as` casts to silence the compiler — fix the type at the source or parse/narrow explicitly.
+
+## Type assertions — use alternatives
+
+```ts
+// ❌
+const body = req.body as UpdateAlertBody
+const code = authError as OAuthRedirectErrorCode
+
+// ✅ narrow or parse
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+const input = parseUpdatePriceAlertBody(body)
+
+// ✅ satisfies (literal checked, type inferred)
+const queryKeys = { alerts: { list: ['alerts', 'list'] } } as const
+```
+
+## Type placement
+
+| Scope | Location | Example |
+|-------|----------|---------|
+| Single module | Sibling `types.ts` | `components/Button/types.ts` |
+| One feature, multiple modules | Feature `types.ts` | `features/watchlists/types.ts` |
+| Multiple features / API contracts | App-wide types | `client/src/types/`, `server/src/types/` |
+
+- Re-export from `client/src/types/index.ts` for shared client API types.
+- Keep `server/src/types/` response models aligned with `client/src/types/` ingestion types.
+- Server env/config: `server/src/config/env.ts`.

@@ -1,2 +1,2 @@
-export { StockChartPanel } from './StockChartPanel'
-export type { StockChartPanelProps } from './StockChartPanel'
+export { default } from './StockChartPanel'
+export { default as StockChartPanel } from './StockChartPanel'

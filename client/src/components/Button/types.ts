@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'tab' | 'tabActive'
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'tab' | 'tabActive'
 
 export type ButtonProps = {
   variant?: ButtonVariant

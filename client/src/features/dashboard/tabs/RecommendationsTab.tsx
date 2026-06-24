@@ -1,8 +1,8 @@
-import { RecommendationsFeed } from '../components/RecommendationsFeed'
-import { useRecommendations } from '../hooks/useRecommendations'
+import { RecommendationsFeed } from '@/features/dashboard/components/RecommendationsFeed'
+import { useRecommendations } from '@/features/dashboard/hooks/useRecommendations'
 
 /** Recommendations tab backed by the dashboard recommendations API. */
-export function RecommendationsTab() {
+function RecommendationsTab() {
   const { recommendations, isLoading, error } = useRecommendations()
 
   return (
@@ -13,3 +13,5 @@ export function RecommendationsTab() {
     />
   )
 }
+
+export default RecommendationsTab

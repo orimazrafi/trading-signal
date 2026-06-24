@@ -1,8 +1,10 @@
 import { type FormEvent, useState } from 'react'
+import { Button } from '@/components/Button'
+import { FormField } from '@/components/FormField'
 import type { WatchlistTabsProps } from './types'
 
 /** Horizontal tabs for switching custom dashboard views with a create-view dialog. */
-export function WatchlistTabs({
+function WatchlistTabs({
   watchlists,
   activeWatchlistId,
   onSelectWatchlist,
@@ -61,33 +63,23 @@ export function WatchlistTabs({
               const isActive = watchlist.id === activeWatchlistId
 
               return (
-                <button
+                <Button
                   key={watchlist.id}
                   type="button"
+                  variant={isActive ? 'tabActive' : 'tab'}
                   onClick={() => onSelectWatchlist(watchlist.id)}
-                  className={[
-                    'shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-violet-600 text-white shadow-sm'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700',
-                  ].join(' ')}
                 >
                   {watchlist.name}
                   <span className="ml-2 text-xs opacity-80">({watchlist.signals.length})</span>
-                </button>
+                </Button>
               )
             })
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={openModal}
-          aria-label="Create new watchlist view"
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-violet-300 bg-violet-50 text-xl font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-100 dark:border-violet-500/50 dark:bg-violet-950/40 dark:text-violet-200 dark:hover:bg-violet-900/50"
-        >
+        <Button type="button" variant="primary" onClick={openModal}>
           +
-        </button>
+        </Button>
       </div>
 
       {isModalOpen ? (
@@ -114,39 +106,24 @@ export function WatchlistTabs({
             </p>
 
             <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
-              <label className="block text-left text-sm font-medium text-slate-700 dark:text-slate-200">
-                View name
-                <input
-                  type="text"
-                  value={viewName}
-                  onChange={(event) => setViewName(event.target.value)}
-                  placeholder="My watchlist"
-                  maxLength={80}
-                  autoFocus
-                  className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none ring-violet-500 focus:ring-2 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
-                />
-              </label>
+              <FormField
+                label="View name"
+                value={viewName}
+                onChange={setViewName}
+                placeholder="My watchlist"
+              />
 
               {formError ? (
                 <p className="text-left text-sm text-red-600 dark:text-red-400">{formError}</p>
               ) : null}
 
               <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  disabled={creating}
-                  className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800"
-                >
+                <Button type="button" variant="secondary" disabled={creating} onClick={closeModal}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={creating}
-                  className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-                >
-                  {creating ? 'Creating…' : 'Create view'}
-                </button>
+                </Button>
+                <Button type="submit" loading={creating} loadingLabel="Creating…">
+                  Create view
+                </Button>
               </div>
             </form>
           </div>
@@ -155,3 +132,5 @@ export function WatchlistTabs({
     </>
   )
 }
+
+export default WatchlistTabs

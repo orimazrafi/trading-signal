@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Button } from '../../../components/Button'
-import { LoginForm } from '../../../components/LoginForm'
-import { SignupForm } from '../../../components/SignupForm'
+import { Button } from '@/components/Button'
+import { LoginForm } from '@/components/LoginForm'
+import { SignupForm } from '@/components/SignupForm'
 import styles from './AuthPage.module.css'
 import type { AuthMode, AuthPageProps } from './types'
 
@@ -11,7 +11,7 @@ function getTabVariant(isActive: boolean): 'tab' | 'tabActive' {
 }
 
 /** Login and signup page with optional Google SSO. */
-export function AuthPage({
+function AuthPage({
   error,
   onClearError,
   onLogin,
@@ -51,3 +51,5 @@ export function AuthPage({
     </section>
   )
 }
+
+export default AuthPage

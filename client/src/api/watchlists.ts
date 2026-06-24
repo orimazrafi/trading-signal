@@ -1,5 +1,5 @@
 import { api } from './client'
-import { buildSignalReason, toSignalAction } from '../lib/signalUtils'
+import { buildSignalReason, toSignalAction } from '@/lib/signalUtils'
 import type {
   AddStockResponse,
   ApiWatchlist,
@@ -9,7 +9,7 @@ import type {
   Watchlist,
   WatchlistResponse,
   WatchlistsResponse,
-} from '../types/watchlist'
+} from '@/types/watchlist'
 
 /** Maps a server watchlist stock row to a client Signal. */
 function mapApiStockToSignal(stock: ApiWatchlistStock): Signal {

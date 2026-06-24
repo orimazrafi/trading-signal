@@ -1,5 +1,5 @@
 import { useSyncExternalStore, type ReactNode } from 'react'
-import { ToastContainer } from './ToastContainer'
+import ToastContainer from './ToastContainer'
 import { dismissToast, getToasts, subscribeToToasts } from './toastStore'
 
 export type ToastProviderProps = {
@@ -7,7 +7,7 @@ export type ToastProviderProps = {
 }
 
 /** Mounts the global toast stack and exposes the imperative toast API. */
-export function ToastProvider({ children }: ToastProviderProps) {
+function ToastProvider({ children }: ToastProviderProps) {
   const toasts = useSyncExternalStore(subscribeToToasts, getToasts, getToasts)
 
   return (
@@ -17,3 +17,5 @@ export function ToastProvider({ children }: ToastProviderProps) {
     </>
   )
 }
+
+export default ToastProvider

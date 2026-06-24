@@ -1,14 +1,15 @@
-import { Button } from '../../../../components/Button'
+import { Button } from '@/components/Button'
 import type { DashboardNavProps, DashboardTab } from './types'
 
 const TABS: Array<{ id: DashboardTab; label: string }> = [
   { id: 'news', label: 'Market News' },
   { id: 'recommendations', label: 'Recommendations' },
   { id: 'watchlist', label: 'Watchlist' },
+  { id: 'alerts', label: 'Alerts' },
 ]
 
 /** Primary navigation between dashboard sections. */
-export function DashboardNav({ activeTab, onTabChange }: DashboardNavProps) {
+function DashboardNav({ activeTab, onTabChange }: DashboardNavProps) {
   return (
     <nav
       className="flex gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1 dark:border-slate-700 dark:bg-slate-900/60"
@@ -32,3 +33,5 @@ export function DashboardNav({ activeTab, onTabChange }: DashboardNavProps) {
     </nav>
   )
 }
+
+export default DashboardNav

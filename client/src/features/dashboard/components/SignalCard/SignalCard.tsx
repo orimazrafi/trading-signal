@@ -1,16 +1,9 @@
-import type { Signal } from '../../../../types/watchlist'
-import { actionBadgeClass } from '../../../../lib/signalUtils'
-
-export type SignalCardProps = {
-  signal: Signal
-  isSelected?: boolean
-  onSelect?: (symbol: string) => void
-  onRemove?: (signalId: string) => void
-  removing?: boolean
-}
+import { Button } from '@/components/Button'
+import { actionBadgeClass } from '@/lib/signalUtils'
+import type { SignalCardProps } from './types'
 
 /** Renders a saved watchlist stock row, optionally selectable. */
-export function SignalCard({
+function SignalCard({
   signal,
   isSelected = false,
   onSelect,
@@ -67,15 +60,19 @@ export function SignalCard({
       </p>
       <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Saved price · tap to view chart</p>
       {onRemove ? (
-        <button
+        <Button
           type="button"
-          onClick={handleRemove}
+          variant="danger"
           disabled={removing}
-          className="mt-3 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/30"
+          loading={removing}
+          loadingLabel="Removing…"
+          onClick={handleRemove}
         >
-          {removing ? 'Removing…' : 'Remove'}
-        </button>
+          Remove
+        </Button>
       ) : null}
     </article>
   )
 }
+
+export default SignalCard

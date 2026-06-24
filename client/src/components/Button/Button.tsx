@@ -1,23 +1,25 @@
 import styles from './Button.module.css'
 import type { ButtonProps, ButtonVariant } from './types'
 
-/** Returns the CSS module class for a button variant. */
-function getVariantClass(variant: ButtonVariant): string {
+/** Returns CSS module classes for a button variant (base + variant; tabActive layers on tab). */
+function getVariantClasses(variant: ButtonVariant): string[] {
   switch (variant) {
     case 'secondary':
-      return styles.secondary
+      return [styles.base, styles.secondary]
+    case 'danger':
+      return [styles.base, styles.danger]
     case 'tab':
-      return styles.tab
+      return [styles.base, styles.tab]
     case 'tabActive':
-      return styles.tabActive
+      return [styles.base, styles.tab, styles.tabActive]
     default:
-      return styles.primary
+      return [styles.base, styles.primary]
   }
 }
 
 /** Builds the final class list for a button element. */
 function getButtonClassName(variant: ButtonVariant, fullWidth: boolean): string {
-  return [getVariantClass(variant), fullWidth ? styles.fullWidth : ''].filter(Boolean).join(' ')
+  return [...getVariantClasses(variant), fullWidth ? styles.fullWidth : ''].filter(Boolean).join(' ')
 }
 
 /** Resolves button label when a loading state is active. */
@@ -26,7 +28,7 @@ function getButtonLabel(loading: boolean, loadingLabel: string | undefined, chil
 }
 
 /** Shared button with primary, secondary, and tab variants. */
-export function Button({
+function Button({
   variant = 'primary',
   type = 'button',
   fullWidth = false,
@@ -52,3 +54,4 @@ export function Button({
   )
 }
 
+export default Button

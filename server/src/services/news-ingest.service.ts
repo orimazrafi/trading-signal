@@ -5,6 +5,7 @@ import { log } from "../lib/logger.js";
 import {
   buildTwelveDataApiUrl,
   buildTwelveDataPressReleaseArticleUrl,
+  requireTwelveDataApiKey,
   TWELVE_DATA_ENDPOINTS,
 } from "../lib/twelveData.js";
 import { publishNewsArticle } from "../queue/publishers/news.publisher.js";
@@ -106,11 +107,7 @@ async function markArticlePublished(articleId: string): Promise<void> {
 
 /** Fetches the latest market news articles from Twelve Data. */
 export async function fetchLatestMarketNewsArticles(): Promise<IncomingNewsArticle[]> {
-  const apiKey = env.twelveDataApiKey?.trim();
-
-  if (!apiKey) {
-    throw new Error("TWELVE_DATA_API_KEY missing; cannot fetch market news");
-  }
+  const apiKey = requireTwelveDataApiKey();
 
   const articles: IncomingNewsArticle[] = [];
 

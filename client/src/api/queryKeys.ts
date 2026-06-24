@@ -15,4 +15,8 @@ export const queryKeys = {
     quote: (symbol: string) => ['stocks', 'quote', symbol] as const,
     history: (symbol: string, range: string) => ['stocks', 'history', symbol, range] as const,
   },
+  alerts: {
+    list: ['alerts', 'list'] as const,
+    notifications: ['alerts', 'notifications'] as const,
+  },
 } as const

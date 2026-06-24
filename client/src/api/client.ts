@@ -1,5 +1,5 @@
 import axios, { isAxiosError } from 'axios'
-import type { ApiErrorBody } from '../types/api'
+import type { ApiErrorBody } from '@/types/api'
 
 /** API error with optional HTTP status for query and mutation handling. */
 export class ApiError extends Error {
