@@ -55,11 +55,11 @@ function NewsFeed({
               href={article.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-semibold leading-snug text-slate-900 group-hover:text-violet-700 dark:text-slate-100 dark:group-hover:text-violet-300"
+              className="text-sm font-semibold leading-snug text-foreground group-hover:text-primary"
             >
               {article.headline}
             </a>
-            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-2 text-xs text-muted-foreground">
               {article.source} · {formatPublishedAt(article.publishedAt)}
             </p>
             {onAddToWatchlist ? (

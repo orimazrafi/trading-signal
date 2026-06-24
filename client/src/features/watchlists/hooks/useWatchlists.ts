@@ -12,6 +12,7 @@ import {
   mapApiWatchlist,
   mapApiWatchlists,
 } from '@/features/watchlists/lib/watchlistMappers'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import type { UseWatchlistsOptions } from '@/features/watchlists/types'
 
 /** Manages watchlist fetch, active view selection, and create/save mutations. */
@@ -23,20 +24,24 @@ export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOpti
     queryKey: queryKeys.watchlists.list(userId),
     queryFn: async () => mapApiWatchlists(await fetchWatchlists(), userId),
     enabled,
+    meta: queryErrorHandledMeta,
   })
 
   const createMutation = useMutation({
     mutationFn: async (name: string) => mapApiWatchlist(await createWatchlist(name), userId),
+    meta: queryErrorHandledMeta,
   })
 
   const saveStockMutation = useMutation({
     mutationFn: async ({ watchlistId, symbol }: { watchlistId: string; symbol: string }) =>
       mapApiStockToSignal(await addStockToWatchlist(watchlistId, symbol)),
+    meta: queryErrorHandledMeta,
   })
 
   const removeStockMutation = useMutation({
     mutationFn: ({ watchlistId, signalId }: { watchlistId: string; signalId: string }) =>
       removeStockFromWatchlist(watchlistId, signalId),
+    meta: queryErrorHandledMeta,
   })
 
   const watchlists = watchlistsQuery.data ?? []

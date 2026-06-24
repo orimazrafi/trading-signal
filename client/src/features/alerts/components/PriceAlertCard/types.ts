@@ -5,7 +5,7 @@ export type PriceAlertCardProps = {
   userEmail: string
   updating: boolean
   deleting: boolean
-  onToggleEnabled: (alert: PriceAlert, enabled: boolean) => Promise<void>
-  onToggleEmail: (alert: PriceAlert, emailEnabled: boolean) => Promise<void>
+  onToggleEnabled: (alert: PriceAlert, enabled: boolean) => Promise<PriceAlert | void>
+  onToggleEmail: (alert: PriceAlert, emailEnabled: boolean) => Promise<PriceAlert | void>
   onDelete: (alertId: string) => Promise<void>
 }

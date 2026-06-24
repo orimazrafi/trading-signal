@@ -4,13 +4,13 @@ import type { ToastItemProps, ToastVariant } from './types'
 function variantClassName(variant: ToastVariant): string {
   switch (variant) {
     case 'success':
-      return 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+      return 'border-positive/30 bg-positive-muted text-positive'
     case 'error':
-      return 'border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/50 dark:text-red-200'
+      return 'border-destructive/30 bg-destructive/10 text-destructive'
     case 'warning':
-      return 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-200'
+      return 'border-warning/30 bg-warning-muted text-warning'
     default:
-      return 'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
+      return 'border-border bg-card text-card-foreground'
   }
 }
 

@@ -25,6 +25,16 @@ import {
   type TwelveDataStatisticsResponse,
 } from "../types/twelveData.js";
 
+export class StockError extends Error {
+  constructor(
+    message: string,
+    readonly statusCode = 502,
+  ) {
+    super(message);
+    this.name = "StockError";
+  }
+}
+
 /** Normalizes a ticker symbol to uppercase. */
 function normalizeSymbol(symbol: string): string {
   return symbol.toUpperCase();
@@ -194,9 +204,18 @@ export async function getStockQuote(symbol: string): Promise<StockQuote> {
     symbol: normalizedSymbol,
   });
 
-  const quote = await fetchQuoteFromApi(normalizedSymbol);
-  await cacheQuote(normalizedSymbol, quote);
-  return quote;
+  try {
+    const quote = await fetchQuoteFromApi(normalizedSymbol);
+    await cacheQuote(normalizedSymbol, quote);
+    return quote;
+  } catch (error) {
+    if (error instanceof StockError) {
+      throw error;
+    }
+
+    const message = error instanceof Error ? error.message : "Unable to fetch stock data";
+    throw new StockError(message);
+  }
 }
 
 /** Derives a BUY/HOLD recommendation from the PE ratio. */

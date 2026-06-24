@@ -1,6 +1,7 @@
-import { Component } from 'react'
+import { Component, type ErrorInfo } from 'react'
 import { Button } from '@/components/Button'
 import { ErrorMessage } from '@/components/ErrorMessage'
+import { reportClientError } from '@/lib/reportClientError'
 import type { ErrorBoundaryProps, ErrorBoundaryState } from './types'
 
 /** Catches render errors in children and shows a recoverable fallback. */
@@ -12,6 +13,10 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    reportClientError(error, errorInfo)
   }
 
   /** Clears the error state so children can render again. */

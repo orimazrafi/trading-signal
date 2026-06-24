@@ -42,9 +42,16 @@
   --negative: #dc2626;
   --negative-muted: #fee2e2;
   --warning: #d97706;
-  --warning-muted: #fef3c7;
+    --warning-muted: #fef3c7;
 
-  --shadow-panel: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    --chart-background: var(--card);
+    --chart-text: var(--muted-foreground);
+    --chart-grid: var(--border);
+    --chart-line: var(--primary);
+    --chart-area-top: color-mix(in srgb, var(--primary) 35%, transparent);
+    --chart-area-bottom: color-mix(in srgb, var(--primary) 2%, transparent);
+
+    --shadow-panel: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
   /* Legacy aliases used by global layout styles */
   --text: var(--muted-foreground);
@@ -94,6 +101,13 @@
     --negative-muted: rgba(127, 29, 29, 0.4);
     --warning: #fbbf24;
     --warning-muted: rgba(120, 53, 15, 0.4);
+
+    --chart-background: var(--card);
+    --chart-text: var(--muted-foreground);
+    --chart-grid: var(--border);
+    --chart-line: var(--primary);
+    --chart-area-top: color-mix(in srgb, var(--primary) 35%, transparent);
+    --chart-area-bottom: color-mix(in srgb, var(--primary) 2%, transparent);
 
     --code-bg: #1f2028;
     --accent-border: rgba(192, 132, 252, 0.5);

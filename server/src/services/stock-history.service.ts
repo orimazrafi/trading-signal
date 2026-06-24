@@ -5,6 +5,7 @@ import { parseStockHistory } from "../lib/parseStockHistory.js";
 import { buildTwelveDataApiUrl, requireTwelveDataApiKey, TWELVE_DATA_ENDPOINTS } from "../lib/twelveData.js";
 import { redis } from "../config/redis.js";
 import type { StockHistory, StockHistoryPoint, StockHistoryRange } from "../types/stockHistory.js";
+import { StockError } from "./stock.service.js";
 
 type TwelveDataTimeSeriesValue = {
   datetime: string;
@@ -158,7 +159,7 @@ async function fetchHistoryFromApi(
   );
 
   if (data.code || data.status === "error") {
-    throw new Error(data.message ?? `Twelve Data time series failed for ${symbol}`);
+    throw new StockError(data.message ?? `Twelve Data time series failed for ${symbol}`);
   }
 
   const isIntraday = range === "1D";
@@ -167,7 +168,7 @@ async function fetchHistoryFromApi(
     .filter((point): point is StockHistoryPoint => point !== null);
 
   if (points.length === 0) {
-    throw new Error(`No history data returned for ${symbol}`);
+    throw new StockError(`No history data returned for ${symbol}`, 404);
   }
 
   return {

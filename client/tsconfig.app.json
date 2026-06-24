@@ -8,7 +8,13 @@
     "esModuleInterop": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@trading-signal/contracts/recommendation": ["../packages/contracts/src/recommendation.ts"],
+      "@trading-signal/contracts/alert": ["../packages/contracts/src/alert.ts"],
+      "@trading-signal/contracts/auth": ["../packages/contracts/src/auth.ts"],
+      "@trading-signal/contracts/parseAlertNotification": [
+        "../packages/contracts/src/parseAlertNotification.ts"
+      ]
     },
 
     /* Bundler mode */

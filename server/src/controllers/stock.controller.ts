@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
-import { log } from "../lib/logger/index.js";
+import { getAuthenticatedUserId } from "../lib/controllerAuth.js";
 import { parseStockHistoryQuery } from "../lib/parseStockHistoryQuery/index.js";
+import { sendStockErrorResponse } from "../lib/stockHttpErrors.js";
 import { getStockHistory } from "../services/stock-history.service.js";
 import {
   getStockQuote,
@@ -27,8 +28,7 @@ export async function getStockHistoryBySymbol(req: Request, res: Response): Prom
     const history = await getStockHistory(symbol, range);
     res.json(history);
   } catch (error) {
-    log.error("Controller endpoint execution failed", error, { path: req.path, range });
-    res.status(500).json({ error: "Unable to fetch stock history" });
+    sendStockErrorResponse(res, error, req.path);
   }
 }
 
@@ -44,17 +44,14 @@ export async function getStockBySymbol(req: Request, res: Response): Promise<voi
     const quote = await getStockQuote(symbol);
     res.json(quote);
   } catch (error) {
-    log.error("Controller endpoint execution failed", error, { path: req.path });
-    res.status(500).json({ error: "Unable to fetch stock data" });
+    sendStockErrorResponse(res, error, req.path);
   }
 }
 
 /** Searches a stock, generates a recommendation, and persists a user signal. */
 export async function searchStockBySymbol(req: Request, res: Response): Promise<void> {
-  const userId = req.user?.userId;
-
+  const userId = getAuthenticatedUserId(req, res);
   if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
     return;
   }
 
@@ -68,17 +65,14 @@ export async function searchStockBySymbol(req: Request, res: Response): Promise<
     const result = await searchStock(userId, symbol);
     res.json(result);
   } catch (error) {
-    log.error("Controller endpoint execution failed", error, { path: req.path });
-    res.status(500).json({ error: "Unable to search stock" });
+    sendStockErrorResponse(res, error, req.path);
   }
 }
 
 /** Returns top trending stocks for the authenticated user. */
 export async function getTrending(req: Request, res: Response): Promise<void> {
-  const userId = req.user?.userId;
-
+  const userId = getAuthenticatedUserId(req, res);
   if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
     return;
   }
 
@@ -86,7 +80,6 @@ export async function getTrending(req: Request, res: Response): Promise<void> {
     const trending = await getTrendingStocks(userId);
     res.json({ userId, trending });
   } catch (error) {
-    log.error("Controller endpoint execution failed", error, { path: req.path });
-    res.status(500).json({ error: "Unable to load trending stocks" });
+    sendStockErrorResponse(res, error, req.path);
   }
 }

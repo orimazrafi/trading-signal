@@ -48,17 +48,17 @@ function SignalCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{signal.symbol}</h3>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{signal.reason}</p>
+          <h3 className="text-lg font-semibold text-foreground">{signal.symbol}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{signal.reason}</p>
         </div>
         <Badge variant={signalActionBadgeVariant(signal.action)}>{signal.action}</Badge>
       </div>
       <div className="mt-3 flex items-end justify-between gap-3">
         <div>
-          <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+          <p className="text-2xl font-semibold text-foreground">
             ${signal.price.toFixed(2)}
           </p>
-          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Saved at snapshot · tap to view chart
           </p>
         </div>

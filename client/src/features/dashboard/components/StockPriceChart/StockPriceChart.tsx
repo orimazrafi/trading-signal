@@ -1,38 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { AreaSeries, ColorType, createChart, type IChartApi, type ISeriesApi } from 'lightweight-charts'
-import type { StockHistoryPoint } from '@/types/stock'
+import { resolveChartThemeColors } from '@/lib/chartTheme'
 import type { StockPriceChartProps } from './types'
-
-/** Maps OHLCV points to area-series values for Lightweight Charts. */
-function toAreaSeriesData(points: StockHistoryPoint[]) {
-  return points.map((point) => ({
-    time: point.time,
-    value: point.close,
-  }))
-}
-
-/** Builds chart colors for the current theme. */
-function buildChartColors(isDarkMode: boolean) {
-  if (isDarkMode) {
-    return {
-      background: '#0f172a',
-      text: '#94a3b8',
-      grid: '#1e293b',
-      line: '#38bdf8',
-      top: 'rgba(56, 189, 248, 0.35)',
-      bottom: 'rgba(56, 189, 248, 0.02)',
-    }
-  }
-
-  return {
-    background: '#ffffff',
-    text: '#64748b',
-    grid: '#e2e8f0',
-    line: '#2563eb',
-    top: 'rgba(37, 99, 235, 0.35)',
-    bottom: 'rgba(37, 99, 235, 0.02)',
-  }
-}
+import { toAreaSeriesData } from './stockChartUtils'
 
 /** Renders a responsive area chart for daily close prices. */
 function StockPriceChart({ points, isDarkMode = false }: StockPriceChartProps) {
@@ -46,7 +16,7 @@ function StockPriceChart({ points, isDarkMode = false }: StockPriceChartProps) {
       return
     }
 
-    const colors = buildChartColors(isDarkMode)
+    const colors = resolveChartThemeColors()
     const chart = createChart(container, {
       layout: {
         background: { type: ColorType.Solid, color: colors.background },

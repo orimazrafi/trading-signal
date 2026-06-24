@@ -1,35 +1,13 @@
 import type { Request, Response } from "express";
-import { log } from "../lib/logger/index.js";
+import { getAuthenticatedUserId } from "../lib/controllerAuth.js";
+import { parseCreateWatchlistBody, parseWatchlistStockBody } from "../lib/parseWatchlistBody.js";
+import { sendWatchlistErrorResponse } from "../lib/watchlistHttpErrors.js";
 import {
-  WatchlistError,
   createWatchlistView,
   getWatchlistsForUser,
   removeStockFromView,
   saveStockToView,
 } from "../services/watchlist.service.js";
-
-/** Returns the authenticated user id or sends 401. */
-function getAuthenticatedUserId(req: Request, res: Response): string | null {
-  const userId = req.user?.userId;
-
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return null;
-  }
-
-  return userId;
-}
-
-/** Maps watchlist service errors to HTTP responses. */
-function handleWatchlistError(res: Response, error: unknown, path: string): void {
-  if (error instanceof WatchlistError) {
-    res.status(error.statusCode).json({ error: error.message });
-    return;
-  }
-
-  log.error("Controller endpoint execution failed", error, { path });
-  res.status(500).json({ error: "Watchlist request failed" });
-}
 
 /** Creates a new named custom view for the authenticated user. */
 export async function postWatchlist(req: Request, res: Response): Promise<void> {
@@ -38,13 +16,13 @@ export async function postWatchlist(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const name = typeof req.body?.name === "string" ? req.body.name : "";
+  const { name } = parseCreateWatchlistBody(req.body);
 
   try {
     const watchlist = await createWatchlistView(userId, name);
     res.status(201).json({ watchlist });
   } catch (error) {
-    handleWatchlistError(res, error, req.path);
+    sendWatchlistErrorResponse(res, error, req.path);
   }
 }
 
@@ -59,7 +37,7 @@ export async function getWatchlists(req: Request, res: Response): Promise<void> 
     const watchlists = await getWatchlistsForUser(userId);
     res.json({ watchlists });
   } catch (error) {
-    handleWatchlistError(res, error, req.path);
+    sendWatchlistErrorResponse(res, error, req.path);
   }
 }
 
@@ -71,7 +49,7 @@ export async function postWatchlistStock(req: Request, res: Response): Promise<v
   }
 
   const watchlistId = req.params.id?.trim() ?? "";
-  const symbol = typeof req.body?.symbol === "string" ? req.body.symbol : "";
+  const { symbol } = parseWatchlistStockBody(req.body);
 
   if (!watchlistId) {
     res.status(400).json({ error: "Watchlist id is required" });
@@ -82,7 +60,7 @@ export async function postWatchlistStock(req: Request, res: Response): Promise<v
     const stock = await saveStockToView(userId, watchlistId, symbol);
     res.status(201).json({ stock });
   } catch (error) {
-    handleWatchlistError(res, error, req.path);
+    sendWatchlistErrorResponse(res, error, req.path);
   }
 }
 
@@ -105,6 +83,6 @@ export async function deleteWatchlistStock(req: Request, res: Response): Promise
     await removeStockFromView(userId, watchlistId, signalId);
     res.status(204).send();
   } catch (error) {
-    handleWatchlistError(res, error, req.path);
+    sendWatchlistErrorResponse(res, error, req.path);
   }
 }

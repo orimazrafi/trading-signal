@@ -1,3 +1,4 @@
+import type { AreaData, Time } from 'lightweight-charts'
 import type { StockHistoryPoint } from '@/types/stock'
 
 /** Appends or updates the latest bar so the chart ends at the live quote price. */
@@ -42,4 +43,23 @@ export function mergeLivePriceIntoHistory(
       volume: existingTodayBar?.volume ?? 0,
     },
   ]
+}
+
+/** Maps API history bar time to a lightweight-charts Time value. */
+export function toChartTime(time: string | number): Time {
+  if (typeof time === 'string') {
+    return time
+  }
+
+  // API intraday bars use unix seconds; lightweight-charts accepts these as UTCTimestamp.
+  // @ts-expect-error UTCTimestamp is a branded number in lightweight-charts.
+  return time
+}
+
+/** Maps OHLCV points to area-series values for Lightweight Charts. */
+export function toAreaSeriesData(points: StockHistoryPoint[]): AreaData<Time>[] {
+  return points.map((point) => ({
+    time: toChartTime(point.time),
+    value: point.close,
+  }))
 }

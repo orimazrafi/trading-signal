@@ -1,5 +1,5 @@
 import { prisma as prismaClient } from "../config/prisma.js";
-import type { AlertNotificationView, PriceAlertView } from "../types/alert.js";
+import type { AlertNotification, PriceAlert } from "../types/alert.js";
 import type {
   AlertNotificationRecord,
   AlertPrismaClient,
@@ -10,7 +10,7 @@ import type {
 const prisma = prismaClient as typeof prismaClient & AlertPrismaClient;
 
 /** Maps a price alert row to an API-friendly payload. */
-function mapPriceAlert(alert: PriceAlertRecord): PriceAlertView {
+function mapPriceAlert(alert: PriceAlertRecord): PriceAlert {
   return {
     id: alert.id,
     symbol: alert.symbol,
@@ -25,7 +25,7 @@ function mapPriceAlert(alert: PriceAlertRecord): PriceAlertView {
 }
 
 /** Maps an alert notification row to an API-friendly payload. */
-function mapAlertNotification(notification: AlertNotificationRecord): AlertNotificationView {
+function mapAlertNotification(notification: AlertNotificationRecord): AlertNotification {
   return {
     id: notification.id,
     alertId: notification.alertId,
@@ -45,7 +45,7 @@ export async function countUserPriceAlerts(userId: string): Promise<number> {
 }
 
 /** Lists all price alerts for a user ordered by creation time. */
-export async function listUserPriceAlerts(userId: string): Promise<PriceAlertView[]> {
+export async function listUserPriceAlerts(userId: string): Promise<PriceAlert[]> {
   const alerts = await prisma.priceAlert.findMany({
     where: { userId },
     orderBy: { createdAt: "asc" },
@@ -83,7 +83,7 @@ export async function createUserPriceAlert(input: {
   thresholdPercent: number;
   baselinePrice: number;
   emailEnabled: boolean;
-}): Promise<PriceAlertView> {
+}): Promise<PriceAlert> {
   const alert = await prisma.priceAlert.create({
     data: input,
   });
@@ -95,7 +95,7 @@ export async function createUserPriceAlert(input: {
 export async function updateUserPriceAlert(
   alertId: string,
   data: PriceAlertUpdateFields,
-): Promise<PriceAlertView> {
+): Promise<PriceAlert> {
   const alert = await prisma.priceAlert.update({
     where: { id: alertId },
     data,
@@ -113,7 +113,7 @@ export async function deleteUserPriceAlert(alertId: string): Promise<void> {
 export async function listUserAlertNotifications(
   userId: string,
   limit = 50,
-): Promise<AlertNotificationView[]> {
+): Promise<AlertNotification[]> {
   const notifications = await prisma.alertNotification.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },

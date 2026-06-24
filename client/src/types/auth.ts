@@ -1,13 +1,6 @@
-/** Authenticated user returned by the API. */
-export type AuthUser = {
-  userId: string
-  email: string
-}
+export type { AuthenticatedUser as AuthUser } from '@trading-signal/contracts/auth'
 
-/** Response body for auth endpoints that return the session user. */
-export type AuthResponse = {
-  user: AuthUser
-}
+export type { AuthResponse } from '@trading-signal/contracts/auth'
 
 /** Response body for POST /api/auth/logout. */
 export type LogoutResponse = {
@@ -21,6 +14,21 @@ export type OAuthRedirectErrorCode =
   | 'invalid_grant'
   | 'google_not_configured'
   | 'google_sign_in_failed'
+
+const oauthRedirectErrorCodes = new Set<string>(
+  Object.keys({
+    invalid_oauth_state: true,
+    invalid_client: true,
+    invalid_grant: true,
+    google_not_configured: true,
+    google_sign_in_failed: true,
+  } satisfies Record<OAuthRedirectErrorCode, true>),
+)
+
+/** Returns true when value is a known OAuth redirect error code. */
+export function isOAuthRedirectErrorCode(value: string): value is OAuthRedirectErrorCode {
+  return oauthRedirectErrorCodes.has(value)
+}
 
 /** User-facing messages for OAuth redirect failures from the server. */
 export const OAUTH_REDIRECT_ERROR_MESSAGES: Record<OAuthRedirectErrorCode, string> = {

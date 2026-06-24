@@ -1,0 +1,31 @@
+{
+  "name": "@trading-signal/contracts",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./recommendation": {
+      "types": "./dist/recommendation.d.ts",
+      "import": "./dist/recommendation.js"
+    },
+    "./alert": {
+      "types": "./dist/alert.d.ts",
+      "import": "./dist/alert.js"
+    },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "import": "./dist/auth.js"
+    },
+    "./parseAlertNotification": {
+      "types": "./dist/parseAlertNotification.d.ts",
+      "import": "./dist/parseAlertNotification.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "files": ["dist"]
+}

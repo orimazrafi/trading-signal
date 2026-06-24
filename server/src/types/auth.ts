@@ -1,4 +1,1 @@
-export interface AuthenticatedUser {
-  userId: string;
-  email: string;
-}
+export type { AuthenticatedUser } from "@trading-signal/contracts/auth.js";

@@ -10,6 +10,7 @@ import {
   getFirstApiErrorMessage,
   runMutationAndInvalidate,
 } from '@/features/alerts/lib/alertQueryUtils'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import type { UsePriceAlertsOptions } from '@/features/alerts/types'
 import type { CreatePriceAlertInput, PriceAlert, UpdatePriceAlertInput } from '@/types/alert'
 
@@ -22,19 +23,23 @@ export function usePriceAlerts({ enabled = true }: UsePriceAlertsOptions = {}) {
     queryKey: alertsQueryKey,
     queryFn: fetchPriceAlerts,
     enabled,
+    meta: queryErrorHandledMeta,
   })
 
   const createMutation = useMutation({
     mutationFn: createPriceAlert,
+    meta: queryErrorHandledMeta,
   })
 
   const updateMutation = useMutation({
     mutationFn: ({ alertId, input }: { alertId: string; input: UpdatePriceAlertInput }) =>
       updatePriceAlert(alertId, input),
+    meta: queryErrorHandledMeta,
   })
 
   const deleteMutation = useMutation({
     mutationFn: deletePriceAlert,
+    meta: queryErrorHandledMeta,
   })
 
   /** Creates an alert and refreshes the list. */

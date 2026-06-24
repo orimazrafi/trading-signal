@@ -12,8 +12,9 @@ const TABS: Array<{ id: DashboardTab; label: string }> = [
 function DashboardNav({ activeTab, onTabChange }: DashboardNavProps) {
   return (
     <nav
-      className="flex gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1 dark:border-slate-700 dark:bg-slate-900/60"
+      className="flex gap-1 rounded-xl border border-border bg-muted/80 p-1"
       aria-label="Dashboard sections"
+      role="tablist"
     >
       {TABS.map((tab) => {
         const isActive = activeTab === tab.id
@@ -23,8 +24,9 @@ function DashboardNav({ activeTab, onTabChange }: DashboardNavProps) {
             key={tab.id}
             variant={isActive ? 'tabActive' : 'tab'}
             fullWidth
+            role="tab"
+            aria-selected={isActive}
             onClick={() => onTabChange(tab.id)}
-            aria-current={isActive ? 'page' : undefined}
           >
             {tab.label}
           </Button>

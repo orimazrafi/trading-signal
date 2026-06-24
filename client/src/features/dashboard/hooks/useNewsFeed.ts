@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import { fetchMarketNews } from '@/api/dashboard'
 import { queryKeys } from '@/api/queryKeys'
 
@@ -9,6 +10,7 @@ export function useNewsFeed() {
     queryFn: fetchMarketNews,
     staleTime: 30_000,
     refetchOnMount: true,
+    meta: queryErrorHandledMeta,
   })
 
   const queryError = newsQuery.error instanceof Error ? newsQuery.error.message : null

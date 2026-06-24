@@ -85,36 +85,36 @@ function StockSearch({
         <Card variant="muted" className="mt-5 shadow-none">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <h3 className="text-lg font-semibold text-foreground">
                 {searchResult.quote.symbol}
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{searchResult.quote.name}</p>
+              <p className="text-sm text-muted-foreground">{searchResult.quote.name}</p>
             </div>
             <Badge variant={signalActionBadgeVariant(searchAction)}>{searchAction}</Badge>
           </div>
 
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div>
-              <dt className="text-slate-500 dark:text-slate-400">Price</dt>
-              <dd className="font-semibold text-slate-900 dark:text-slate-100">
+              <dt className="text-muted-foreground">Price</dt>
+              <dd className="font-semibold text-foreground">
                 ${searchResult.quote.price.toFixed(2)}
               </dd>
             </div>
             <div>
-              <dt className="text-slate-500 dark:text-slate-400">P/E ratio</dt>
-              <dd className="font-semibold text-slate-900 dark:text-slate-100">
+              <dt className="text-muted-foreground">P/E ratio</dt>
+              <dd className="font-semibold text-foreground">
                 {searchResult.quote.peRatio.toFixed(2)}
               </dd>
             </div>
             <div className="col-span-2">
-              <dt className="text-slate-500 dark:text-slate-400">Sector</dt>
-              <dd className="font-medium text-slate-900 dark:text-slate-100">
+              <dt className="text-muted-foreground">Sector</dt>
+              <dd className="font-medium text-foreground">
                 {searchResult.quote.sector}
               </dd>
             </div>
           </dl>
 
-          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{searchReason}</p>
+          <p className="mt-3 text-sm text-muted-foreground">{searchReason}</p>
 
           <div className="mt-4">
             <Button
@@ -130,17 +130,17 @@ function StockSearch({
           </div>
 
           {!activeWatchlistId ? (
-            <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+            <p className="mt-2 text-xs text-warning">
               Create or select a custom view before saving.
             </p>
           ) : null}
 
           {saveError ? (
-            <p className="mt-2 text-sm text-red-600 dark:text-red-400">{saveError}</p>
+            <p className="mt-2 text-sm text-destructive">{saveError}</p>
           ) : null}
 
           {saveSuccess ? (
-            <p className="mt-2 text-sm text-emerald-700 dark:text-emerald-300">{saveSuccess}</p>
+            <p className="mt-2 text-sm text-positive">{saveSuccess}</p>
           ) : null}
         </Card>
       ) : null}

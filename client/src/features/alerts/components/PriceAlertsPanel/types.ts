@@ -8,8 +8,8 @@ export type PriceAlertsPanelProps = {
   updating: boolean
   deleting: boolean
   error: string | null
-  onCreate: (symbol: string, thresholdPercent: number, emailEnabled: boolean) => Promise<void>
-  onToggleEnabled: (alert: PriceAlert, enabled: boolean) => Promise<void>
-  onToggleEmail: (alert: PriceAlert, emailEnabled: boolean) => Promise<void>
+  onCreate: (symbol: string, thresholdPercent: number, emailEnabled: boolean) => Promise<PriceAlert | void>
+  onToggleEnabled: (alert: PriceAlert, enabled: boolean) => Promise<PriceAlert | void>
+  onToggleEmail: (alert: PriceAlert, emailEnabled: boolean) => Promise<PriceAlert | void>
   onDelete: (alertId: string) => Promise<void>
 }

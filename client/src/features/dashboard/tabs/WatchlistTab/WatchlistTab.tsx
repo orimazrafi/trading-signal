@@ -92,7 +92,7 @@ function WatchlistTab({ user }: WatchlistTabProps) {
             title={activeWatchlist ? activeWatchlist.name : 'Active view'}
             description={watchlistDescription}
             variant="section"
-            className="bg-slate-50/80 dark:bg-slate-900/40"
+            className="bg-muted/50"
           >
             {!activeWatchlist ? (
               <EmptyState message="Create a custom view with the + button above to start saving stocks." />

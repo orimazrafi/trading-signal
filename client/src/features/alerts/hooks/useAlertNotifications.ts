@@ -5,6 +5,7 @@ import {
   getFirstApiErrorMessage,
   runMutationAndInvalidate,
 } from '@/features/alerts/lib/alertQueryUtils'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import type { UseAlertNotificationsOptions } from '@/features/alerts/types'
 
 /** Loads alert notification history for the authenticated user. */
@@ -15,10 +16,12 @@ export function useAlertNotifications({ enabled = true }: UseAlertNotificationsO
     queryKey: queryKeys.alerts.notifications,
     queryFn: fetchAlertNotifications,
     enabled,
+    meta: queryErrorHandledMeta,
   })
 
   const readMutation = useMutation({
     mutationFn: markAlertNotificationRead,
+    meta: queryErrorHandledMeta,
   })
 
   /** Marks a notification read and refreshes the list. */

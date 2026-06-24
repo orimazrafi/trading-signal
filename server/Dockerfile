@@ -5,23 +5,27 @@ FROM node:22-alpine AS base
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-COPY prisma ./prisma
+COPY packages/contracts/package.json packages/contracts/tsconfig.json ./packages/contracts/
+COPY packages/contracts/src ./packages/contracts/src
+COPY server/package.json server/package-lock.json* ./server/
+
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
 
+WORKDIR /app/server
+
 FROM base AS builder
 
-COPY prisma ./prisma
-COPY tsconfig.json ./
-COPY src ./src
-RUN npx prisma generate && npm run build
+COPY server/prisma ./prisma
+COPY server/tsconfig.json ./
+COPY server/src ./src
+RUN npm run build
 
 FROM base AS dev
 
-COPY prisma ./prisma
-COPY tsconfig.json ./
-COPY src ./src
-RUN npx prisma generate
+COPY server/prisma ./prisma
+COPY server/tsconfig.json ./
+COPY server/src ./src
 
 EXPOSE 3000
 
@@ -35,15 +39,21 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 COPY package.json package-lock.json* ./
-COPY prisma ./prisma
+COPY packages/contracts ./packages/contracts
+COPY server/package.json server/package-lock.json* ./server/
+COPY server/prisma ./server/prisma
+
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev --ignore-scripts
 
-COPY docker-entrypoint.sh ./
+WORKDIR /app/server
+
+COPY server/docker-entrypoint.sh ./
 RUN sed -i 's/\r$//' docker-entrypoint.sh && chmod +x docker-entrypoint.sh
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/server/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/server/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/server/dist ./dist
+COPY --from=builder /app/packages/contracts/dist /app/packages/contracts/dist
 
 EXPOSE 3000
 

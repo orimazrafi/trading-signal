@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { queryKeys } from '@/api/queryKeys'
 import type { AuthUser } from '@/types/auth'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import { fetchMe, login, logout, signup } from '@/api/auth'
 
 /** Manages login, signup, logout, and session state via React Query. */
@@ -13,14 +14,17 @@ export function useAuth() {
     queryKey: queryKeys.auth.me,
     queryFn: fetchMe,
     retry: false,
+    meta: queryErrorHandledMeta,
   })
 
   const loginMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) => login(email, password),
+    meta: queryErrorHandledMeta,
   })
 
   const signupMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) => signup(email, password),
+    meta: queryErrorHandledMeta,
   })
 
   const logoutMutation = useMutation({

@@ -2,6 +2,8 @@ import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { log } from "../lib/logger/index.js";
+import { sendAuthErrorResponse } from "../lib/authHttpErrors.js";
+import { parseAuthCredentialsBody } from "../lib/parseAuthCredentials.js";
 import {
   AUTH_COOKIE_NAME,
   AuthError,
@@ -48,42 +50,29 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
 }
 
-/** Maps auth service errors to HTTP responses. */
-function handleAuthError(res: Response, error: unknown, path: string): void {
-  if (error instanceof AuthError) {
-    res.status(error.statusCode).json({ error: error.message });
-    return;
-  }
-
-  log.error("Controller endpoint execution failed", error, { path });
-  res.status(500).json({ error: "Authentication failed" });
-}
-
 /** Registers a new user and sets the auth cookie. */
 export async function postSignup(req: Request, res: Response): Promise<void> {
-  const email = typeof req.body?.email === "string" ? req.body.email : "";
-  const password = typeof req.body?.password === "string" ? req.body.password : "";
+  const { email, password } = parseAuthCredentialsBody(req.body);
 
   try {
     const user = await registerWithEmail(email, password);
     setAuthCookie(res, user);
     res.status(201).json({ user });
   } catch (error) {
-    handleAuthError(res, error, req.path);
+    sendAuthErrorResponse(res, error, req.path);
   }
 }
 
 /** Logs in with email/password and sets the auth cookie. */
 export async function postLogin(req: Request, res: Response): Promise<void> {
-  const email = typeof req.body?.email === "string" ? req.body.email : "";
-  const password = typeof req.body?.password === "string" ? req.body.password : "";
+  const { email, password } = parseAuthCredentialsBody(req.body);
 
   try {
     const user = await loginWithEmail(email, password);
     setAuthCookie(res, user);
     res.json({ user });
   } catch (error) {
-    handleAuthError(res, error, req.path);
+    sendAuthErrorResponse(res, error, req.path);
   }
 }
 
@@ -118,7 +107,7 @@ export function getGoogleAuth(req: Request, res: Response): void {
 
     res.redirect(buildGoogleAuthUrl(state));
   } catch (error) {
-    handleAuthError(res, error, req.path);
+    sendAuthErrorResponse(res, error, req.path);
   }
 }
 

@@ -36,17 +36,18 @@ services:
 
   worker:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
       target: dev
       cache_from:
         - trading-signal-worker:dev
     image: trading-signal-worker:dev
     command: ["npm", "run", "dev:worker"]
     volumes:
-      - ./server/src:/app/src
-      - ./server/prisma:/app/prisma
-      - ./server/tsconfig.json:/app/tsconfig.json
+      - ./server/src:/app/server/src
+      - ./server/prisma:/app/server/prisma
+      - ./server/tsconfig.json:/app/server/tsconfig.json
+      - ./packages/contracts:/app/packages/contracts
     env_file:
       - ./server/.env
     environment:
@@ -70,8 +71,8 @@ services:
 
   server:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
       target: dev
       cache_from:
         - trading-signal-server:dev
@@ -80,9 +81,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./server/src:/app/src
-      - ./server/prisma:/app/prisma
-      - ./server/tsconfig.json:/app/tsconfig.json
+      - ./server/src:/app/server/src
+      - ./server/prisma:/app/server/prisma
+      - ./server/tsconfig.json:/app/server/tsconfig.json
+      - ./packages/contracts:/app/packages/contracts
     env_file:
       - ./server/.env
     environment:
@@ -143,6 +145,7 @@ services:
       - ./client/package.json:/app/package.json
       - ./client/package-lock.json:/app/package-lock.json
       - ./client/public:/app/public
+      - ./packages/contracts:/app/packages/contracts
     environment:
       API_PROXY_TARGET: http://server:3000
       CHOKIDAR_USEPOLLING: "true"

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "dev:worker": "tsx watch src/worker.ts",
-    "build": "prisma generate && tsc",
+    "build": "npm run build -w @trading-signal/contracts && prisma generate && tsc",
     "start": "node dist/server.js",
     "start:worker": "node dist/worker.js",
     "news:ingest": "tsx src/scripts/publish-news.ts",
@@ -16,6 +16,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@trading-signal/contracts": "*",
     "@prisma/client": "^6.19.0",
     "amqplib": "^0.10.9",
     "axios": "^1.13.2",

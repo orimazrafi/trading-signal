@@ -21,14 +21,14 @@ function RecommendationCard({
   return (
     <Card
       variant="muted"
-      className={`shadow-none ${isHoldIdea ? 'bg-slate-100/80 dark:bg-slate-900/60' : ''}`}
+      className={`shadow-none ${isHoldIdea ? 'bg-muted/80' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+          <h3 className="text-lg font-semibold text-foreground">
             {recommendation.symbol}
           </h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-muted-foreground">
             {recommendation.name} · {recommendation.sector}
           </p>
         </div>
@@ -37,24 +37,24 @@ function RecommendationCard({
         </Badge>
       </div>
 
-      <p className="mt-3 text-sm text-slate-700 dark:text-slate-200">{recommendation.summary}</p>
+      <p className="mt-3 text-sm text-foreground/90">{recommendation.summary}</p>
 
       <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
         <div>
-          <dt className="text-slate-500 dark:text-slate-400">Price</dt>
-          <dd className="font-semibold text-slate-900 dark:text-slate-100">
+          <dt className="text-muted-foreground">Price</dt>
+          <dd className="font-semibold text-foreground">
             ${recommendation.price.toFixed(2)}
           </dd>
         </div>
         <div>
-          <dt className="text-slate-500 dark:text-slate-400">Score</dt>
-          <dd className="font-semibold text-slate-900 dark:text-slate-100">
+          <dt className="text-muted-foreground">Score</dt>
+          <dd className="font-semibold text-foreground">
             {recommendation.confidence}%
           </dd>
         </div>
         <div>
-          <dt className="text-slate-500 dark:text-slate-400">Primary signal</dt>
-          <dd className="font-medium text-slate-900 dark:text-slate-100">
+          <dt className="text-muted-foreground">Primary signal</dt>
+          <dd className="font-medium text-foreground">
             {formatRecommendationSource(recommendation.primarySource)}
           </dd>
         </div>
@@ -63,7 +63,7 @@ function RecommendationCard({
       <RecommendationFactors factors={recommendation.factors} />
 
       {onAddToWatchlist ? (
-        <div className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-700">
+        <div className="mt-4 border-t border-border pt-3">
           <AddToWatchlistButton
             symbol={recommendation.symbol}
             onAdd={onAddToWatchlist}
