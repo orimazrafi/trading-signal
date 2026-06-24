@@ -13,6 +13,7 @@ import {
   toAuthenticatedUser,
   upsertGoogleUser,
 } from "../repositories/user.repository.js";
+import { ensureDefaultWatchlistForUser } from "./watchlist.service.js";
 
 export const AUTH_COOKIE_NAME = "auth_token";
 export const OAUTH_STATE_COOKIE = "oauth_state";
@@ -186,6 +187,7 @@ export async function registerWithEmail(email: string, password: string): Promis
   await assertEmailAvailable(normalizedEmail);
 
   const user = await createPasswordUser(normalizedEmail, password);
+  await ensureDefaultWatchlistForUser(user.id);
   return toAuthenticatedUser(user);
 }
 
@@ -367,5 +369,6 @@ export async function authenticateWithGoogleCode(code: string): Promise<Authenti
   assertGoogleProfile(profile);
 
   const user = await upsertGoogleUser(profile.googleId, profile.email);
+  await ensureDefaultWatchlistForUser(user.id);
   return toAuthenticatedUser(user);
 }

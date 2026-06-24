@@ -116,7 +116,7 @@ function WatchlistTab({ user }: WatchlistTabProps) {
             ) : activeWatchlist.signals.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center dark:border-slate-600 dark:bg-slate-900">
                 <p className="text-sm text-slate-600 dark:text-slate-300">
-                  No stocks saved in this view yet. Use stock search below to find and add stocks.
+                  No stocks saved yet. Search below or use Add to watchlist on News and Market Ideas.
                 </p>
               </div>
             ) : (

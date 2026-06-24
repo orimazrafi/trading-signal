@@ -6,6 +6,7 @@ export type IncomingNewsArticle = {
   url: string;
   source: string;
   publishedAt: string;
+  symbol: string;
 };
 
 /** Processed article stored in Redis for the dashboard feed. */
@@ -15,4 +16,5 @@ export type ProcessedNewsArticle = {
   source: string;
   publishedAt: string;
   sentiment: NewsSentiment;
+  symbol: string;
 };

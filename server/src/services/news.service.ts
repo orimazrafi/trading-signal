@@ -2,6 +2,7 @@ import { env } from "../config/env.js";
 import { log } from "../lib/logger.js";
 import { redis } from "../config/redis.js";
 import { parseProcessedNewsArticles } from "../lib/parseNews.js";
+import { getWatchlistSymbolsForUser } from "../services/watchlist.service.js";
 import {
   fetchLatestMarketNewsArticles,
   markIncomingArticlesAsSeen,
@@ -72,7 +73,23 @@ function processIncomingArticle(article: IncomingNewsArticle): ProcessedNewsArti
     source: article.source,
     publishedAt: article.publishedAt,
     sentiment: analyzeHeadlineSentiment(article.title),
+    symbol: article.symbol,
   };
+}
+
+/** Filters articles to symbols on the user's watchlists when any exist. */
+function filterNewsByWatchlistSymbols(
+  articles: ProcessedNewsArticle[],
+  watchlistSymbols: string[],
+): ProcessedNewsArticle[] {
+  if (watchlistSymbols.length === 0) {
+    return articles;
+  }
+
+  const allowed = new Set(watchlistSymbols);
+  const filtered = articles.filter((article) => allowed.has(article.symbol));
+
+  return filtered.length > 0 ? filtered : articles;
 }
 
 /** Fetches market news from Twelve Data, processes it, and caches the feed. */
@@ -117,6 +134,16 @@ export class NewsService {
     }
 
     return refreshProcessedNewsFromApi();
+  }
+
+  /** Returns news filtered to the user's watchlist symbols when available. */
+  async getProcessedNewsForUser(userId: string): Promise<ProcessedNewsArticle[]> {
+    const [articles, watchlistSymbols] = await Promise.all([
+      this.getProcessedNews(),
+      getWatchlistSymbolsForUser(userId),
+    ]);
+
+    return filterNewsByWatchlistSymbols(articles, watchlistSymbols);
   }
 
   /** Scores, prepends, trims, and stores an incoming news article. */

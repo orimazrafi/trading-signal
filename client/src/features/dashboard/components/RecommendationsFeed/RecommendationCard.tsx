@@ -1,4 +1,5 @@
 import type { StockRecommendation } from '@/types/recommendation'
+import { AddToWatchlistButton } from '@/features/watchlists/components/AddToWatchlistButton'
 import RecommendationFactors from './RecommendationFactors'
 import {
   formatRecommendationAction,
@@ -8,12 +9,28 @@ import {
 
 export type RecommendationCardProps = {
   recommendation: StockRecommendation
+  onAddToWatchlist?: (symbol: string) => Promise<void>
+  saving?: boolean
+  watchlistName?: string | null
 }
 
-/** Renders a single stock recommendation card with factor breakdown. */
-function RecommendationCard({ recommendation }: RecommendationCardProps) {
+/** Renders a single market idea card with factor breakdown. */
+function RecommendationCard({
+  recommendation,
+  onAddToWatchlist,
+  saving = false,
+  watchlistName,
+}: RecommendationCardProps) {
+  const isHoldIdea = recommendation.action === 'HOLD'
+
   return (
-    <article className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/40">
+    <article
+      className={`rounded-xl border p-4 ${
+        isHoldIdea
+          ? 'border-slate-200 bg-slate-100/80 dark:border-slate-700 dark:bg-slate-900/60'
+          : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950/40'
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -40,7 +57,7 @@ function RecommendationCard({ recommendation }: RecommendationCardProps) {
           </dd>
         </div>
         <div>
-          <dt className="text-slate-500 dark:text-slate-400">Confidence</dt>
+          <dt className="text-slate-500 dark:text-slate-400">Score</dt>
           <dd className="font-semibold text-slate-900 dark:text-slate-100">
             {recommendation.confidence}%
           </dd>
@@ -54,6 +71,17 @@ function RecommendationCard({ recommendation }: RecommendationCardProps) {
       </dl>
 
       <RecommendationFactors factors={recommendation.factors} />
+
+      {onAddToWatchlist ? (
+        <div className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-700">
+          <AddToWatchlistButton
+            symbol={recommendation.symbol}
+            onAdd={onAddToWatchlist}
+            saving={saving}
+            watchlistName={watchlistName}
+          />
+        </div>
+      ) : null}
     </article>
   )
 }

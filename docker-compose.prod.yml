@@ -34,6 +34,36 @@ services:
       timeout: 10s
       retries: 10
 
+  worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: production
+      cache_from:
+        - trading-signal-worker:latest
+    image: trading-signal-worker:latest
+    command: ["node", "dist/worker.js"]
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      RECOMMENDATIONS_ENABLED: "true"
+      RECOMMENDATIONS_INTERVAL_MS: "300000"
+      RECOMMENDATION_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL,AMZN,META,JPM,XOM"
+      NEWS_INGEST_ENABLED: "true"
+      NEWS_INGEST_INTERVAL_MS: "300000"
+      NEWS_INGEST_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
   server:
     build:
       context: ./server
@@ -56,6 +86,8 @@ services:
       CLIENT_URL: http://localhost:8080
       GOOGLE_CALLBACK_URL: http://localhost:8080/api/auth/google/callback
       AUTH_ALLOW_MOCK: "false"
+      RECOMMENDATIONS_ENABLED: "true"
+      RECOMMENDATION_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL,AMZN,META,JPM,XOM"
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,29 +95,7 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-
-  worker:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-      target: production
-      cache_from:
-        - trading-signal-worker:latest
-    image: trading-signal-worker:latest
-    command: ["node", "dist/worker.js"]
-    environment:
-      NODE_ENV: production
-      DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
-      REDIS_URL: redis://redis:6379
-      RABBITMQ_URL: amqp://rabbitmq:5672
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-      server:
+      worker:
         condition: service_started
 
   alerts-runner:
@@ -119,7 +129,10 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - server
+      server:
+        condition: service_started
+      worker:
+        condition: service_started
 
 volumes:
   postgres_data:

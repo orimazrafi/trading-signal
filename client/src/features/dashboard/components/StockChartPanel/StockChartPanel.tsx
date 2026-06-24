@@ -16,7 +16,7 @@ export type StockChartPanelProps = {
 
 /** Shows live quote details and a historical price chart for the selected symbol. */
 function StockChartPanel({ symbol }: StockChartPanelProps) {
-  const [range, setRange] = useState<StockHistoryRange>('3M')
+  const [range, setRange] = useState<StockHistoryRange>('1M')
   const isDarkMode = usePrefersDarkMode()
   const { quote, isLoading: isQuoteLoading, error: quoteError } = useStockQuote(symbol, {
     refetchIntervalMs: QUOTE_REFETCH_MS,
@@ -36,8 +36,8 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
       return history.points
     }
 
-    return mergeLivePriceIntoHistory(history.points, quote.price)
-  }, [history?.points, quote?.price])
+    return mergeLivePriceIntoHistory(history.points, quote.price, range)
+  }, [history?.points, quote?.price, range])
 
   if (!symbol) {
     return (

@@ -24,6 +24,25 @@ export function actionBadgeClass(action: SignalAction): string {
   return ACTION_BADGE_CLASSES[action]
 }
 
+/** Formats a signed percent change for display. */
+export function formatChangePercent(changePercent: number): string {
+  const sign = changePercent >= 0 ? '+' : ''
+  return `${sign}${changePercent.toFixed(2)}%`
+}
+
+/** Returns Tailwind classes for a positive or negative price change. */
+export function changePercentClass(changePercent: number): string {
+  if (changePercent > 0) {
+    return 'text-emerald-600 dark:text-emerald-400'
+  }
+
+  if (changePercent < 0) {
+    return 'text-red-600 dark:text-red-400'
+  }
+
+  return 'text-slate-500 dark:text-slate-400'
+}
+
 /** Maps a server recommendation string to a client signal action. */
 export function toSignalAction(recommendation: string): SignalAction {
   const normalized = recommendation.toUpperCase()
@@ -42,4 +61,20 @@ export function toSignalAction(recommendation: string): SignalAction {
 /** Builds a human-readable reason from the recommendation action. */
 export function buildSignalReason(action: SignalAction): string {
   return SIGNAL_REASONS[action]
+}
+
+/** Maps a server recommendation string to a human-readable watchlist reason. */
+export function buildSignalReasonFromRecommendation(
+  recommendation: string,
+  changePercent: number,
+): string {
+  const action = toSignalAction(recommendation)
+  const base = buildSignalReason(action)
+
+  if (changePercent === 0) {
+    return base
+  }
+
+  const sign = changePercent >= 0 ? '+' : ''
+  return `${base} Snapshot change: ${sign}${changePercent.toFixed(2)}%.`
 }

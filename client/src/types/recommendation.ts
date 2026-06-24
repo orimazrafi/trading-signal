@@ -61,4 +61,5 @@ export type StockRecommendation = {
 /** Response body for GET /api/dashboard/recommendations. */
 export type RecommendationsResponse = {
   recommendations: StockRecommendation[]
+  emptyMessage?: string
 }

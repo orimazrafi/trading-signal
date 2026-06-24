@@ -1,6 +1,6 @@
 import { api } from './client'
 import type { MarketNewsArticle, MarketNewsResponse } from '@/types/news'
-import type { RecommendationsResponse, StockRecommendation } from '@/types/recommendation'
+import type { RecommendationsResponse } from '@/types/recommendation'
 
 /** Fetches the compiled market news feed from the dashboard API. */
 export async function fetchMarketNews(): Promise<MarketNewsArticle[]> {
@@ -9,7 +9,10 @@ export async function fetchMarketNews(): Promise<MarketNewsArticle[]> {
 }
 
 /** Fetches pre-computed stock recommendations from the dashboard API. */
-export async function fetchRecommendations(): Promise<StockRecommendation[]> {
+export async function fetchRecommendations(): Promise<RecommendationsResponse> {
   const { data } = await api.get<RecommendationsResponse>('/dashboard/recommendations')
-  return data.recommendations ?? []
+  return {
+    recommendations: data.recommendations ?? [],
+    emptyMessage: data.emptyMessage,
+  }
 }

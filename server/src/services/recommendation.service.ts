@@ -1,4 +1,8 @@
 import { env } from "../config/env.js";
+import {
+  RECOMMENDATIONS_EMPTY_MESSAGE,
+  RECOMMENDATIONS_UNAVAILABLE_MESSAGE,
+} from "../lib/recommendationConstants.js";
 import { log } from "../lib/logger.js";
 import { parseStockRecommendations } from "../lib/parseRecommendations.js";
 import { redis } from "../config/redis.js";
@@ -15,6 +19,44 @@ export type RecommendationQuery = {
   sector?: string;
   sources?: RecommendationSource[];
 };
+
+export type RecommendationsFeedResult = {
+  recommendations: StockRecommendation[];
+  emptyMessage?: string;
+};
+
+/** Builds recommendations from fetched quotes and writes them to Redis. */
+function buildRecommendationsFromQuotes(quotes: StockQuote[]): StockRecommendation[] {
+  const sectorAverages = buildSectorAveragePeMap(quotes);
+  const generatedAt = new Date().toISOString();
+
+  return quotes
+    .map((quote) => buildRecommendation(quote, sectorAverages.get(quote.sector) ?? 0, generatedAt))
+    .sort((left, right) => {
+      const actionRank = (action: RecommendationAction) => {
+        if (action === "STRONG_BUY") return 0;
+        if (action === "BUY") return 1;
+        return 2;
+      };
+
+      const rankDiff = actionRank(left.action) - actionRank(right.action);
+      if (rankDiff !== 0) {
+        return rankDiff;
+      }
+
+      return right.confidence - left.confidence;
+    })
+    .slice(0, env.recommendationsMaxItems);
+}
+
+/** Returns a user-facing empty-state message for the ideas feed. */
+function resolveRecommendationsEmptyMessage(quoteCount: number | null): string {
+  if (quoteCount === 0) {
+    return RECOMMENDATIONS_UNAVAILABLE_MESSAGE;
+  }
+
+  return RECOMMENDATIONS_EMPTY_MESSAGE;
+}
 
 /** Maps a P/E ratio to a fundamental buy/hold action. */
 function resolveFundamentalAction(peRatio: number): RecommendationAction {
@@ -150,16 +192,13 @@ function buildRecommendation(
   };
 }
 
-/** Reads processed recommendations from Redis, or an empty list on miss. */
-async function readRecommendationsFromRedis(): Promise<StockRecommendation[]> {
+/** Reads processed recommendations from Redis, or null on cache miss. */
+async function readRecommendationsFromRedis(): Promise<StockRecommendation[] | null> {
   try {
     const cached = await redis.get(env.dashboardRecommendationsRedisKey);
 
     if (!cached) {
-      log.warn("Cache miss for dynamic data, fetching from external provider", {
-        key: env.dashboardRecommendationsRedisKey,
-      });
-      return [];
+      return null;
     }
 
     return parseStockRecommendations(JSON.parse(cached));
@@ -167,7 +206,7 @@ async function readRecommendationsFromRedis(): Promise<StockRecommendation[]> {
     log.error("Failed to read recommendations from Redis", error, {
       key: env.dashboardRecommendationsRedisKey,
     });
-    return [];
+    return null;
   }
 }
 
@@ -226,14 +265,7 @@ export class RecommendationService {
   /** Recomputes recommendations from live quotes and writes them to Redis. */
   async refreshRecommendations(): Promise<StockRecommendation[]> {
     const quotes = await fetchUniverseQuotes();
-    const sectorAverages = buildSectorAveragePeMap(quotes);
-    const generatedAt = new Date().toISOString();
-
-    const recommendations = quotes
-      .map((quote) => buildRecommendation(quote, sectorAverages.get(quote.sector) ?? 0, generatedAt))
-      .filter((recommendation) => recommendation.action !== "HOLD")
-      .sort((left, right) => right.confidence - left.confidence)
-      .slice(0, env.recommendationsMaxItems);
+    const recommendations = buildRecommendationsFromQuotes(quotes);
 
     await saveRecommendationsToRedis(recommendations);
 
@@ -245,10 +277,30 @@ export class RecommendationService {
     return recommendations;
   }
 
-  /** Returns the compiled recommendations feed from Redis with optional filters. */
-  async getRecommendations(query: RecommendationQuery = {}): Promise<StockRecommendation[]> {
-    const recommendations = await readRecommendationsFromRedis();
-    return filterRecommendations(recommendations, query);
+  /** Returns the compiled recommendations feed, refreshing on Redis cache miss. */
+  async getRecommendations(query: RecommendationQuery = {}): Promise<RecommendationsFeedResult> {
+    let recommendations = await readRecommendationsFromRedis();
+    let quoteCount: number | null = null;
+
+    if (recommendations === null) {
+      log.warn("Cache miss for dynamic data, fetching from external provider", {
+        key: env.dashboardRecommendationsRedisKey,
+      });
+
+      const quotes = await fetchUniverseQuotes();
+      quoteCount = quotes.length;
+      recommendations = buildRecommendationsFromQuotes(quotes);
+      await saveRecommendationsToRedis(recommendations);
+    }
+
+    const filtered = filterRecommendations(recommendations, query);
+    const emptyMessage =
+      filtered.length === 0 ? resolveRecommendationsEmptyMessage(quoteCount) : undefined;
+
+    return {
+      recommendations: filtered,
+      emptyMessage,
+    };
   }
 }
 

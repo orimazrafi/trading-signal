@@ -1,11 +1,20 @@
 import type { NewsFeedProps } from '@/features/dashboard/components/NewsFeed/types'
 import { NewsFeed } from '@/features/dashboard/components/NewsFeed'
 
-export type NewsTabProps = Pick<NewsFeedProps, 'news' | 'isLoading' | 'error'>
+export type NewsTabProps = Pick<
+  NewsFeedProps,
+  | 'news'
+  | 'isLoading'
+  | 'error'
+  | 'watchlistSymbols'
+  | 'onAddToWatchlist'
+  | 'savingSymbol'
+  | 'watchlistName'
+>
 
-/** Default home tab with the full-width market news feed. */
-function NewsTab({ news, isLoading, error }: NewsTabProps) {
-  return <NewsFeed news={news} isLoading={isLoading} error={error} variant="page" />
+/** Default home tab with the full-width watchlist news feed. */
+function NewsTab(props: NewsTabProps) {
+  return <NewsFeed {...props} variant="page" />
 }
 
 export default NewsTab

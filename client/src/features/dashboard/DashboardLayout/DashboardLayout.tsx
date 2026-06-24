@@ -4,6 +4,7 @@ import { AppHeader } from '@/components/AppHeader'
 import { DashboardNav, type DashboardTab } from '@/features/dashboard/components/DashboardNav'
 import { useNewsFeed } from '@/features/dashboard/hooks/useNewsFeed'
 import type { DashboardProps } from '@/features/dashboard/types'
+import { useQuickAddToWatchlist } from '@/features/watchlists/hooks/useQuickAddToWatchlist'
 import AlertsTab from '@/features/dashboard/tabs/AlertsTab'
 import NewsTab from '@/features/dashboard/tabs/NewsTab'
 import RecommendationsTab from '@/features/dashboard/tabs/RecommendationsTab'
@@ -13,6 +14,12 @@ import WatchlistTab from '@/features/dashboard/tabs/WatchlistTab'
 function DashboardLayout({ user, onLogout }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<DashboardTab>('news')
   const { news, isLoading: newsLoading, error: newsError } = useNewsFeed()
+  const {
+    quickAdd,
+    savingSymbol,
+    watchlistName,
+    watchlistSymbols,
+  } = useQuickAddToWatchlist(user.userId)
 
   useAlertStream(true)
 
@@ -22,9 +29,23 @@ function DashboardLayout({ user, onLogout }: DashboardProps) {
       <DashboardNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 'news' ? (
-        <NewsTab news={news} isLoading={newsLoading} error={newsError} />
+        <NewsTab
+          news={news}
+          isLoading={newsLoading}
+          error={newsError}
+          watchlistSymbols={watchlistSymbols}
+          onAddToWatchlist={quickAdd}
+          savingSymbol={savingSymbol}
+          watchlistName={watchlistName}
+        />
       ) : null}
-      {activeTab === 'recommendations' ? <RecommendationsTab /> : null}
+      {activeTab === 'recommendations' ? (
+        <RecommendationsTab
+          onAddToWatchlist={quickAdd}
+          savingSymbol={savingSymbol}
+          watchlistName={watchlistName}
+        />
+      ) : null}
       {activeTab === 'watchlist' ? <WatchlistTab user={user} /> : null}
       {activeTab === 'alerts' ? <AlertsTab userEmail={user.email} /> : null}
     </main>

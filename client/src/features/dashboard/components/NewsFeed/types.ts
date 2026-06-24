@@ -6,4 +6,8 @@ export type NewsFeedProps = {
   isLoading: boolean
   error: string | null
   variant?: 'panel' | 'page'
+  watchlistSymbols?: string[]
+  onAddToWatchlist?: (symbol: string) => Promise<void>
+  savingSymbol?: string | null
+  watchlistName?: string | null
 }

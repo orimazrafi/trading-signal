@@ -1,5 +1,5 @@
 import { Button } from '@/components/Button'
-import { actionBadgeClass } from '@/lib/signalUtils'
+import { actionBadgeClass, changePercentClass, formatChangePercent } from '@/lib/signalUtils'
 import type { SignalCardProps } from './types'
 
 /** Renders a saved watchlist stock row, optionally selectable. */
@@ -55,10 +55,19 @@ function SignalCard({
           {signal.action}
         </span>
       </div>
-      <p className="mt-3 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-        ${signal.price.toFixed(2)}
-      </p>
-      <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Saved price · tap to view chart</p>
+      <div className="mt-3 flex items-end justify-between gap-3">
+        <div>
+          <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+            ${signal.price.toFixed(2)}
+          </p>
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+            Saved at snapshot · tap to view chart
+          </p>
+        </div>
+        <p className={`text-sm font-semibold ${changePercentClass(signal.changePercent)}`}>
+          {formatChangePercent(signal.changePercent)}
+        </p>
+      </div>
       {onRemove ? (
         <Button
           type="button"

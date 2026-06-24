@@ -1,5 +1,5 @@
 import { api } from './client'
-import { buildSignalReason, toSignalAction } from '@/lib/signalUtils'
+import { buildSignalReasonFromRecommendation, toSignalAction } from '@/lib/signalUtils'
 import type {
   AddStockResponse,
   ApiWatchlist,
@@ -19,8 +19,11 @@ function mapApiStockToSignal(stock: ApiWatchlistStock): Signal {
     id: stock.signalId,
     symbol: stock.symbol,
     price: stock.price,
+    previousPrice: stock.previousPrice,
+    changePercent: stock.changePercent,
+    recommendation: stock.recommendation,
     action,
-    reason: buildSignalReason(action),
+    reason: buildSignalReasonFromRecommendation(stock.recommendation, stock.changePercent),
     createdAt: stock.createdAt,
   }
 }

@@ -19,6 +19,7 @@ function RecommendationFactors({ factors }: RecommendationFactorsProps) {
           className="flex items-center justify-between gap-3 text-xs"
         >
           <span className="text-slate-500 dark:text-slate-400">
+            {factor.weight !== undefined ? `${Math.round(factor.weight * 100)}% · ` : ''}
             {formatRecommendationSource(factor.source)} · {factor.label}
           </span>
           <span className="font-medium text-slate-800 dark:text-slate-200">{factor.value}</span>

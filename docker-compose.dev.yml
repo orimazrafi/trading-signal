@@ -34,42 +34,6 @@ services:
       timeout: 10s
       retries: 10
 
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-      target: dev
-      cache_from:
-        - trading-signal-server:dev
-    image: trading-signal-server:dev
-    command: ["sh", "-c", "npx prisma db push --accept-data-loss && npm run dev"]
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./server/src:/app/src
-      - ./server/prisma:/app/prisma
-      - ./server/tsconfig.json:/app/tsconfig.json
-    env_file:
-      - ./server/.env
-    environment:
-      NODE_ENV: development
-      PORT: 3000
-      DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
-      REDIS_URL: redis://redis:6379
-      RABBITMQ_URL: amqp://rabbitmq:5672
-      JWT_SECRET: dev-jwt-secret-change-me
-      JWT_EXPIRES_IN: 1h
-      CLIENT_URL: http://localhost:5173
-      GOOGLE_CALLBACK_URL: http://localhost:5173/api/auth/google/callback
-      AUTH_ALLOW_MOCK: "false"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-
   worker:
     build:
       context: ./server
@@ -103,7 +67,45 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-      server:
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: dev
+      cache_from:
+        - trading-signal-server:dev
+    image: trading-signal-server:dev
+    command: ["sh", "-c", "npx prisma db push --accept-data-loss && npm run dev"]
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server/src:/app/src
+      - ./server/prisma:/app/prisma
+      - ./server/tsconfig.json:/app/tsconfig.json
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      JWT_SECRET: dev-jwt-secret-change-me
+      JWT_EXPIRES_IN: 1h
+      CLIENT_URL: http://localhost:5173
+      GOOGLE_CALLBACK_URL: http://localhost:5173/api/auth/google/callback
+      AUTH_ALLOW_MOCK: "false"
+      RECOMMENDATIONS_ENABLED: "true"
+      RECOMMENDATION_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL,AMZN,META,JPM,XOM"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      worker:
         condition: service_started
 
   alerts-runner:
@@ -146,7 +148,10 @@ services:
     ports:
       - "5173:5173"
     depends_on:
-      - server
+      server:
+        condition: service_started
+      worker:
+        condition: service_started
 
 volumes:
   postgres_data:

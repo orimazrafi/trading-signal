@@ -1,11 +1,11 @@
 /** Supported dashboard chart lookback windows. */
-export const STOCK_HISTORY_RANGES = ['1M', '3M', '6M', '1Y'] as const
+export const STOCK_HISTORY_RANGES = ['1D', '1W', '1M', '3M', '6M', '1Y'] as const
 
 export type StockHistoryRange = (typeof STOCK_HISTORY_RANGES)[number]
 
 /** One OHLCV bar returned by the history API. */
 export type StockHistoryPoint = {
-  time: string
+  time: string | number
   open: number
   high: number
   low: number

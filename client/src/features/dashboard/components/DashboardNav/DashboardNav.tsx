@@ -3,7 +3,7 @@ import type { DashboardNavProps, DashboardTab } from './types'
 
 const TABS: Array<{ id: DashboardTab; label: string }> = [
   { id: 'news', label: 'Market News' },
-  { id: 'recommendations', label: 'Recommendations' },
+  { id: 'recommendations', label: 'Market Ideas' },
   { id: 'watchlist', label: 'Watchlist' },
   { id: 'alerts', label: 'Alerts' },
 ]

@@ -1,9 +1,11 @@
 import type { Signal, Watchlist, WatchlistItem } from "@prisma/client";
 import { Prisma } from "@prisma/client";
+import { DEFAULT_WATCHLIST_NAME } from "../lib/watchlistConstants.js";
 import {
   addStockToWatchlist,
   createWatchlist,
   findWatchlistByIdAndUser,
+  getDistinctWatchlistSymbols,
   getUserWatchlists,
   isSignalInWatchlist,
   removeStockFromWatchlist,
@@ -121,6 +123,22 @@ async function resolveSignalForSymbol(userId: string, symbol: string): Promise<S
   }
 
   return signal;
+}
+
+/** Creates the default watchlist when a new user has none yet. */
+export async function ensureDefaultWatchlistForUser(userId: string): Promise<void> {
+  const watchlists = await getUserWatchlists(userId);
+
+  if (watchlists.length > 0) {
+    return;
+  }
+
+  await createWatchlist(userId, DEFAULT_WATCHLIST_NAME);
+}
+
+/** Returns distinct ticker symbols saved across all of a user's watchlists. */
+export async function getWatchlistSymbolsForUser(userId: string): Promise<string[]> {
+  return getDistinctWatchlistSymbols(userId);
 }
 
 /** Creates a new custom view for the authenticated user. */

@@ -13,6 +13,9 @@ export interface Signal {
   id: string
   symbol: string
   price: number
+  previousPrice: number
+  changePercent: number
+  recommendation: string
   action: SignalAction
   reason: string
   createdAt: string

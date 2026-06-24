@@ -53,6 +53,28 @@ export async function removeStockFromWatchlist(watchlistId: string, signalId: st
   });
 }
 
+/** Returns distinct symbols linked across all watchlists for a user. */
+export async function getDistinctWatchlistSymbols(userId: string): Promise<string[]> {
+  const items = await prisma.watchlistItem.findMany({
+    where: {
+      watchlist: { userId },
+    },
+    select: {
+      signal: {
+        select: { symbol: true },
+      },
+    },
+  });
+
+  const symbols = new Set<string>();
+
+  for (const item of items) {
+    symbols.add(item.signal.symbol);
+  }
+
+  return [...symbols].sort();
+}
+
 /** Returns true when the signal is already linked to the watchlist. */
 export async function isSignalInWatchlist(watchlistId: string, signalId: string): Promise<boolean> {
   const existing = await prisma.watchlistItem.findUnique({

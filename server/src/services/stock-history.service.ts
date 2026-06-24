@@ -6,8 +6,6 @@ import { buildTwelveDataApiUrl, requireTwelveDataApiKey, TWELVE_DATA_ENDPOINTS }
 import { redis } from "../config/redis.js";
 import type { StockHistory, StockHistoryPoint, StockHistoryRange } from "../types/stockHistory.js";
 
-const HISTORY_INTERVAL = "1day";
-
 type TwelveDataTimeSeriesValue = {
   datetime: string;
   open: string;
@@ -32,6 +30,10 @@ function normalizeSymbol(symbol: string): string {
 /** Maps a dashboard range label to Twelve Data outputsize. */
 function resolveOutputSize(range: StockHistoryRange): number {
   switch (range) {
+    case "1D":
+      return 13;
+    case "1W":
+      return 5;
     case "1M":
       return 22;
     case "3M":
@@ -43,6 +45,31 @@ function resolveOutputSize(range: StockHistoryRange): number {
   }
 }
 
+/** Maps a dashboard range label to a Twelve Data interval. */
+function resolveHistoryInterval(range: StockHistoryRange): string {
+  if (range === "1D") {
+    return "30min";
+  }
+
+  return "1day";
+}
+
+/** Normalizes a Twelve Data datetime string to a chart-compatible time value. */
+function normalizeBarTime(datetime: string, isIntraday: boolean): string | number {
+  if (!isIntraday) {
+    return datetime.slice(0, 10);
+  }
+
+  const normalized = datetime.includes("T") ? datetime : datetime.replace(" ", "T");
+  const timestamp = Date.parse(normalized);
+
+  if (Number.isNaN(timestamp)) {
+    return datetime.slice(0, 10);
+  }
+
+  return Math.floor(timestamp / 1000);
+}
+
 /** Builds the Redis cache key for a symbol history series. */
 function buildHistoryCacheKey(symbol: string, range: StockHistoryRange): string {
   return `stock:history:${symbol}:${range}`;
@@ -52,7 +79,7 @@ function buildHistoryCacheKey(symbol: string, range: StockHistoryRange): string 
 function buildTimeSeriesUrl(symbol: string, range: StockHistoryRange, apiKey: string): string {
   return buildTwelveDataApiUrl(TWELVE_DATA_ENDPOINTS.timeSeries, {
     symbol,
-    interval: HISTORY_INTERVAL,
+    interval: resolveHistoryInterval(range),
     outputsize: String(resolveOutputSize(range)),
     apikey: apiKey,
     order: "ASC",
@@ -60,7 +87,7 @@ function buildTimeSeriesUrl(symbol: string, range: StockHistoryRange, apiKey: st
 }
 
 /** Maps a Twelve Data bar to an internal history point. */
-function mapTimeSeriesValue(value: TwelveDataTimeSeriesValue): StockHistoryPoint | null {
+function mapTimeSeriesValue(value: TwelveDataTimeSeriesValue, isIntraday: boolean): StockHistoryPoint | null {
   const open = Number(value.open);
   const high = Number(value.high);
   const low = Number(value.low);
@@ -72,7 +99,7 @@ function mapTimeSeriesValue(value: TwelveDataTimeSeriesValue): StockHistoryPoint
   }
 
   return {
-    time: value.datetime.slice(0, 10),
+    time: normalizeBarTime(value.datetime, isIntraday),
     open,
     high,
     low,
@@ -134,8 +161,9 @@ async function fetchHistoryFromApi(
     throw new Error(data.message ?? `Twelve Data time series failed for ${symbol}`);
   }
 
+  const isIntraday = range === "1D";
   const points = (data.values ?? [])
-    .map((value) => mapTimeSeriesValue(value))
+    .map((value) => mapTimeSeriesValue(value, isIntraday))
     .filter((point): point is StockHistoryPoint => point !== null);
 
   if (points.length === 0) {
@@ -144,7 +172,7 @@ async function fetchHistoryFromApi(
 
   return {
     symbol,
-    interval: HISTORY_INTERVAL,
+    interval: resolveHistoryInterval(range),
     range,
     points,
   };

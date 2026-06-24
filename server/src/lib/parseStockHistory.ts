@@ -14,8 +14,10 @@ function parseStockHistoryPoint(value: unknown): StockHistoryPoint | null {
 
   const { time, open, high, low, close, volume } = value;
 
+  const hasValidTime = typeof time === "string" || typeof time === "number";
+
   if (
-    typeof time !== "string" ||
+    !hasValidTime ||
     typeof open !== "number" ||
     typeof high !== "number" ||
     typeof low !== "number" ||

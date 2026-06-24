@@ -52,6 +52,7 @@ function mapPressRelease(symbol: string, release: TwelveDataPressRelease): Incom
     url: buildTwelveDataPressReleaseArticleUrl(symbol, release.id),
     source: `Twelve Data · ${symbol}`,
     publishedAt: release.datetime,
+    symbol,
   };
 }
 

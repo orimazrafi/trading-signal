@@ -8,6 +8,7 @@ export type MarketNewsArticle = {
   source: string
   publishedAt: string
   sentiment: NewsSentiment
+  symbol: string
 }
 
 /** Response body for GET /api/dashboard/news. */

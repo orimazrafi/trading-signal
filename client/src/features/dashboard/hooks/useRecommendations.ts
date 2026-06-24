@@ -13,7 +13,8 @@ export function useRecommendations() {
     recommendationsQuery.error instanceof Error ? recommendationsQuery.error.message : null
 
   return {
-    recommendations: recommendationsQuery.data ?? [],
+    recommendations: recommendationsQuery.data?.recommendations ?? [],
+    emptyMessage: recommendationsQuery.data?.emptyMessage ?? null,
     isLoading: recommendationsQuery.isLoading,
     error: queryError,
     reload: () => recommendationsQuery.refetch(),
