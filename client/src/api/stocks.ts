@@ -1,6 +1,11 @@
-import { api } from './client'
-import type { ApiRequestOptions } from './types'
+import {
+  searchStockResultSchema,
+  stockHistorySchema,
+  stockQuoteSchema,
+} from '@trading-signal/contracts/stock'
 import type { SearchStockResult, StockHistory, StockHistoryRange, StockQuote } from '@/types/stock'
+import type { ApiRequestOptions } from './types'
+import { fetchValidated } from './fetchValidated'
 
 /** Normalizes a ticker symbol to uppercase. */
 function normalizeSymbol(symbol: string): string {
@@ -18,10 +23,12 @@ export async function fetchStockQuote(
     throw new Error('Stock symbol is required')
   }
 
-  const { data } = await api.get<StockQuote>(`/stock/${encodeURIComponent(normalized)}`, {
-    signal: options.signal,
-  })
-  return data
+  return fetchValidated(
+    `/stock/${encodeURIComponent(normalized)}`,
+    stockQuoteSchema,
+    'stock quote',
+    { signal: options.signal },
+  )
 }
 
 /** Fetches cached or live daily OHLCV history for charting. */
@@ -36,12 +43,12 @@ export async function fetchStockHistory(
     throw new Error('Stock symbol is required')
   }
 
-  const { data } = await api.get<StockHistory>(
+  return fetchValidated(
     `/stock/${encodeURIComponent(normalized)}/history`,
+    stockHistorySchema,
+    'stock history',
     { params: { range }, signal: options.signal },
   )
-
-  return data
 }
 
 /** Searches a stock, generates a recommendation, and persists a user signal. */
@@ -55,10 +62,10 @@ export async function searchStock(
     throw new Error('Stock symbol is required')
   }
 
-  const { data } = await api.get<SearchStockResult>(
+  return fetchValidated(
     `/stocks/${encodeURIComponent(normalized)}/search`,
+    searchStockResultSchema,
+    'stock search result',
     { signal: options.signal },
   )
-
-  return data
 }

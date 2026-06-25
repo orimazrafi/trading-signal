@@ -19,10 +19,13 @@ export default defineConfig({
       '@trading-signal/contracts/recommendation': path.join(contractsSrc, 'recommendation.ts'),
       '@trading-signal/contracts/alert': path.join(contractsSrc, 'alert.ts'),
       '@trading-signal/contracts/auth': path.join(contractsSrc, 'auth.ts'),
-      '@trading-signal/contracts/parseAlertNotification': path.join(
-        contractsSrc,
-        'parseAlertNotification.ts',
-      ),
+      '@trading-signal/contracts/parseAlertNotification': path.join(contractsSrc, 'alert.ts'),
+      '@trading-signal/contracts/stock': path.join(contractsSrc, 'stock.ts'),
+      '@trading-signal/contracts/signal': path.join(contractsSrc, 'signal.ts'),
+      '@trading-signal/contracts/news': path.join(contractsSrc, 'news.ts'),
+      '@trading-signal/contracts/watchlist': path.join(contractsSrc, 'watchlist.ts'),
+      '@trading-signal/contracts/zodApi': path.join(contractsSrc, 'lib/zodApi.ts'),
+      '@trading-signal/contracts/httpStatus': path.join(contractsSrc, 'httpStatus.ts'),
     },
   },
   server: {

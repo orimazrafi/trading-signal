@@ -6,6 +6,9 @@
     "server",
     "packages/*"
   ],
+  "overrides": {
+    "zod": "3.25.76"
+  },
   "scripts": {
     "build:contracts": "npm run build -w @trading-signal/contracts",
     "build:server": "npm run build -w server",

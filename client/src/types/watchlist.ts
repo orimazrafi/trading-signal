@@ -1,12 +1,15 @@
-/** Allowed trading actions for a saved watchlist signal. */
-export const SIGNAL_ACTIONS = {
-  BUY: 'BUY',
-  SELL: 'SELL',
-  HOLD: 'HOLD',
-} as const
+import { SIGNAL_ACTIONS, type SignalAction } from '@trading-signal/contracts/signal'
 
-/** Trading recommendation action for a saved signal. */
-export type SignalAction = (typeof SIGNAL_ACTIONS)[keyof typeof SIGNAL_ACTIONS]
+export { SIGNAL_ACTIONS, type SignalAction }
+
+export type {
+  AddStockResponse,
+  ApiWatchlist,
+  ApiWatchlistStock,
+  RemoveStockResponse,
+  WatchlistResponse,
+  WatchlistsResponse,
+} from '@trading-signal/contracts/watchlist'
 
 /** Persisted stock signal shown in a custom dashboard view. */
 export interface Signal {
@@ -28,43 +31,4 @@ export interface Watchlist {
   userId: string
   signals: Signal[]
   createdAt: string
-}
-
-/** Raw watchlist stock row from the watchlists API. */
-export type ApiWatchlistStock = {
-  signalId: string
-  symbol: string
-  recommendation: string
-  price: number
-  previousPrice: number
-  changePercent: number
-  createdAt: string
-}
-
-/** Raw watchlist payload from the watchlists API. */
-export type ApiWatchlist = {
-  id: string
-  name: string
-  createdAt: string
-  stocks: ApiWatchlistStock[]
-}
-
-/** Response body for GET /api/watchlists. */
-export type WatchlistsResponse = {
-  watchlists: ApiWatchlist[]
-}
-
-/** Response body for POST /api/watchlists. */
-export type WatchlistResponse = {
-  watchlist: ApiWatchlist
-}
-
-/** Response body for POST /api/watchlists/:id/stocks. */
-export type AddStockResponse = {
-  stock: ApiWatchlistStock
-}
-
-/** Response body for DELETE /api/watchlists/:id/stocks/:signalId. */
-export type RemoveStockResponse = {
-  ok: boolean
 }

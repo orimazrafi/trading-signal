@@ -26,6 +26,7 @@ export function useStockHistory(symbol: string | null, range: StockHistoryRange)
   return {
     history: historyQuery.data ?? null,
     isLoading: historyQuery.isLoading,
+    isFetching: historyQuery.isFetching,
     error: queryError,
     reload: () => historyQuery.refetch(),
   }

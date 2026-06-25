@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseAlertNotificationEvent,
   parseAlertNotificationPubSubPayload,
-} from "./parseAlertNotification.js";
+} from "./alert.js";
 
 describe("parseAlertNotificationEvent", () => {
   it("returns null for invalid payloads", () => {

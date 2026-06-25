@@ -4,7 +4,7 @@ import { toast } from '@/components/Toast'
 import { getAlertStreamUrl } from '@/api/alerts'
 import { queryKeys } from '@/api/queryKeys'
 import { SSE_INITIAL_RETRY_MS, SSE_MAX_RETRY_MS } from '@/lib/sseConstants'
-import { parseAlertNotificationEvent } from '@trading-signal/contracts/parseAlertNotification'
+import { parseAlertNotificationEvent } from '@trading-signal/contracts/alert'
 
 /** Subscribes to server-sent alert events with reconnect backoff and surfaces toasts. */
 export function useAlertStream(enabled = true) {

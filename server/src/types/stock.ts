@@ -1,3 +1,5 @@
+import { parseStockQuote as parseStockQuoteFromContracts } from "@trading-signal/contracts/stock.js";
+
 export interface StockQuote {
   symbol: string;
   name: string;
@@ -67,21 +69,5 @@ export function parseStockTickMessage(payload: unknown): StockTickMessage | null
 
 /** Validates cached stock quote JSON from Redis. */
 export function parseStockQuote(value: unknown): StockQuote | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-
-  const { symbol, name, price, peRatio, sector } = value;
-
-  if (
-    typeof symbol !== "string" ||
-    typeof name !== "string" ||
-    typeof sector !== "string" ||
-    typeof price !== "number" ||
-    typeof peRatio !== "number"
-  ) {
-    return null;
-  }
-
-  return { symbol, name, price, peRatio, sector };
+  return parseStockQuoteFromContracts(value);
 }

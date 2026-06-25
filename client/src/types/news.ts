@@ -1,17 +1,8 @@
-/** Sentiment label assigned to a market news headline. */
-export type NewsSentiment = 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL'
+export type { NewsSentiment, MarketNewsArticle, MarketNewsResponse } from '@trading-signal/contracts/news'
 
-/** Processed market news article returned by GET /api/dashboard/news. */
-export type MarketNewsArticle = {
-  headline: string
-  url: string
-  source: string
-  publishedAt: string
-  sentiment: NewsSentiment
-  symbol: string
-}
-
-/** Response body for GET /api/dashboard/news. */
-export type MarketNewsResponse = {
-  news: MarketNewsArticle[]
-}
+export {
+  marketNewsArticleSchema,
+  marketNewsResponseSchema,
+  newsSentimentSchema,
+  parseMarketNewsResponse,
+} from '@trading-signal/contracts/news'

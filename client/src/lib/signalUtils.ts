@@ -1,17 +1,10 @@
 import type { BadgeVariant } from '@/lib/badgeVariants'
-import { SIGNAL_ACTIONS, type SignalAction } from '@/types/watchlist'
+import { isSignalAction, SIGNAL_ACTIONS, type SignalAction } from '@trading-signal/contracts/signal'
 
 const SIGNAL_REASONS: Record<SignalAction, string> = {
   BUY: 'PE ratio is within the buy threshold (0–25).',
   SELL: 'Signal indicates sell conditions.',
   HOLD: 'PE ratio is outside the buy threshold; hold position.',
-}
-
-const signalActionValues = new Set<string>(Object.values(SIGNAL_ACTIONS))
-
-/** Returns true when value is a known watchlist signal action. */
-function isSignalAction(value: string): value is SignalAction {
-  return signalActionValues.has(value)
 }
 
 /** Maps a watchlist signal action to a shared badge variant. */

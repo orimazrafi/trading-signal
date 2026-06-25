@@ -2,10 +2,7 @@ export type { AuthenticatedUser as AuthUser } from '@trading-signal/contracts/au
 
 export type { AuthResponse } from '@trading-signal/contracts/auth'
 
-/** Response body for POST /api/auth/logout. */
-export type LogoutResponse = {
-  ok: boolean
-}
+export type { LogoutResponse } from '@trading-signal/contracts/auth'
 
 /** OAuth redirect error codes passed via ?authError= query param. */
 export type OAuthRedirectErrorCode =

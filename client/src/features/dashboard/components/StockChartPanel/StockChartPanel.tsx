@@ -13,21 +13,35 @@ import {
 import { usePrefersDarkMode } from '@/hooks/usePrefersDarkMode'
 import { useStockHistory } from '@/features/stocks/hooks/useStockHistory'
 import { useStockQuote } from '@/features/stocks/hooks/useStockQuote'
+import { useWorkerCalculation } from '@/features/stocks/hooks/useWorkerCalculation'
+import { buildChartOverlays } from '@/features/stocks/lib/chartIndicatorSeries'
+import type { ChartOverlayKey } from '@/features/stocks/lib/chartIndicatorSeries'
+import {
+  DEFAULT_CHART_OVERLAY_VISIBILITY,
+  toggleChartOverlayVisibility,
+  type ChartOverlayVisibility,
+} from '@/features/stocks/lib/chartOverlayVisibility'
+import { mergeLivePriceIntoHistory, toAreaSeriesData } from '@/features/stocks/lib/chartSeries'
+import { StockChart } from '@/features/watchlists/components/StockChart'
 import { STOCK_HISTORY_RANGES } from '@/lib/stockHistoryConstants'
 import { isStockHistoryRange } from '@/lib/stockHistoryUtils'
 import type { StockHistoryRange } from '@/types/stock'
-import { StockPriceChart } from '@/features/dashboard/components/StockPriceChart'
-import { mergeLivePriceIntoHistory } from '@/features/dashboard/components/StockPriceChart/stockChartUtils'
+import ChartIndicatorStrip from './ChartIndicatorStrip'
+import ChartOverlayToggles from './ChartOverlayToggles'
 import type { StockChartPanelProps } from './types'
 
 /** Shows live quote details and a historical price chart for the selected symbol. */
 function StockChartPanel({ symbol }: StockChartPanelProps) {
   const [range, setRange] = useState<StockHistoryRange>('1M')
+  const [overlayVisibility, setOverlayVisibility] = useState<ChartOverlayVisibility>(
+    DEFAULT_CHART_OVERLAY_VISIBILITY,
+  )
   const isDarkMode = usePrefersDarkMode()
   const { quote, isLoading: isQuoteLoading, error: quoteError } = useStockQuote(symbol)
   const {
     history,
     isLoading: isHistoryLoading,
+    isFetching: isHistoryFetching,
     error: historyError,
   } = useStockHistory(symbol, range)
 
@@ -42,6 +56,38 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
 
     return mergeLivePriceIntoHistory(history.points, quote.price, range)
   }, [history?.points, quote?.price, range])
+
+  const chartSeries = useMemo(() => toAreaSeriesData(chartPoints), [chartPoints])
+
+  const workerInput = useMemo(() => {
+    if (!chartPoints.length) {
+      return null
+    }
+
+    return {
+      points: chartPoints,
+      peRatio: quote?.peRatio,
+    }
+  }, [chartPoints, quote?.peRatio])
+
+  const {
+    result: indicatorAnalysis,
+    isLoading: isIndicatorLoading,
+    error: workerError,
+  } = useWorkerCalculation(workerInput)
+
+  const chartOverlays = useMemo(
+    () => buildChartOverlays(chartSeries, indicatorAnalysis),
+    [chartSeries, indicatorAnalysis],
+  )
+
+  const isChartLoading =
+    isHistoryLoading || (isHistoryFetching && chartSeries.length === 0)
+
+  /** Toggles one moving-average overlay on the chart. */
+  function handleOverlayToggle(key: ChartOverlayKey) {
+    setOverlayVisibility((current) => toggleChartOverlayVisibility(current, key))
+  }
 
   if (!symbol) {
     return (
@@ -88,38 +134,56 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
         </dl>
       ) : null}
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Range</span>
-        <Select
-          value={range}
-          onValueChange={(value) => {
-            if (isStockHistoryRange(value)) {
-              setRange(value)
-            }
-          }}
-        >
-          <SelectTrigger className="w-[7rem]" aria-label="Chart range">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STOCK_HISTORY_RANGES.map((option) => (
-              <SelectItem key={option} value={option}>
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <ChartIndicatorStrip
+        analysis={indicatorAnalysis}
+        livePrice={quote?.price ?? null}
+        isLoading={isIndicatorLoading}
+        overlayVisibility={overlayVisibility}
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Range</span>
+          <Select
+            value={range}
+            onValueChange={(value) => {
+              if (isStockHistoryRange(value)) {
+                setRange(value)
+              }
+            }}
+          >
+            <SelectTrigger className="w-[7rem]" aria-label="Chart range">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STOCK_HISTORY_RANGES.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <ChartOverlayToggles visibility={overlayVisibility} onToggle={handleOverlayToggle} />
       </div>
 
       <div className="flex min-h-[16rem] flex-1 flex-col rounded-xl border border-border bg-muted/40 p-2">
-        {isHistoryLoading ? <LoadingSpinner label="Loading price history…" /> : null}
         {historyError ? <ErrorMessage message={historyError} /> : null}
+        {workerError ? <ErrorMessage message={workerError} /> : null}
 
-        {!isHistoryLoading && !historyError && chartPoints.length > 0 ? (
-          <StockPriceChart points={chartPoints} isDarkMode={isDarkMode} />
+        {!historyError && (isChartLoading || chartSeries.length > 0) ? (
+          <StockChart
+            symbol={symbol}
+            series={chartSeries}
+            overlays={chartOverlays}
+            overlayVisibility={overlayVisibility}
+            isDarkMode={isDarkMode}
+            isLoading={isChartLoading}
+          />
         ) : null}
 
-        {!isHistoryLoading && !historyError && history?.points.length === 0 ? (
+        {!isChartLoading && !historyError && history?.points.length === 0 ? (
           <EmptyState
             message="No historical data available for this range."
             variant="plain"

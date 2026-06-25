@@ -1,12 +1,17 @@
-import { ApiError, api } from './client'
+import { authResponseSchema, logoutResponseSchema } from '@trading-signal/contracts/auth'
 import { HTTP_STATUS } from '@trading-signal/contracts/httpStatus'
+import type { AuthUser } from '@/types/auth'
+import { ApiError } from './client'
 import type { ApiRequestOptions } from './types'
-import type { AuthResponse, AuthUser, LogoutResponse } from '@/types/auth'
+import { fetchValidated, postValidated } from './fetchValidated'
 
 /** Returns the current session user, or null when unauthenticated. */
 export async function fetchMe(options: ApiRequestOptions = {}): Promise<AuthUser | null> {
   try {
-    const { data } = await api.get<AuthResponse>('/auth/me', { signal: options.signal })
+    const data = await fetchValidated('/auth/me', authResponseSchema, 'auth session', {
+      signal: options.signal,
+    })
+
     return data.user
   } catch (error) {
     if (error instanceof ApiError && error.status === HTTP_STATUS.UNAUTHORIZED) {
@@ -19,17 +24,25 @@ export async function fetchMe(options: ApiRequestOptions = {}): Promise<AuthUser
 
 /** Logs in with email and password. */
 export async function login(email: string, password: string): Promise<AuthUser> {
-  const { data } = await api.post<AuthResponse>('/auth/login', { email, password })
+  const data = await postValidated('/auth/login', authResponseSchema, 'auth login', {
+    email,
+    password,
+  })
+
   return data.user
 }
 
 /** Registers a new email/password account. */
 export async function signup(email: string, password: string): Promise<AuthUser> {
-  const { data } = await api.post<AuthResponse>('/auth/signup', { email, password })
+  const data = await postValidated('/auth/signup', authResponseSchema, 'auth signup', {
+    email,
+    password,
+  })
+
   return data.user
 }
 
 /** Clears the server session cookie. */
 export async function logout(): Promise<void> {
-  await api.post<LogoutResponse>('/auth/logout')
+  await postValidated('/auth/logout', logoutResponseSchema, 'auth logout')
 }

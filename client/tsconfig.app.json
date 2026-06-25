@@ -13,8 +13,14 @@
       "@trading-signal/contracts/alert": ["../packages/contracts/src/alert.ts"],
       "@trading-signal/contracts/auth": ["../packages/contracts/src/auth.ts"],
       "@trading-signal/contracts/parseAlertNotification": [
-        "../packages/contracts/src/parseAlertNotification.ts"
-      ]
+        "../packages/contracts/src/alert.ts"
+      ],
+      "@trading-signal/contracts/stock": ["../packages/contracts/src/stock.ts"],
+      "@trading-signal/contracts/signal": ["../packages/contracts/src/signal.ts"],
+      "@trading-signal/contracts/news": ["../packages/contracts/src/news.ts"],
+      "@trading-signal/contracts/watchlist": ["../packages/contracts/src/watchlist.ts"],
+      "@trading-signal/contracts/zodApi": ["../packages/contracts/src/lib/zodApi.ts"],
+      "@trading-signal/contracts/httpStatus": ["../packages/contracts/src/httpStatus.ts"]
     },
 
     /* Bundler mode */

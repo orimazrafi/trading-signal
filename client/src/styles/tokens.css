@@ -50,6 +50,9 @@
   --chart-line: var(--positive);
   --chart-area-top: color-mix(in srgb, var(--positive) 35%, transparent);
   --chart-area-bottom: color-mix(in srgb, var(--positive) 2%, transparent);
+  --chart-sma20: #2563eb;
+  --chart-sma50: #d97706;
+  --chart-ema12: #7c3aed;
 
   --shadow-panel: rgba(15, 23, 42, 0.08) 0 10px 15px -3px, rgba(15, 23, 42, 0.04) 0 4px 6px -2px;
 
@@ -106,6 +109,9 @@
   --chart-line: var(--positive);
   --chart-area-top: color-mix(in srgb, var(--positive) 35%, transparent);
   --chart-area-bottom: color-mix(in srgb, var(--positive) 2%, transparent);
+  --chart-sma20: #2563eb;
+  --chart-sma50: #d97706;
+  --chart-ema12: #7c3aed;
 
   --code-bg: #1a2332;
   --accent-border: rgba(56, 189, 248, 0.35);
@@ -155,6 +161,9 @@
     --chart-line: var(--positive);
     --chart-area-top: color-mix(in srgb, var(--positive) 35%, transparent);
     --chart-area-bottom: color-mix(in srgb, var(--positive) 2%, transparent);
+    --chart-sma20: #60a5fa;
+    --chart-sma50: #fbbf24;
+    --chart-ema12: #a78bfa;
 
     --code-bg: #1a2332;
     --accent-border: rgba(56, 189, 248, 0.35);

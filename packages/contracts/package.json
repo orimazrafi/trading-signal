@@ -25,17 +25,48 @@
       "import": "./dist/auth.js"
     },
     "./parseAlertNotification": {
-      "types": "./dist/parseAlertNotification.d.ts",
-      "import": "./dist/parseAlertNotification.js"
+      "types": "./dist/alert.d.ts",
+      "import": "./dist/alert.js"
     },
     "./httpStatus": {
       "types": "./dist/httpStatus.d.ts",
       "import": "./dist/httpStatus.js"
+    },
+    "./stock": {
+      "types": "./dist/stock.d.ts",
+      "import": "./dist/stock.js"
+    },
+    "./stock.js": {
+      "types": "./dist/stock.d.ts",
+      "import": "./dist/stock.js"
+    },
+    "./signal": {
+      "types": "./dist/signal.d.ts",
+      "import": "./dist/signal.js"
+    },
+    "./signal.js": {
+      "types": "./dist/signal.d.ts",
+      "import": "./dist/signal.js"
+    },
+    "./news": {
+      "types": "./dist/news.d.ts",
+      "import": "./dist/news.js"
+    },
+    "./watchlist": {
+      "types": "./dist/watchlist.d.ts",
+      "import": "./dist/watchlist.js"
+    },
+    "./zodApi": {
+      "types": "./dist/lib/zodApi.d.ts",
+      "import": "./dist/lib/zodApi.js"
     }
   },
   "scripts": {
     "build": "tsc",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

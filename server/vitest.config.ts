@@ -11,10 +11,8 @@ export default defineConfig({
       "@trading-signal/contracts/alert.js": path.join(contractsSrc, "alert.ts"),
       "@trading-signal/contracts/recommendation.js": path.join(contractsSrc, "recommendation.ts"),
       "@trading-signal/contracts/auth.js": path.join(contractsSrc, "auth.ts"),
-      "@trading-signal/contracts/parseAlertNotification.js": path.join(
-        contractsSrc,
-        "parseAlertNotification.ts",
-      ),
+      "@trading-signal/contracts/parseAlertNotification.js": path.join(contractsSrc, "alert.ts"),
+      "@trading-signal/contracts/stock.js": path.join(contractsSrc, "stock.ts"),
     },
   },
   test: {

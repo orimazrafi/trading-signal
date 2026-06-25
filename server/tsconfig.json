@@ -18,8 +18,10 @@
       "@trading-signal/contracts/auth.js": ["../packages/contracts/dist/auth.js"],
       "@trading-signal/contracts/recommendation": ["../packages/contracts/dist/recommendation.js"],
       "@trading-signal/contracts/recommendation.js": ["../packages/contracts/dist/recommendation.js"],
-      "@trading-signal/contracts/parseAlertNotification": ["../packages/contracts/dist/parseAlertNotification.js"],
-      "@trading-signal/contracts/parseAlertNotification.js": ["../packages/contracts/dist/parseAlertNotification.js"]
+      "@trading-signal/contracts/parseAlertNotification": ["../packages/contracts/dist/alert.js"],
+      "@trading-signal/contracts/parseAlertNotification.js": ["../packages/contracts/dist/alert.js"],
+      "@trading-signal/contracts/stock": ["../packages/contracts/dist/stock.js"],
+      "@trading-signal/contracts/stock.js": ["../packages/contracts/dist/stock.js"]
     }
   },
   "include": ["src"]

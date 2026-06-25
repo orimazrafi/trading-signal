@@ -1,6 +1,6 @@
 export type { Signal, SignalAction, Watchlist } from './watchlist'
 
-export { SIGNAL_ACTIONS } from './watchlist'
+export { SIGNAL_ACTIONS, isSignalAction } from '@trading-signal/contracts/signal'
 
 export type { MarketNewsArticle, MarketNewsResponse, NewsSentiment } from './news'
 
@@ -32,9 +32,14 @@ export {
 
 export type { StockQuote, SearchStockResult, StockHistory, StockHistoryPoint, StockHistoryRange } from './stock'
 
-export { STOCK_HISTORY_RANGES } from '@/lib/stockHistoryConstants'
-
-export { isStockHistoryRange } from '@/lib/stockHistoryUtils'
+export {
+  STOCK_HISTORY_RANGES,
+  isStockHistoryRange,
+  parseSearchStockResult,
+  parseStockHistory,
+  parseStockHistoryPoint,
+  parseStockQuote,
+} from '@trading-signal/contracts/stock'
 
 export type {
   AlertNotification,
