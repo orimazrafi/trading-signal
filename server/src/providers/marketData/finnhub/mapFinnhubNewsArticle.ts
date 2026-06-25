@@ -5,7 +5,7 @@ const NEWS_LOOKBACK_DAYS = 30;
 const SECONDS_PER_DAY = 86_400;
 
 /** Formats a Finnhub news unix timestamp as ISO-8601. */
-function formatNewsPublishedAt(datetime: number | undefined): string {
+export function formatNewsPublishedAt(datetime: number | undefined): string {
   if (typeof datetime !== "number" || !Number.isFinite(datetime)) {
     return new Date().toISOString();
   }
@@ -36,7 +36,7 @@ export function mapFinnhubNewsArticle(
   return {
     title: row.headline,
     url: row.url,
-    source: row.source ? `${row.source} · ${symbol}` : `Finnhub · ${symbol}`,
+    source: row.source ?? "Market",
     publishedAt: formatNewsPublishedAt(row.datetime),
     symbol,
   };

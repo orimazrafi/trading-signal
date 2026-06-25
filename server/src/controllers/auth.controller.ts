@@ -51,6 +51,33 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
 }
 
+/** Attaches the user when a valid auth cookie is present; otherwise continues anonymously. */
+export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
+  const token = req.cookies?.[AUTH_COOKIE_NAME];
+
+  if (typeof token !== "string") {
+    if (env.authAllowMock) {
+      req.user = env.mockUser;
+    }
+
+    next();
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, env.jwtSecret);
+    const user = parseJwtUser(decoded);
+
+    if (user) {
+      req.user = user;
+    }
+  } catch (error) {
+    log.error("Invalid auth cookie", error, { path: req.path });
+  }
+
+  next();
+}
+
 /** Registers a new user and sets the auth cookie. */
 export async function postSignup(req: Request, res: Response): Promise<void> {
   const { email, password } = parseAuthCredentialsBody(req.body);

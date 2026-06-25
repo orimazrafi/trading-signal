@@ -49,7 +49,7 @@ export const env = {
   stockTicksQueue: "stock_ticks",
   marketNewsQueue: "market_news",
   dashboardNewsRedisKey: "dashboard:news",
-  newsMaxArticles: 20,
+  newsMaxArticles: 40,
   newsIngestEnabled: process.env.NEWS_INGEST_ENABLED !== "false",
   newsIngestIntervalMs: Number(process.env.NEWS_INGEST_INTERVAL_MS) || 300_000,
   newsIngestBatchSize: Number(process.env.NEWS_INGEST_BATCH_SIZE) || 5,

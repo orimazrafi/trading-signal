@@ -12,5 +12,4 @@ export type PriceAlertsPanelProps = {
   onToggleEnabled: (alert: PriceAlert, enabled: boolean) => Promise<PriceAlert | void>
   onToggleEmail: (alert: PriceAlert, emailEnabled: boolean) => Promise<PriceAlert | void>
   onDelete: (alertId: string) => Promise<void>
-  onSetUpAgain?: (alert: PriceAlert) => Promise<PriceAlert | void>
 }

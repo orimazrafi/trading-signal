@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { DashboardLayout } from '@/features/dashboard/DashboardLayout'
 import {
   AlertsTabRoute,
@@ -6,6 +6,7 @@ import {
   RecommendationsTabRoute,
   WatchlistTabRoute,
 } from '@/routes/DashboardTabRoutes'
+import LandingPage from '@/routes/LandingPage'
 import LoginPage from '@/routes/LoginPage'
 import NotFoundPage from '@/routes/NotFoundPage'
 import ProtectedRoute from '@/routes/ProtectedRoute'
@@ -15,6 +16,7 @@ import { ROUTES } from '@/routes/paths'
 function AppRoutes() {
   return (
     <Routes>
+      <Route path={ROUTES.home} element={<LandingPage />} />
       <Route path={ROUTES.login} element={<LoginPage />} />
 
       <Route element={<ProtectedRoute />}>
@@ -27,7 +29,7 @@ function AppRoutes() {
         </Route>
       </Route>
 
-      <Route path="/" element={<Navigate to={ROUTES.dashboard} replace />} />
+
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )

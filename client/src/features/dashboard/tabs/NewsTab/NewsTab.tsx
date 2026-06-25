@@ -13,7 +13,7 @@ function NewsTab({ userId }: NewsTabProps) {
       news={news}
       isLoading={isLoading}
       error={error}
-      variant="page"
+      variant="watchlist"
       watchlistSymbols={watchlistSymbols}
       onAddToWatchlist={quickAdd}
       savingSymbol={savingSymbol}

@@ -1,4 +1,5 @@
 import { env } from "../config/env.js";
+import { diversifyNewsArticles } from "../lib/diversifyNewsArticles.js";
 import { log } from "../lib/logger/index.js";
 import { redis } from "../config/redis.js";
 import { parseProcessedNewsArticles } from "../lib/parseNews.js";
@@ -99,9 +100,10 @@ async function refreshProcessedNewsFromApi(): Promise<ProcessedNewsArticle[]> {
   });
 
   const incomingArticles = await fetchLatestMarketNewsArticles();
-  const processedArticles = incomingArticles
-    .map((article) => processIncomingArticle(article))
-    .slice(0, env.newsMaxArticles);
+  const processedArticles = diversifyNewsArticles(
+    incomingArticles.map((article) => processIncomingArticle(article)),
+    env.newsMaxArticles,
+  );
 
   await saveProcessedNewsToRedis(processedArticles);
   await markIncomingArticlesAsSeen(incomingArticles);
@@ -141,6 +143,11 @@ export class NewsService {
       });
       return [];
     }
+  }
+
+  /** Returns the full diversified dashboard feed (public landing page). */
+  async getPublicNewsFeed(): Promise<ProcessedNewsArticle[]> {
+    return this.getProcessedNews();
   }
 
   /** Returns news filtered to the user's watchlist symbols when available. */

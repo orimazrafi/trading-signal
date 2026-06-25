@@ -12,8 +12,8 @@ function NotFoundPage() {
       <p className="max-w-md text-muted-foreground">
         The page you requested does not exist or may have moved.
       </p>
-      <Button variant="primary" onClick={() => navigate(ROUTES.dashboard)}>
-        Go to dashboard
+      <Button variant="primary" onClick={() => navigate(ROUTES.home)}>
+        Go home
       </Button>
     </main>
   )

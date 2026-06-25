@@ -1,4 +1,3 @@
-import { Badge } from '@/components/Badge'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { CheckboxField } from '@/components/CheckboxField'
@@ -11,20 +10,16 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { PriceAlertCardProps } from './types'
 
-/** Renders one configured price alert with toggles and actions. */
+/** Renders one active price alert with toggles and actions. */
 function PriceAlertCard({
   alert,
   userEmail,
   updating,
   deleting,
-  settingUpAgain = false,
   onToggleEnabled,
   onToggleEmail,
   onDelete,
-  onSetUpAgain,
 }: PriceAlertCardProps) {
-  const wasSent = alert.lastTriggeredAt !== null
-
   /** Deletes this alert and surfaces feedback. */
   const handleDelete = async () => {
     try {
@@ -32,20 +27,6 @@ function PriceAlertCard({
       toast.success(`${alert.symbol} alert removed.`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Unable to remove alert.')
-    }
-  }
-
-  /** Re-arms a previously triggered alert for the same symbol. */
-  const handleSetUpAgain = async () => {
-    if (!onSetUpAgain) {
-      return
-    }
-
-    try {
-      await onSetUpAgain(alert)
-      toast.success(`${alert.symbol} alert set up again.`)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Unable to set up alert again.')
     }
   }
 
@@ -58,67 +39,37 @@ function PriceAlertCard({
             Alert when price moves ±{alert.thresholdPercent.toFixed(2)}% from $
             {alert.baselinePrice.toFixed(2)}
           </p>
-          {wasSent && alert.lastTriggeredAt ? (
-            <p className="mt-1 text-xs font-medium text-warning">
-              Sent · {new Date(alert.lastTriggeredAt).toLocaleString()}
-              {alert.emailEnabled ? ' · Email enabled' : ' · In-app only'}
-            </p>
-          ) : null}
         </div>
 
-        {wasSent ? (
-          <Badge variant="warning">Sent</Badge>
-        ) : (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button type="button" variant="secondary" disabled={deleting}>
-                Actions
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem variant="destructive" onClick={() => void handleDelete()}>
-                Remove alert
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="secondary" disabled={deleting}>
+              Actions
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem variant="destructive" onClick={() => void handleDelete()}>
+              Remove alert
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {wasSent ? (
-        <div className="mt-4 flex flex-wrap gap-3">
-          {onSetUpAgain ? (
-            <Button
-              type="button"
-              variant="primary"
-              disabled={settingUpAgain}
-              loading={settingUpAgain}
-              loadingLabel="Setting up…"
-              onClick={() => void handleSetUpAgain()}
-            >
-              Set up again
-            </Button>
-          ) : null}
-          <Button type="button" variant="secondary" disabled={deleting} onClick={() => void handleDelete()}>
-            Remove
-          </Button>
-        </div>
-      ) : (
-        <div className="mt-4 flex flex-wrap gap-4">
-          <CheckboxField
-            label="Enabled"
-            checked={alert.enabled}
-            disabled={updating}
-            onChange={(checked) => void onToggleEnabled(alert, checked)}
-          />
+      <div className="mt-4 flex flex-wrap gap-4">
+        <CheckboxField
+          label="Enabled"
+          checked={alert.enabled}
+          disabled={updating}
+          onChange={(checked) => void onToggleEnabled(alert, checked)}
+        />
 
-          <CheckboxField
-            label={`Email me (${userEmail})`}
-            checked={alert.emailEnabled}
-            disabled={updating}
-            onChange={(checked) => void onToggleEmail(alert, checked)}
-          />
-        </div>
-      )}
+        <CheckboxField
+          label={`Email me (${userEmail})`}
+          checked={alert.emailEnabled}
+          disabled={updating}
+          onChange={(checked) => void onToggleEmail(alert, checked)}
+        />
+      </div>
     </Card>
   )
 }

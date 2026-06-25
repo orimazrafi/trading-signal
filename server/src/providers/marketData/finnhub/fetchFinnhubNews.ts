@@ -1,4 +1,5 @@
 import type { IncomingNewsArticle } from "../../../types/news.js";
+import { fetchFinnhubGeneralNews } from "./fetchFinnhubGeneralNews.js";
 import { finnhubGet } from "./client.js";
 import {
   buildFinnhubNewsDateRange,
@@ -33,13 +34,30 @@ async function fetchNewsForSymbol(
   }
 }
 
+/** Deduplicates articles by URL, keeping the first (newest) occurrence. */
+function dedupeArticlesByUrl(articles: IncomingNewsArticle[]): IncomingNewsArticle[] {
+  const seenUrls = new Set<string>();
+
+  return articles.filter((article) => {
+    if (seenUrls.has(article.url)) {
+      return false;
+    }
+
+    seenUrls.add(article.url);
+    return true;
+  });
+}
+
 /** Fetches company news for each symbol and returns merged, sorted articles. */
 export async function fetchFinnhubNews(symbols: readonly string[]): Promise<IncomingNewsArticle[]> {
   const { from, to } = buildFinnhubNewsDateRange();
 
-  const articlesBySymbol = await Promise.all(
-    symbols.map((symbol) => fetchNewsForSymbol(symbol, from, to)),
-  );
+  const [generalArticles, ...articlesBySymbol] = await Promise.all([
+    fetchFinnhubGeneralNews(),
+    ...symbols.map((symbol) => fetchNewsForSymbol(symbol, from, to)),
+  ]);
 
-  return sortNewsByPublishedAt(articlesBySymbol.flat());
+  return sortNewsByPublishedAt(
+    dedupeArticlesByUrl([...generalArticles, ...articlesBySymbol.flat()]),
+  );
 }

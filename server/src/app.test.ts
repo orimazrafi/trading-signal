@@ -17,6 +17,17 @@ describe("GET /api/health", () => {
   });
 });
 
+describe("GET /api/dashboard/news", () => {
+  it("returns market news without authentication", async () => {
+    const app = createApp();
+
+    const response = await request(app).get("/api/dashboard/news");
+
+    expect(response.status).toBe(HTTP_STATUS.OK);
+    expect(Array.isArray(response.body.news)).toBe(true);
+  });
+});
+
 describe("GET /api/stock/:symbol", () => {
   it("requires authentication", async () => {
     const app = createApp();

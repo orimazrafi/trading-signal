@@ -5,9 +5,10 @@ export type NewsFeedProps = {
   news: MarketNewsArticle[]
   isLoading: boolean
   error: string | null
-  variant?: 'panel' | 'page'
+  variant?: 'landing' | 'watchlist' | 'panel' | 'page'
   watchlistSymbols?: string[]
   onAddToWatchlist?: (symbol: string) => Promise<void>
   savingSymbol?: string | null
   watchlistName?: string | null
+  onRefresh?: () => void
 }

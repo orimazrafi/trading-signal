@@ -1,8 +1,8 @@
 import type { BadgeVariant } from '@/lib/badgeVariants'
-import { formatPublishedAt } from '@/lib/formatDate'
+import { formatPublishedAt, formatTimeAgo } from '@/lib/formatDate'
 import type { NewsSentiment } from '@/types/news'
 
-export { formatPublishedAt }
+export { formatPublishedAt, formatTimeAgo }
 
 /** Maps a news sentiment label to a shared badge variant. */
 export function sentimentBadgeVariant(sentiment: NewsSentiment): BadgeVariant {

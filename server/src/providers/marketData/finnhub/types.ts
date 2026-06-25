@@ -35,3 +35,12 @@ export type FinnhubNewsArticle = {
   source?: string;
   datetime?: number;
 };
+
+/** Finnhub `/news?category=general` article row. */
+export type FinnhubGeneralNewsArticle = {
+  headline?: string;
+  url?: string;
+  source?: string;
+  datetime?: number;
+  related?: string;
+};

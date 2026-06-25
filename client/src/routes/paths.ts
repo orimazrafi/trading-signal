@@ -1,5 +1,6 @@
 /** App route paths for navigation and redirects. */
 export const ROUTES = {
+  home: '/',
   login: '/login',
   dashboard: '/dashboard',
   recommendations: '/dashboard/recommendations',
