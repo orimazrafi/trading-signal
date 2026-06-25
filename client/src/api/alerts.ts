@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { ApiRequestOptions } from './types'
 import type {
   AlertNotificationsResponse,
   CreatePriceAlertInput,
@@ -8,8 +9,8 @@ import type {
 } from '@/types/alert'
 
 /** Fetches configured price alerts for the authenticated user. */
-export async function fetchPriceAlerts() {
-  const { data } = await api.get<PriceAlertsResponse>('/alerts')
+export async function fetchPriceAlerts(options: ApiRequestOptions = {}) {
+  const { data } = await api.get<PriceAlertsResponse>('/alerts', { signal: options.signal })
   return data.alerts
 }
 
@@ -31,14 +32,21 @@ export async function deletePriceAlert(alertId: string): Promise<void> {
 }
 
 /** Fetches alert notification history. */
-export async function fetchAlertNotifications() {
-  const { data } = await api.get<AlertNotificationsResponse>('/alerts/notifications')
+export async function fetchAlertNotifications(options: ApiRequestOptions = {}) {
+  const { data } = await api.get<AlertNotificationsResponse>('/alerts/notifications', {
+    signal: options.signal,
+  })
   return data.notifications
 }
 
 /** Marks one alert notification as read. */
 export async function markAlertNotificationRead(notificationId: string): Promise<void> {
   await api.patch(`/alerts/notifications/${notificationId}/read`)
+}
+
+/** Triggers an immediate check of all enabled alerts (development only). */
+export async function triggerAlertCheck(): Promise<void> {
+  await api.post('/alerts/run-check', {}, { timeout: 60_000 })
 }
 
 /** Opens an SSE stream URL for real-time alert notifications. */

@@ -12,7 +12,7 @@ export function useAuth() {
 
   const meQuery = useQuery({
     queryKey: queryKeys.auth.me,
-    queryFn: fetchMe,
+    queryFn: ({ signal }) => fetchMe({ signal }),
     retry: false,
     meta: queryErrorHandledMeta,
   })

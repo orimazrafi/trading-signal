@@ -1,3 +1,4 @@
+import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
@@ -29,7 +30,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
       return;
     }
 
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: "Unauthorized" });
     return;
   }
 
@@ -38,7 +39,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     const user = parseJwtUser(decoded);
 
     if (!user) {
-      res.status(401).json({ error: "Unauthorized" });
+      res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: "Unauthorized" });
       return;
     }
 
@@ -46,7 +47,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     next();
   } catch (error) {
     log.error("Invalid auth cookie", error, { path: req.path });
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: "Unauthorized" });
   }
 }
 
@@ -57,7 +58,7 @@ export async function postSignup(req: Request, res: Response): Promise<void> {
   try {
     const user = await registerWithEmail(email, password);
     setAuthCookie(res, user);
-    res.status(201).json({ user });
+    res.status(HTTP_STATUS.CREATED).json({ user });
   } catch (error) {
     sendAuthErrorResponse(res, error, req.path);
   }
@@ -85,7 +86,7 @@ export function postLogout(_req: Request, res: Response): void {
 /** Returns the currently authenticated user. */
 export function getMe(req: Request, res: Response): void {
   if (!req.user) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(HTTP_STATUS.UNAUTHORIZED).json({ error: "Unauthorized" });
     return;
   }
 
@@ -120,23 +121,23 @@ export async function getGoogleCallback(req: Request, res: Response): Promise<vo
   res.clearCookie(OAUTH_STATE_COOKIE, { path: "/" });
 
   if (!code || !state || !storedState || state !== storedState) {
-    res.redirect(`${env.clientUrl}/?authError=invalid_oauth_state`);
+    res.redirect(`${env.clientUrl}/login?authError=invalid_oauth_state`);
     return;
   }
 
   try {
     const user = await authenticateWithGoogleCode(code);
     setAuthCookie(res, user);
-    res.redirect(env.clientUrl);
+    res.redirect(`${env.clientUrl}/dashboard`);
   } catch (error) {
     if (error instanceof AuthError) {
       log.error("Google callback failed", error, { path: req.path, code: error.code });
       const authError = error.code ?? "google_sign_in_failed";
-      res.redirect(`${env.clientUrl}/?authError=${encodeURIComponent(authError)}`);
+      res.redirect(`${env.clientUrl}/login?authError=${encodeURIComponent(authError)}`);
       return;
     }
 
     log.error("Google callback failed", error, { path: req.path });
-    res.redirect(`${env.clientUrl}/?authError=google_sign_in_failed`);
+    res.redirect(`${env.clientUrl}/login?authError=google_sign_in_failed`);
   }
 }

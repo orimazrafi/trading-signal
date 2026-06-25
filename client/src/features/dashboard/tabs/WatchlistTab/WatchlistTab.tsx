@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ErrorMessage } from '@/components/ErrorMessage'
 import { EmptyState } from '@/components/EmptyState'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
@@ -9,10 +10,15 @@ import { useWatchlists } from '@/features/watchlists/hooks/useWatchlists'
 import { SignalCard } from '@/features/dashboard/components/SignalCard'
 import { StockChartPanel } from '@/features/dashboard/components/StockChartPanel'
 import { StockSearch } from '@/features/dashboard/components/StockSearch'
+import { normalizeWatchlistSymbolParam, ROUTES } from '@/routes/paths'
 import type { WatchlistTabProps } from './types'
 
 /** Watchlist tab with custom views, stock search, and chart panel on selection. */
 function WatchlistTab({ user }: WatchlistTabProps) {
+  const navigate = useNavigate()
+  const { symbol: symbolParam } = useParams<{ symbol?: string }>()
+  const selectedSymbol = normalizeWatchlistSymbolParam(symbolParam)
+
   const {
     watchlists,
     activeWatchlistId,
@@ -27,16 +33,24 @@ function WatchlistTab({ user }: WatchlistTabProps) {
     handleRemoveStockFromWatchlist,
   } = useWatchlists({ userId: user.userId })
 
-  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
-
   const activeWatchlist = useMemo(
     () => watchlists.find((watchlist) => watchlist.id === activeWatchlistId) ?? null,
     [watchlists, activeWatchlistId],
   )
 
+  /** Updates the watchlist route when a stock is selected or cleared. */
+  const handleSelectSymbol = (symbol: string | null) => {
+    if (symbol) {
+      navigate(ROUTES.watchlistSymbol(symbol))
+      return
+    }
+
+    navigate(ROUTES.watchlist)
+  }
+
   /** Selects a watchlist stock and loads its chart panel. */
-  const handleSelectSymbol = (symbol: string) => {
-    setSelectedSymbol(symbol)
+  const handleSelectSavedSymbol = (symbol: string) => {
+    handleSelectSymbol(symbol)
   }
 
   /** Saves a searched stock into the active custom view. */
@@ -46,7 +60,7 @@ function WatchlistTab({ user }: WatchlistTabProps) {
     }
 
     await handleSaveStockToWatchlist(activeWatchlistId, symbol)
-    setSelectedSymbol(symbol)
+    handleSelectSymbol(symbol)
   }
 
   /** Removes a stock from the active custom view. */
@@ -60,10 +74,10 @@ function WatchlistTab({ user }: WatchlistTabProps) {
       await handleRemoveStockFromWatchlist(activeWatchlistId, signalId)
       toast.success(`${symbol} removed from watchlist.`)
       if (selectedSymbol === symbol) {
-        setSelectedSymbol(null)
+        handleSelectSymbol(null)
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Unable to remove stock from this view.')
+      toast.error(err instanceof Error ? err.message : 'Unable to remove stock from watchlist.')
     }
   }
 
@@ -105,7 +119,7 @@ function WatchlistTab({ user }: WatchlistTabProps) {
                     <SignalCard
                       signal={signal}
                       isSelected={selectedSymbol === signal.symbol}
-                      onSelect={handleSelectSymbol}
+                      onSelect={handleSelectSavedSymbol}
                       onRemove={(signalId) => void handleRemoveStock(signalId, signal.symbol)}
                       removing={removing}
                     />

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { requireAuth } from "../controllers/auth.controller.js";
+import { stockQuoteRateLimiter } from "../lib/rateLimiters.js";
 import {
   getHealth,
   getStockBySymbol,
@@ -12,7 +13,12 @@ import {
 export const stockRoutes = Router();
 
 stockRoutes.get("/health", getHealth);
-stockRoutes.get("/stock/:symbol/history", getStockHistoryBySymbol);
-stockRoutes.get("/stock/:symbol", getStockBySymbol);
+stockRoutes.get(
+  "/stock/:symbol/history",
+  stockQuoteRateLimiter,
+  requireAuth,
+  getStockHistoryBySymbol,
+);
+stockRoutes.get("/stock/:symbol", stockQuoteRateLimiter, requireAuth, getStockBySymbol);
 stockRoutes.get("/stocks/:symbol/search", requireAuth, searchStockBySymbol);
 stockRoutes.get("/dashboard/trending", requireAuth, getTrending);

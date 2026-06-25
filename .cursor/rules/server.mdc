@@ -24,6 +24,9 @@ queue/         → RabbitMQ publishers, consumers, parsers
 ## HTTP
 
 - Use **axios** for outbound HTTP. Do not use `fetch`.
+- Use **`HTTP_STATUS`** from `@trading-signal/contracts/httpStatus` for all `res.status(...)` calls and domain error `statusCode` values — never raw numbers.
+- **`HTTP_STATUS.CONFLICT` (409)** — duplicate alert symbol, max alerts reached, duplicate watchlist name, or email already registered.
+- **`HTTP_STATUS_IN_APP`** documents what each code means in this API; **`describeHttpStatus()`** returns that text.
 - Exceptions: none for new code; migrate existing `fetch` call sites to axios.
 
 ## Worker separation

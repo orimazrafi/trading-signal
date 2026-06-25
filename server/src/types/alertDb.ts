@@ -28,7 +28,10 @@ export type AlertNotificationRecord = {
 
 /** Fields that can be updated on an existing price alert. */
 export type PriceAlertUpdateFields = Partial<
-  Pick<PriceAlertRecord, "thresholdPercent" | "enabled" | "emailEnabled" | "baselinePrice">
+  Pick<
+    PriceAlertRecord,
+    "thresholdPercent" | "enabled" | "emailEnabled" | "baselinePrice" | "lastTriggeredAt"
+  >
 >;
 
 /** Prisma delegates used by the alert repository. */

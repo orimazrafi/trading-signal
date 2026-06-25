@@ -42,12 +42,12 @@ services:
       cache_from:
         - trading-signal-worker:dev
     image: trading-signal-worker:dev
-    command: ["npm", "run", "dev:worker"]
+    command: ["sh", "-c", "npm run build -w @trading-signal/contracts && npm run dev:worker"]
     volumes:
       - ./server/src:/app/server/src
       - ./server/prisma:/app/server/prisma
       - ./server/tsconfig.json:/app/server/tsconfig.json
-      - ./packages/contracts:/app/packages/contracts
+      - ./packages/contracts/src:/app/packages/contracts/src
     env_file:
       - ./server/.env
     environment:
@@ -77,14 +77,14 @@ services:
       cache_from:
         - trading-signal-server:dev
     image: trading-signal-server:dev
-    command: ["sh", "-c", "npx prisma db push --accept-data-loss && npm run dev"]
+    command: ["sh", "-c", "npm run build -w @trading-signal/contracts && (npx prisma migrate deploy || (npx prisma migrate resolve --applied 20250624120000_init && npx prisma migrate deploy)) && npm run dev"]
     ports:
       - "3000:3000"
     volumes:
       - ./server/src:/app/server/src
       - ./server/prisma:/app/server/prisma
       - ./server/tsconfig.json:/app/server/tsconfig.json
-      - ./packages/contracts:/app/packages/contracts
+      - ./packages/contracts/src:/app/packages/contracts/src
     env_file:
       - ./server/.env
     environment:
@@ -100,6 +100,7 @@ services:
       AUTH_ALLOW_MOCK: "false"
       RECOMMENDATIONS_ENABLED: "true"
       RECOMMENDATION_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL,AMZN,META,JPM,XOM"
+      ALERTS_RUNNER_URL: http://alerts-runner:8081
     depends_on:
       postgres:
         condition: service_healthy
@@ -115,6 +116,8 @@ services:
       context: ./alerts-runner
       dockerfile: Dockerfile
     image: trading-signal-alerts-runner:dev
+    ports:
+      - "8081:8081"
     env_file:
       - ./server/.env
     environment:
@@ -122,6 +125,9 @@ services:
       REDIS_URL: redis://redis:6379
       ALERT_CHECK_INTERVAL_MS: "300000"
       STOCK_CACHE_TTL_SECONDS: "60"
+      ALERT_RUNNER_DEV_HTTP: "true"
+      ALERT_RUNNER_DEV_HTTP_PORT: "8081"
+      CLIENT_URL: http://localhost:5173
     depends_on:
       postgres:
         condition: service_healthy
@@ -132,20 +138,20 @@ services:
 
   client:
     build:
-      context: ./client
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: client/Dockerfile
       target: dev
       cache_from:
         - trading-signal-client:dev
     image: trading-signal-client:dev
     volumes:
-      - ./client/src:/app/src
-      - ./client/index.html:/app/index.html
-      - ./client/vite.config.ts:/app/vite.config.ts
-      - ./client/package.json:/app/package.json
-      - ./client/package-lock.json:/app/package-lock.json
-      - ./client/public:/app/public
-      - ./packages/contracts:/app/packages/contracts
+      - ./client/src:/app/client/src
+      - ./client/index.html:/app/client/index.html
+      - ./client/vite.config.ts:/app/client/vite.config.ts
+      - ./client/package.json:/app/client/package.json
+      - ./client/package-lock.json:/app/client/package-lock.json
+      - ./client/public:/app/client/public
+      - ./packages/contracts/src:/app/packages/contracts/src
     environment:
       API_PROXY_TARGET: http://server:3000
       CHOKIDAR_USEPOLLING: "true"

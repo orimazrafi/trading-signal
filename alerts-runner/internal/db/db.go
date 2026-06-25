@@ -1,15 +1,20 @@
+// Package db loads enabled alerts and persists triggered notifications in PostgreSQL.
 package db
 
 import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const alertRedisChannel = "alert:notifications"
+
+// ErrAlertAlreadyTriggered is returned when another worker disabled the alert first.
+var ErrAlertAlreadyTriggered = errors.New("alert already triggered")
 
 // PriceAlert is an enabled user alert loaded from PostgreSQL.
 type PriceAlert struct {
@@ -103,7 +108,8 @@ func (s *Store) ListEnabledAlerts(ctx context.Context) ([]PriceAlert, error) {
 	return alerts, rows.Err()
 }
 
-// TriggerAlert persists a notification and disables the alert so it cannot fire again.
+// TriggerAlert atomically inserts a notification and disables the alert.
+// Returns ErrAlertAlreadyTriggered when the alert was already disabled (e.g. concurrent workers).
 func (s *Store) TriggerAlert(
 	ctx context.Context,
 	alert PriceAlert,
@@ -159,7 +165,7 @@ func (s *Store) TriggerAlert(
 		return NotificationRecord{}, err
 	}
 
-	_, err = tx.Exec(ctx, `
+	updateResult, err := tx.Exec(ctx, `
 		UPDATE "PriceAlert"
 		SET
 			enabled = false,
@@ -171,6 +177,10 @@ func (s *Store) TriggerAlert(
 		return NotificationRecord{}, err
 	}
 
+	if updateResult.RowsAffected() == 0 {
+		return NotificationRecord{}, ErrAlertAlreadyTriggered
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return NotificationRecord{}, err
 	}
@@ -178,11 +188,22 @@ func (s *Store) TriggerAlert(
 	return notification, nil
 }
 
+// MarkNotificationEmailSent sets emailSent on a persisted alert notification.
+func (s *Store) MarkNotificationEmailSent(ctx context.Context, notificationID string) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE "AlertNotification"
+		SET "emailSent" = true
+		WHERE id = $1
+	`, notificationID)
+	return err
+}
+
 // RedisChannel returns the pub/sub channel used by the API server.
 func RedisChannel() string {
 	return alertRedisChannel
 }
 
+// newNotificationID generates a cuid-style identifier for AlertNotification rows.
 func newNotificationID() string {
 	buffer := make([]byte, 12)
 	_, _ = rand.Read(buffer)

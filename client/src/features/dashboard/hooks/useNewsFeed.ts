@@ -1,5 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { queryErrorHandledMeta } from '@/lib/queryMeta'
+import {
+  marketDataQueryOptions,
+  MARKET_NEWS_GC_TIME_MS,
+  MARKET_NEWS_STALE_TIME_MS,
+} from '@/lib/marketDataQueryOptions'
 import { fetchMarketNews } from '@/api/dashboard'
 import { queryKeys } from '@/api/queryKeys'
 
@@ -7,9 +12,10 @@ import { queryKeys } from '@/api/queryKeys'
 export function useNewsFeed() {
   const newsQuery = useQuery({
     queryKey: queryKeys.dashboard.news,
-    queryFn: fetchMarketNews,
-    staleTime: 30_000,
-    refetchOnMount: true,
+    queryFn: ({ signal }) => fetchMarketNews({ signal }),
+    staleTime: MARKET_NEWS_STALE_TIME_MS,
+    gcTime: MARKET_NEWS_GC_TIME_MS,
+    ...marketDataQueryOptions,
     meta: queryErrorHandledMeta,
   })
 

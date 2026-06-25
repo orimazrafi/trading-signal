@@ -14,7 +14,7 @@ export function useAlertNotifications({ enabled = true }: UseAlertNotificationsO
 
   const notificationsQuery = useQuery({
     queryKey: queryKeys.alerts.notifications,
-    queryFn: fetchAlertNotifications,
+    queryFn: ({ signal }) => fetchAlertNotifications({ signal }),
     enabled,
     meta: queryErrorHandledMeta,
   })

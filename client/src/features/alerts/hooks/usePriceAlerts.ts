@@ -4,10 +4,13 @@ import {
   createPriceAlert,
   deletePriceAlert,
   fetchPriceAlerts,
+  triggerAlertCheck,
   updatePriceAlert,
 } from '@/api/alerts'
+import { getApiErrorMessage } from '@/api/client'
 import {
   getFirstApiErrorMessage,
+  invalidateQueryKey,
   runMutationAndInvalidate,
 } from '@/features/alerts/lib/alertQueryUtils'
 import { queryErrorHandledMeta } from '@/lib/queryMeta'
@@ -21,7 +24,7 @@ export function usePriceAlerts({ enabled = true }: UsePriceAlertsOptions = {}) {
 
   const alertsQuery = useQuery({
     queryKey: alertsQueryKey,
-    queryFn: fetchPriceAlerts,
+    queryFn: ({ signal }) => fetchPriceAlerts({ signal }),
     enabled,
     meta: queryErrorHandledMeta,
   })
@@ -39,6 +42,11 @@ export function usePriceAlerts({ enabled = true }: UsePriceAlertsOptions = {}) {
 
   const deleteMutation = useMutation({
     mutationFn: deletePriceAlert,
+    meta: queryErrorHandledMeta,
+  })
+
+  const runCheckMutation = useMutation({
+    mutationFn: triggerAlertCheck,
     meta: queryErrorHandledMeta,
   })
 
@@ -73,6 +81,23 @@ export function usePriceAlerts({ enabled = true }: UsePriceAlertsOptions = {}) {
   const toggleAlertEmail = (alert: PriceAlert, emailEnabled: boolean) =>
     updateAlert(alert.id, { emailEnabled })
 
+  /** Runs an immediate alert check (development only). */
+  const runAlertCheck = async () => {
+    await runCheckMutation.mutateAsync()
+    await Promise.all([
+      invalidateQueryKey(queryClient, alertsQueryKey),
+      invalidateQueryKey(queryClient, queryKeys.alerts.notifications),
+    ])
+  }
+
+  /** Re-arms a previously triggered alert for the same symbol. */
+  const setUpAlertAgain = (alert: PriceAlert) =>
+    createAlert({
+      symbol: alert.symbol,
+      thresholdPercent: alert.thresholdPercent,
+      emailEnabled: alert.emailEnabled,
+    })
+
   const error = getFirstApiErrorMessage([
     alertsQuery.error,
     createMutation.error,
@@ -80,19 +105,25 @@ export function usePriceAlerts({ enabled = true }: UsePriceAlertsOptions = {}) {
     deleteMutation.error,
   ])
 
+  const runCheckError = runCheckMutation.error == null ? null : getApiErrorMessage(runCheckMutation.error)
+
   return {
     alerts: alertsQuery.data ?? [],
     loading: alertsQuery.isLoading,
     creating: createMutation.isPending,
     updating: updateMutation.isPending,
     deleting: deleteMutation.isPending,
+    runningCheck: runCheckMutation.isPending,
+    runCheckError,
     error,
     createAlert,
     createAlertFromFields,
+    setUpAlertAgain,
     updateAlert,
     deleteAlert,
     toggleAlertEnabled,
     toggleAlertEmail,
+    runAlertCheck,
     reload: () => alertsQuery.refetch(),
   }
 }

@@ -1,8 +1,9 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { isRequestCancelled } from '@/api/client'
+import { searchStock } from '@/api/stocks'
 import type { SearchStockResult } from '@/types/stock'
 import type { SignalAction } from '@/types/watchlist'
 import { buildSignalReason, toSignalAction } from '@/lib/signalUtils'
-import { searchStock } from '@/api/stocks'
 
 /** Owns symbol search form state and stock lookup with recommendation. */
 export function useSearchStock() {
@@ -10,6 +11,7 @@ export function useSearchStock() {
   const [searchResult, setSearchResult] = useState<SearchStockResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
+  const searchAbortRef = useRef<AbortController | null>(null)
 
   const searchAction: SignalAction | null = searchResult
     ? toSignalAction(searchResult.recommendation)
@@ -17,10 +19,20 @@ export function useSearchStock() {
 
   const searchReason = searchAction ? buildSignalReason(searchAction) : null
 
+  /** Aborts any in-flight search when the hook unmounts. */
+  useEffect(() => {
+    return () => {
+      searchAbortRef.current?.abort()
+    }
+  }, [])
+
   /** Clears the current search result and error state. */
   const clearSearch = () => {
+    searchAbortRef.current?.abort()
+    searchAbortRef.current = null
     setSearchResult(null)
     setSearchError(null)
+    setIsLoading(false)
   }
 
   /** Normalizes symbol input to uppercase as the user types. */
@@ -39,17 +51,31 @@ export function useSearchStock() {
       return
     }
 
+    searchAbortRef.current?.abort()
+    const controller = new AbortController()
+    searchAbortRef.current = controller
     setIsLoading(true)
 
     try {
-      const result = await searchStock(symbol)
+      const result = await searchStock(symbol, { signal: controller.signal })
+      if (searchAbortRef.current !== controller) {
+        return
+      }
+
       setSearchResult(result)
       setSymbolInput(result.quote.symbol)
     } catch (err) {
+      if (isRequestCancelled(err)) {
+        return
+      }
+
       setSearchResult(null)
       setSearchError(err instanceof Error ? err.message : 'Search failed. Try again.')
     } finally {
-      setIsLoading(false)
+      if (searchAbortRef.current === controller) {
+        searchAbortRef.current = null
+        setIsLoading(false)
+      }
     }
   }
 

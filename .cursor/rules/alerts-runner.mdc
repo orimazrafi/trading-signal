@@ -16,7 +16,7 @@ alerts-runner/
   internal/
     config/    # env loading
     db/        # Postgres queries
-    quotes/    # live price fetch (Twelve Data)
+    quotes/    # live price fetch (market data provider)
     runner/    # check loop, trigger logic
     email/     # Resend delivery
     market/    # market-hours / timezone

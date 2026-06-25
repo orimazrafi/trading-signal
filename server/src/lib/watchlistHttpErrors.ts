@@ -1,3 +1,4 @@
+import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import type { Response } from "express";
 import { log } from "./logger/index.js";
 import { WatchlistError } from "../services/watchlist.service.js";
@@ -10,5 +11,5 @@ export function sendWatchlistErrorResponse(res: Response, error: unknown, path: 
   }
 
   log.error("Controller endpoint execution failed", error, { path });
-  res.status(500).json({ error: "Watchlist request failed" });
+  res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ error: "Watchlist request failed" });
 }

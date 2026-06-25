@@ -15,6 +15,7 @@ Monorepo: **client** (Vite/React), **server** (Express/Prisma), **alerts-runner*
 - **No shared/exported types inline** — put types in dedicated `types.ts` files (see placement table below).
 - **No `as` type assertions** — do not cast with `value as SomeType`. Use narrowing (type guards, `typeof`/`in` checks), validated parsers, or generics instead. (`as const` and import aliases like `import { x as y }` are fine.)
 - **No magic strings/numbers** used more than once — extract to `const` objects, enums, or env config.
+- **HTTP status codes** — use `HTTP_STATUS` from `@trading-signal/contracts/httpStatus` (not raw `409`, `401`, etc.). See `HTTP_STATUS_IN_APP` for what each code means in this API.
 - **Promote types** when a second importer appears (module → feature → `src/types/`).
 
 ## Prefer

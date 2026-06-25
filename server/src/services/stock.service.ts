@@ -1,11 +1,8 @@
 import { env } from "../config/env.js";
 import { log } from "../lib/logger/index.js";
-import { requireTwelveDataApiKey } from "../lib/twelveData.js";
-import {
-  requestTwelveDataPrice,
-  requestTwelveDataProfile,
-  requestTwelveDataStatistics,
-} from "../lib/twelveDataClient.js";
+import { buildBackupCacheKey } from "../lib/redisBackupCache.js";
+import { toStockProviderError } from "../lib/stockProviderErrors.js";
+import { getMarketDataProvider } from "../providers/marketData/index.js";
 import { redis } from "../config/redis.js";
 import {
   createSignal,
@@ -19,21 +16,8 @@ import type {
   TrendingStock,
 } from "../types/stock.js";
 import { parseStockQuote } from "../types/stock.js";
-import {
-  isTwelveDataErrorPayload,
-  type TwelveDataProfileResponse,
-  type TwelveDataStatisticsResponse,
-} from "../types/twelveData.js";
 
-export class StockError extends Error {
-  constructor(
-    message: string,
-    readonly statusCode = 502,
-  ) {
-    super(message);
-    this.name = "StockError";
-  }
-}
+export { StockError } from "../lib/stockError.js";
 
 /** Normalizes a ticker symbol to uppercase. */
 function normalizeSymbol(symbol: string): string {
@@ -62,109 +46,48 @@ async function readCachedQuote(symbol: string): Promise<StockQuote | null> {
   }
 }
 
+/** Reads a backup quote from Redis when the live provider is unavailable. */
+async function readBackupQuote(symbol: string): Promise<StockQuote | null> {
+  const backupKey = buildBackupCacheKey(buildQuoteCacheKey(symbol));
+
+  try {
+    const cached = await redis.get(backupKey);
+    if (!cached) {
+      return null;
+    }
+
+    return parseStockQuote(JSON.parse(cached));
+  } catch (error) {
+    log.error("Redis backup read failed", error, { symbol, backupKey });
+    return null;
+  }
+}
+
 /** Reads a cached quote from Redis, or null on miss or parse failure. */
 export async function getCachedStockQuote(symbol: string): Promise<StockQuote | null> {
   return readCachedQuote(symbol);
 }
 
-/** Maps Twelve Data responses to a StockQuote. */
-function mapTwelveDataQuote(
-  symbol: string,
-  price: number,
-  profile: TwelveDataProfileResponse | null,
-  statistics: TwelveDataStatisticsResponse | null,
-): StockQuote {
-  const peRatio = statistics?.statistics?.valuations_metrics?.trailing_pe ?? 0;
-
-  return {
-    symbol,
-    name: String(profile?.name ?? statistics?.meta?.name ?? `${symbol} Inc.`),
-    price,
-    peRatio: Number.isFinite(peRatio) ? peRatio : 0,
-    sector: String(profile?.sector ?? profile?.industry ?? "Unknown"),
-  };
-}
-
-/** Fetches the latest trade price from Twelve Data. */
-async function fetchPriceFromApi(symbol: string, apiKey: string): Promise<number> {
-  const response = await requestTwelveDataPrice(symbol, apiKey);
-
-  if (isTwelveDataErrorPayload(response.data)) {
-    throw new Error(response.data.message ?? `Twelve Data price failed for ${symbol}`);
-  }
-
-  const price = Number(response.data.price);
-  if (!Number.isFinite(price) || price <= 0) {
-    throw new Error(`Twelve Data returned an invalid price for ${symbol}`);
-  }
-
-  return price;
-}
-
-/** Fetches company profile metadata used to enrich quote responses. */
-async function fetchProfileFromApi(
-  symbol: string,
-  apiKey: string,
-): Promise<TwelveDataProfileResponse | null> {
-  try {
-    const response = await requestTwelveDataProfile(symbol, apiKey);
-
-    if (isTwelveDataErrorPayload(response.data)) {
-      throw new Error(response.data.message ?? `Twelve Data profile failed for ${symbol}`);
-    }
-
-    return response.data;
-  } catch (error) {
-    log.error("External API fetch failed", error, { provider: "Twelve Data", symbol, endpoint: "profile" });
-    return null;
-  }
-}
-
-/** Fetches valuation statistics used to enrich quote responses. */
-async function fetchStatisticsFromApi(
-  symbol: string,
-  apiKey: string,
-): Promise<TwelveDataStatisticsResponse | null> {
-  try {
-    const response = await requestTwelveDataStatistics(symbol, apiKey);
-
-    if (isTwelveDataErrorPayload(response.data)) {
-      throw new Error(response.data.message ?? `Twelve Data statistics failed for ${symbol}`);
-    }
-
-    return response.data;
-  } catch (error) {
-    log.error("External API fetch failed", error, { provider: "Twelve Data", symbol, endpoint: "statistics" });
-    return null;
-  }
-}
-
-/** Fetches a quote from Twelve Data; throws when the API key is missing or the request fails. */
-async function fetchQuoteFromApi(symbol: string): Promise<StockQuote> {
-  const apiKey = requireTwelveDataApiKey();
-
-  const [price, profile, statistics] = await Promise.all([
-    fetchPriceFromApi(symbol, apiKey),
-    fetchProfileFromApi(symbol, apiKey),
-    fetchStatisticsFromApi(symbol, apiKey),
-  ]);
-
-  return mapTwelveDataQuote(symbol, price, profile, statistics);
-}
-
 /** Writes a quote to Redis with TTL; logs but does not throw on failure. */
 async function cacheQuote(symbol: string, quote: StockQuote): Promise<void> {
   const cacheKey = buildQuoteCacheKey(symbol);
+  const payload = JSON.stringify(quote);
 
   try {
-    await redis.set(cacheKey, JSON.stringify(quote), "EX", env.stockCacheTtlSeconds);
+    await redis.set(cacheKey, payload, "EX", env.stockCacheTtlSeconds);
+    await redis.set(buildBackupCacheKey(cacheKey), payload);
     log.info("Cached stock quote in Redis", { symbol, ttlSeconds: env.stockCacheTtlSeconds });
   } catch (error) {
     log.error("Redis write failed", error, { symbol, cacheKey });
   }
 }
 
-/** Returns the latest stock price using cache or a single Twelve Data price call. */
+/** Fetches a quote from the configured market data provider. */
+async function fetchQuoteFromProvider(symbol: string): Promise<StockQuote> {
+  return getMarketDataProvider().fetchQuote(symbol);
+}
+
+/** Returns the latest stock price using cache or the configured market data provider. */
 export async function getStockPrice(symbol: string): Promise<number> {
   const normalizedSymbol = normalizeSymbol(symbol);
   const cached = await readCachedQuote(normalizedSymbol);
@@ -173,25 +96,17 @@ export async function getStockPrice(symbol: string): Promise<number> {
     return cached.price;
   }
 
-  const apiKey = requireTwelveDataApiKey();
-
   log.warn("Cache miss for stock price, fetching from external provider", {
     symbol: normalizedSymbol,
+    provider: env.marketDataProvider,
   });
 
-  const price = await fetchPriceFromApi(normalizedSymbol, apiKey);
-  await cacheQuote(normalizedSymbol, {
-    symbol: normalizedSymbol,
-    name: normalizedSymbol,
-    price,
-    peRatio: 0,
-    sector: "Unknown",
-  });
-
-  return price;
+  const quote = await fetchQuoteFromProvider(normalizedSymbol);
+  await cacheQuote(normalizedSymbol, quote);
+  return quote.price;
 }
 
-/** Returns cached stock quote or fetches live data from Twelve Data. */
+/** Returns cached stock quote or fetches live data from the market data provider. */
 export async function getStockQuote(symbol: string): Promise<StockQuote> {
   const normalizedSymbol = normalizeSymbol(symbol);
 
@@ -202,19 +117,21 @@ export async function getStockQuote(symbol: string): Promise<StockQuote> {
 
   log.warn("Cache miss for dynamic data, fetching from external provider", {
     symbol: normalizedSymbol,
+    provider: env.marketDataProvider,
   });
 
   try {
-    const quote = await fetchQuoteFromApi(normalizedSymbol);
+    const quote = await fetchQuoteFromProvider(normalizedSymbol);
     await cacheQuote(normalizedSymbol, quote);
     return quote;
   } catch (error) {
-    if (error instanceof StockError) {
-      throw error;
+    const backupQuote = await readBackupQuote(normalizedSymbol);
+    if (backupQuote) {
+      log.warn("Serving backup stock quote after provider failure", { symbol: normalizedSymbol });
+      return backupQuote;
     }
 
-    const message = error instanceof Error ? error.message : "Unable to fetch stock data";
-    throw new StockError(message);
+    throw toStockProviderError(error, `quote for ${normalizedSymbol}`);
   }
 }
 

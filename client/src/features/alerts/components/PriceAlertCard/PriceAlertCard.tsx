@@ -17,9 +17,11 @@ function PriceAlertCard({
   userEmail,
   updating,
   deleting,
+  settingUpAgain = false,
   onToggleEnabled,
   onToggleEmail,
   onDelete,
+  onSetUpAgain,
 }: PriceAlertCardProps) {
   const wasSent = alert.lastTriggeredAt !== null
 
@@ -30,6 +32,20 @@ function PriceAlertCard({
       toast.success(`${alert.symbol} alert removed.`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Unable to remove alert.')
+    }
+  }
+
+  /** Re-arms a previously triggered alert for the same symbol. */
+  const handleSetUpAgain = async () => {
+    if (!onSetUpAgain) {
+      return
+    }
+
+    try {
+      await onSetUpAgain(alert)
+      toast.success(`${alert.symbol} alert set up again.`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Unable to set up alert again.')
     }
   }
 
@@ -68,7 +84,25 @@ function PriceAlertCard({
         )}
       </div>
 
-      {!wasSent ? (
+      {wasSent ? (
+        <div className="mt-4 flex flex-wrap gap-3">
+          {onSetUpAgain ? (
+            <Button
+              type="button"
+              variant="primary"
+              disabled={settingUpAgain}
+              loading={settingUpAgain}
+              loadingLabel="Setting up…"
+              onClick={() => void handleSetUpAgain()}
+            >
+              Set up again
+            </Button>
+          ) : null}
+          <Button type="button" variant="secondary" disabled={deleting} onClick={() => void handleDelete()}>
+            Remove
+          </Button>
+        </div>
+      ) : (
         <div className="mt-4 flex flex-wrap gap-4">
           <CheckboxField
             label="Enabled"
@@ -84,7 +118,7 @@ function PriceAlertCard({
             onChange={(checked) => void onToggleEmail(alert, checked)}
           />
         </div>
-      ) : null}
+      )}
     </Card>
   )
 }

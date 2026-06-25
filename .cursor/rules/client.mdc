@@ -47,6 +47,7 @@ Semantic colors and radii live in `src/styles/tokens.css` and are exposed to Tai
 
 - **SoC:** components render UI only; hooks own state, effects, and data lifecycle; `api/` owns HTTP calls.
 - **HTTP:** use the shared axios client (`@/api/client.ts`). No raw `fetch` in features, hooks, or components. (SSE via `EventSource` is the exception.)
+- **HTTP status checks** — compare against `HTTP_STATUS` from `@trading-signal/contracts/httpStatus`, not numeric literals.
 - **Imports:** use `@/` path aliases (e.g. `@/components/Button`). No `../` chains across modules.
 - **React Query:** cache keys in `@/api/queryKeys.ts` only.
 - **Mutations:** no `onSuccess` on `useMutation` — call `mutateAsync`, then `invalidateQueries` in the hook wrapper (see `usePriceAlerts`).

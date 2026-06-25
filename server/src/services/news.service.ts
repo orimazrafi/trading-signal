@@ -92,7 +92,7 @@ function filterNewsByWatchlistSymbols(
   return filtered.length > 0 ? filtered : articles;
 }
 
-/** Fetches market news from Twelve Data, processes it, and caches the feed. */
+/** Fetches market news from the configured provider, processes it, and caches the feed. */
 async function refreshProcessedNewsFromApi(): Promise<ProcessedNewsArticle[]> {
   log.warn("Cache miss for dynamic data, fetching from external provider", {
     key: env.dashboardNewsRedisKey,
@@ -133,7 +133,14 @@ export class NewsService {
       return cachedArticles;
     }
 
-    return refreshProcessedNewsFromApi();
+    try {
+      return await refreshProcessedNewsFromApi();
+    } catch (error) {
+      log.error("Failed to refresh dashboard news from provider", error, {
+        key: env.dashboardNewsRedisKey,
+      });
+      return [];
+    }
   }
 
   /** Returns news filtered to the user's watchlist symbols when available. */

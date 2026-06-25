@@ -1,10 +1,16 @@
+import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import {
-  ALERT_MAX_THRESHOLD_PERCENT,
-  ALERT_MIN_THRESHOLD_PERCENT,
-  MAX_ALERTS_PER_USER,
-} from "../lib/alertConstants.js";
+  assertNoActiveAlertForSymbol,
+  parseCreateAlertFields,
+  type ValidatedCreateAlertFields,
+} from "../lib/alertCreateRules.js";
+import { AlertError } from "../lib/alertError.js";
+import { normalizeAlertThresholdPercent } from "../lib/alertInput.js";
 import {
-  countUserPriceAlerts,
+  assertUserHasActiveAlertSlot,
+  fetchAlertBaselinePrice,
+} from "./alertCreateSupport.js";
+import {
   createUserPriceAlert,
   deleteUserPriceAlert,
   findUserPriceAlertById,
@@ -14,44 +20,17 @@ import {
   markAlertNotificationRead,
   updateUserPriceAlert,
 } from "../repositories/alert.repository.js";
-import { getStockPrice } from "./stock.service.js";
+import type { PriceAlertRecord } from "../types/alertDb.js";
+import type { PriceAlert } from "../types/alert.js";
 
-export class AlertError extends Error {
-  constructor(
-    message: string,
-    readonly statusCode = 400,
-  ) {
-    super(message);
-    this.name = "AlertError";
-  }
-}
-
-/** Normalizes a ticker symbol to uppercase. */
-function normalizeSymbol(symbol: string): string {
-  return symbol.trim().toUpperCase();
-}
-
-/** Validates and normalizes an alert threshold percent. */
-function normalizeThresholdPercent(thresholdPercent: number): number {
-  if (!Number.isFinite(thresholdPercent)) {
-    throw new AlertError("Threshold percent must be a number");
-  }
-
-  if (thresholdPercent < ALERT_MIN_THRESHOLD_PERCENT || thresholdPercent > ALERT_MAX_THRESHOLD_PERCENT) {
-    throw new AlertError(
-      `Threshold must be between ${ALERT_MIN_THRESHOLD_PERCENT}% and ${ALERT_MAX_THRESHOLD_PERCENT}%`,
-    );
-  }
-
-  return Math.round(thresholdPercent * 100) / 100;
-}
+export { AlertError } from "../lib/alertError.js";
 
 /** Returns all configured price alerts for a user. */
 export async function getAlertsForUser(userId: string) {
   return listUserPriceAlerts(userId);
 }
 
-/** Creates a new price alert for a user. */
+/** Creates a new price alert for a user, or re-arms a previously triggered one for the same symbol. */
 export async function createAlertForUser(
   userId: string,
   input: {
@@ -59,38 +38,40 @@ export async function createAlertForUser(
     thresholdPercent: number;
     emailEnabled?: boolean;
   },
-) {
-  const symbol = normalizeSymbol(input.symbol);
+): Promise<PriceAlert> {
+  const fields = parseCreateAlertFields(input);
+  const baselinePrice = await fetchAlertBaselinePrice(fields.symbol);
+  const existing = await findUserPriceAlertBySymbol(userId, fields.symbol);
 
-  if (!symbol) {
-    throw new AlertError("Stock symbol is required");
-  }
-
-  const alertCount = await countUserPriceAlerts(userId);
-  if (alertCount >= MAX_ALERTS_PER_USER) {
-    throw new AlertError(`You can configure up to ${MAX_ALERTS_PER_USER} price alerts`, 409);
-  }
-
-  const existing = await findUserPriceAlertBySymbol(userId, symbol);
   if (existing) {
-    throw new AlertError("An alert already exists for this symbol", 409);
+    return rearmAlertForUser(existing, fields, baselinePrice);
   }
 
-  const thresholdPercent = normalizeThresholdPercent(input.thresholdPercent);
-
-  let baselinePrice: number;
-  try {
-    baselinePrice = await getStockPrice(symbol);
-  } catch {
-    throw new AlertError("Unable to fetch a live price for this symbol", 502);
-  }
-
+  await assertUserHasActiveAlertSlot(userId);
   return createUserPriceAlert({
     userId,
-    symbol,
-    thresholdPercent,
+    symbol: fields.symbol,
+    thresholdPercent: fields.thresholdPercent,
     baselinePrice,
-    emailEnabled: input.emailEnabled ?? true,
+    emailEnabled: fields.emailEnabled,
+  });
+}
+
+/** Re-enables a previously triggered alert for the same symbol. */
+async function rearmAlertForUser(
+  existing: PriceAlertRecord,
+  fields: ValidatedCreateAlertFields,
+  baselinePrice: number,
+): Promise<PriceAlert> {
+  assertNoActiveAlertForSymbol(existing);
+  await assertUserHasActiveAlertSlot(existing.userId, { hintRemoveExisting: true });
+
+  return updateUserPriceAlert(existing.id, {
+    thresholdPercent: fields.thresholdPercent,
+    baselinePrice,
+    enabled: true,
+    emailEnabled: fields.emailEnabled,
+    lastTriggeredAt: null,
   });
 }
 
@@ -107,22 +88,17 @@ export async function updateAlertForUser(
 ) {
   const alert = await findUserPriceAlertById(userId, alertId);
   if (!alert) {
-    throw new AlertError("Price alert not found", 404);
+    throw new AlertError("Price alert not found", HTTP_STATUS.NOT_FOUND);
   }
 
   const nextThreshold =
     input.thresholdPercent === undefined
       ? undefined
-      : normalizeThresholdPercent(input.thresholdPercent);
+      : normalizeAlertThresholdPercent(input.thresholdPercent);
 
-  let baselinePrice = alert.baselinePrice;
-  if (input.resetBaseline) {
-    try {
-      baselinePrice = await getStockPrice(alert.symbol);
-    } catch {
-      throw new AlertError("Unable to fetch a live price for this symbol", 502);
-    }
-  }
+  const baselinePrice = input.resetBaseline
+    ? await fetchAlertBaselinePrice(alert.symbol)
+    : alert.baselinePrice;
 
   return updateUserPriceAlert(alert.id, {
     thresholdPercent: nextThreshold,
@@ -136,7 +112,7 @@ export async function updateAlertForUser(
 export async function deleteAlertForUser(userId: string, alertId: string): Promise<void> {
   const alert = await findUserPriceAlertById(userId, alertId);
   if (!alert) {
-    throw new AlertError("Price alert not found", 404);
+    throw new AlertError("Price alert not found", HTTP_STATUS.NOT_FOUND);
   }
 
   await deleteUserPriceAlert(alert.id);
@@ -154,6 +130,6 @@ export async function markNotificationReadForUser(
 ): Promise<void> {
   const updated = await markAlertNotificationRead(userId, notificationId);
   if (!updated) {
-    throw new AlertError("Notification not found", 404);
+    throw new AlertError("Notification not found", HTTP_STATUS.NOT_FOUND);
   }
 }

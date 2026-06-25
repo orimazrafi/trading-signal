@@ -7,6 +7,7 @@ import {
   getPriceAlerts,
   patchAlertNotificationRead,
   patchPriceAlert,
+  postAlertRunCheck,
   postPriceAlert,
 } from "../controllers/alert.controller.js";
 
@@ -14,6 +15,7 @@ import {
 export const alertRoutes = Router();
 
 alertRoutes.get("/", requireAuth, getPriceAlerts);
+alertRoutes.post("/run-check", requireAuth, postAlertRunCheck);
 alertRoutes.post("/", requireAuth, postPriceAlert);
 alertRoutes.patch("/:id", requireAuth, patchPriceAlert);
 alertRoutes.delete("/:id", requireAuth, deletePriceAlert);

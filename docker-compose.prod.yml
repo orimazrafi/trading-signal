@@ -36,8 +36,8 @@ services:
 
   worker:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
       target: production
       cache_from:
         - trading-signal-worker:latest
@@ -66,8 +66,8 @@ services:
 
   server:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
       target: production
       cache_from:
         - trading-signal-server:latest

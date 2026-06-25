@@ -1,3 +1,4 @@
+import { HTTP_STATUS, type HttpStatusCode } from "@trading-signal/contracts/httpStatus";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import axios from "axios";
@@ -54,7 +55,7 @@ type GoogleProfile = {
 export class AuthError extends Error {
   constructor(
     message: string,
-    readonly statusCode = 400,
+    readonly statusCode: HttpStatusCode = HTTP_STATUS.BAD_REQUEST,
     readonly code?: string,
   ) {
     super(message);
@@ -170,7 +171,7 @@ async function assertEmailAvailable(email: string): Promise<void> {
   const existing = await findUserByEmail(email);
 
   if (existing) {
-    throw new AuthError("An account with this email already exists", 409);
+    throw new AuthError("An account with this email already exists", HTTP_STATUS.CONFLICT);
   }
 }
 
@@ -194,7 +195,7 @@ export async function registerWithEmail(email: string, password: string): Promis
 /** Throws when no credential user exists for the email. */
 function assertCredentialUserExists(user: CredentialUser | null): asserts user is CredentialUser {
   if (!user) {
-    throw new AuthError("Invalid email or password", 401);
+    throw new AuthError("Invalid email or password", HTTP_STATUS.UNAUTHORIZED);
   }
 }
 
@@ -203,7 +204,7 @@ function assertPasswordAccount(user: CredentialUser): asserts user is Credential
   passwordHash: string;
 } {
   if (!user.passwordHash) {
-    throw new AuthError("This account uses Google sign-in. Please continue with Google.", 401);
+    throw new AuthError("This account uses Google sign-in. Please continue with Google.", HTTP_STATUS.UNAUTHORIZED);
   }
 }
 
@@ -212,7 +213,7 @@ async function assertPasswordMatches(password: string, passwordHash: string): Pr
   const valid = await verifyPassword(password, passwordHash);
 
   if (!valid) {
-    throw new AuthError("Invalid email or password", 401);
+    throw new AuthError("Invalid email or password", HTTP_STATUS.UNAUTHORIZED);
   }
 }
 
@@ -237,14 +238,14 @@ export function createOAuthState(): string {
 /** Throws when Google OAuth client id is missing. */
 function assertGoogleClientConfigured(): void {
   if (!env.googleClientId) {
-    throw new AuthError("Google sign-in is not configured", 503);
+    throw new AuthError("Google sign-in is not configured", HTTP_STATUS.SERVICE_UNAVAILABLE);
   }
 }
 
 /** Throws when Google OAuth credentials are missing. */
 function assertGoogleOAuthConfigured(): void {
   if (!env.googleClientId || !env.googleClientSecret) {
-    throw new AuthError("Google sign-in is not configured", 503, "google_not_configured");
+    throw new AuthError("Google sign-in is not configured", HTTP_STATUS.SERVICE_UNAVAILABLE, "google_not_configured");
   }
 }
 
@@ -273,17 +274,17 @@ function mapGoogleTokenError(body: GoogleOAuthErrorBody | undefined): AuthError 
     case "invalid_client":
       return new AuthError(
         "Google client credentials are invalid",
-        502,
+        HTTP_STATUS.BAD_GATEWAY,
         "invalid_client",
       );
     case "invalid_grant":
       return new AuthError(
         "Google authorization code expired or was already used",
-        502,
+        HTTP_STATUS.BAD_GATEWAY,
         "invalid_grant",
       );
     default:
-      return new AuthError("Google sign-in failed", 502, "google_sign_in_failed");
+      return new AuthError("Google sign-in failed", HTTP_STATUS.BAD_GATEWAY, "google_sign_in_failed");
   }
 }
 
@@ -356,7 +357,7 @@ function parseGoogleProfile(profile: GoogleUserInfo): GoogleProfile | null {
 /** Throws when Google profile data is incomplete. */
 function assertGoogleProfile(profile: GoogleProfile | null): asserts profile is GoogleProfile {
   if (!profile) {
-    throw new AuthError("Google account did not return required profile data", 502);
+    throw new AuthError("Google account did not return required profile data", HTTP_STATUS.BAD_GATEWAY);
   }
 }
 

@@ -22,7 +22,7 @@ export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOpti
 
   const watchlistsQuery = useQuery({
     queryKey: queryKeys.watchlists.list(userId),
-    queryFn: async () => mapApiWatchlists(await fetchWatchlists(), userId),
+    queryFn: async ({ signal }) => mapApiWatchlists(await fetchWatchlists({ signal }), userId),
     enabled,
     meta: queryErrorHandledMeta,
   })

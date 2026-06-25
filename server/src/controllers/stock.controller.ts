@@ -1,3 +1,4 @@
+import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import type { Request, Response } from "express";
 import { getAuthenticatedUserId } from "../lib/controllerAuth.js";
 import { parseStockHistoryQuery } from "../lib/parseStockHistoryQuery/index.js";
@@ -18,7 +19,7 @@ export function getHealth(_req: Request, res: Response): void {
 export async function getStockHistoryBySymbol(req: Request, res: Response): Promise<void> {
   const symbol = req.params.symbol?.trim();
   if (!symbol) {
-    res.status(400).json({ error: "Stock symbol is required" });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Stock symbol is required" });
     return;
   }
 
@@ -36,7 +37,7 @@ export async function getStockHistoryBySymbol(req: Request, res: Response): Prom
 export async function getStockBySymbol(req: Request, res: Response): Promise<void> {
   const symbol = req.params.symbol?.trim();
   if (!symbol) {
-    res.status(400).json({ error: "Stock symbol is required" });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Stock symbol is required" });
     return;
   }
 
@@ -57,7 +58,7 @@ export async function searchStockBySymbol(req: Request, res: Response): Promise<
 
   const symbol = req.params.symbol?.trim();
   if (!symbol) {
-    res.status(400).json({ error: "Stock symbol is required" });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Stock symbol is required" });
     return;
   }
 

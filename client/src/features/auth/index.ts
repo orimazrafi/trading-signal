@@ -1,4 +1,5 @@
 export { default } from './AuthPage'
 export { default as AuthPage } from './AuthPage'
+export { AuthProvider, useAuthContext } from './AuthProvider'
 export { useAuth } from './useAuth'
 export type { AuthPageProps, AuthMode } from './AuthPage/types'

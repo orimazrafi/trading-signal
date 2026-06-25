@@ -1,4 +1,6 @@
 import type { AuthenticatedUser } from "../types/auth.js";
+import { resolveMarketDataProviderId } from "../providers/marketData/resolveMarketDataProviderId.js";
+import { DEV_JWT_SECRET } from "./validateProductionEnv.js";
 import { parseDurationToMs } from "../lib/parseDurationToMs.js";
 
 /** Trims an optional env string; empty when unset or whitespace-only. */
@@ -6,13 +8,29 @@ function trimEnv(value: string | undefined): string {
   return (value ?? "").trim();
 }
 
+/** Resolves alerts-runner URL for dev manual check triggers. */
+function resolveAlertsRunnerUrl(nodeEnv: string): string {
+  const configured = trimEnv(process.env.ALERTS_RUNNER_URL);
+  if (configured) {
+    return configured;
+  }
+
+  if (nodeEnv === "development") {
+    return "http://localhost:8081";
+  }
+
+  return "";
+}
+
+const nodeEnv = process.env.NODE_ENV ?? "development";
+
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN ?? "1h";
 
 /** Centralized environment configuration and app constants. */
 export const env = {
   port: Number(process.env.PORT) || 3000,
-  nodeEnv: process.env.NODE_ENV ?? "development",
-  jwtSecret: process.env.JWT_SECRET ?? "dev-jwt-secret-change-me",
+  nodeEnv,
+  jwtSecret: process.env.JWT_SECRET ?? DEV_JWT_SECRET,
   jwtExpiresIn,
   jwtExpiresInMs: parseDurationToMs(jwtExpiresIn),
   authAllowMock: process.env.AUTH_ALLOW_MOCK === "true",
@@ -22,8 +40,10 @@ export const env = {
   googleCallbackUrl: (
     process.env.GOOGLE_CALLBACK_URL ?? "http://localhost:3000/api/auth/google/callback"
   ).trim(),
-  stockCacheTtlSeconds: 60,
+  stockCacheTtlSeconds: Number(process.env.STOCK_CACHE_TTL_SECONDS) || 300,
   stockHistoryCacheTtlSeconds: Number(process.env.STOCK_HISTORY_CACHE_TTL_SECONDS) || 3600,
+  marketDataProvider: resolveMarketDataProviderId(process.env.MARKET_DATA_PROVIDER),
+  finnhubApiKey: trimEnv(process.env.FINNHUB_API_KEY),
   twelveDataApiKey: trimEnv(process.env.TWELVE_DATA_API_KEY),
   rabbitmqUrl: process.env.RABBITMQ_URL ?? "amqp://localhost:5672",
   stockTicksQueue: "stock_ticks",
@@ -54,6 +74,7 @@ export const env = {
   resendApiKey: trimEnv(process.env.RESEND_API_KEY),
   emailFrom: trimEnv(process.env.EMAIL_FROM),
   alertCheckIntervalMs: Number(process.env.ALERT_CHECK_INTERVAL_MS) || 300_000,
+  alertsRunnerUrl: resolveAlertsRunnerUrl(nodeEnv),
   mockUser: {
     userId: "user-mock-default",
     email: "demo@trading-signal.local",

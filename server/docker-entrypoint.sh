@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-echo "[entrypoint] Applying Prisma schema..."
-npx prisma db push --skip-generate --accept-data-loss
+echo "[entrypoint] Running database migrations..."
+npx prisma migrate deploy
 
 echo "[entrypoint] Starting process: $*"
 exec "$@"

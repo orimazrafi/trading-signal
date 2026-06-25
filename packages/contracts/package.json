@@ -12,6 +12,10 @@
       "types": "./dist/alert.d.ts",
       "import": "./dist/alert.js"
     },
+    "./alert.js": {
+      "types": "./dist/alert.d.ts",
+      "import": "./dist/alert.js"
+    },
     "./auth": {
       "types": "./dist/auth.d.ts",
       "import": "./dist/auth.js"
@@ -19,13 +23,21 @@
     "./parseAlertNotification": {
       "types": "./dist/parseAlertNotification.d.ts",
       "import": "./dist/parseAlertNotification.js"
+    },
+    "./httpStatus": {
+      "types": "./dist/httpStatus.d.ts",
+      "import": "./dist/httpStatus.js"
     }
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.9"
   },
-  "files": ["dist"]
+  "files": [
+    "dist"
+  ]
 }

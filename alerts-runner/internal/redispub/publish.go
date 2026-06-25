@@ -1,3 +1,4 @@
+// Package redispub publishes triggered alert events for the Node API SSE subscriber.
 package redispub
 
 import (
@@ -15,12 +16,12 @@ type Publisher struct {
 	client *redis.Client
 }
 
-// NewPublisher creates a Redis publisher.
+// NewPublisher creates a Redis publisher for alert notification events.
 func NewPublisher(client *redis.Client) *Publisher {
 	return &Publisher{client: client}
 }
 
-// NotificationEvent is the payload consumed by the API SSE subscriber.
+// NotificationEvent is the JSON payload consumed by the API server's SSE stream.
 type NotificationEvent struct {
 	UserID        string  `json:"userId"`
 	ID            string  `json:"id"`
@@ -32,7 +33,7 @@ type NotificationEvent struct {
 	CreatedAt     string  `json:"createdAt"`
 }
 
-// PublishAlert sends a notification event to subscribed API clients.
+// PublishAlert broadcasts a notification on the shared Redis channel for real-time UI updates.
 func (p *Publisher) PublishAlert(ctx context.Context, notification db.NotificationRecord) error {
 	event := NotificationEvent{
 		UserID:        notification.UserID,

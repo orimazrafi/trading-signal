@@ -1,45 +1,41 @@
-import { lazy, Suspense, useState } from 'react'
+import { Suspense } from 'react'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { AppHeader } from '@/components/AppHeader'
 import AlertStreamListener from '@/features/alerts/components/AlertStreamListener'
-import { DashboardNav, type DashboardTab } from '@/features/dashboard/components/DashboardNav'
-import type { DashboardProps } from '@/features/dashboard/types'
-import { useQuickAddToWatchlist } from '@/features/watchlists/hooks/useQuickAddToWatchlist'
+import { DashboardNav } from '@/features/dashboard/components/DashboardNav'
+import { useAuthContext } from '@/features/auth/AuthProvider'
 import { TAB_ERROR_TITLE, TAB_LOADING_LABEL } from './types'
+import { resolveDashboardTab } from '@/routes/resolveDashboardTab'
+import { ROUTES } from '@/routes/paths'
 
-const AlertsTab = lazy(() => import('@/features/dashboard/tabs/AlertsTab'))
-const NewsTab = lazy(() => import('@/features/dashboard/tabs/NewsTab'))
-const RecommendationsTab = lazy(() => import('@/features/dashboard/tabs/RecommendationsTab'))
-const WatchlistTab = lazy(() => import('@/features/dashboard/tabs/WatchlistTab'))
+/** Signed-in dashboard shell with primary section tabs and nested route outlet. */
+function DashboardLayout() {
+  const { user, logout } = useAuthContext()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const activeTab = resolveDashboardTab(location.pathname)
 
-/** Signed-in dashboard shell with primary section tabs. */
-function DashboardLayout({ user, onLogout }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<DashboardTab>('news')
-  const {
-    quickAdd,
-    savingSymbol,
-    watchlistName,
-  } = useQuickAddToWatchlist(user.userId)
+  if (!user) {
+    return null
+  }
+
+  /** Signs out and returns the visitor to the login page. */
+  const handleLogout = async () => {
+    await logout()
+    navigate(ROUTES.login, { replace: true })
+  }
 
   return (
     <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-6 px-4 py-6 text-left">
       <AlertStreamListener />
-      <AppHeader email={user.email} onLogout={onLogout} />
-      <DashboardNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <AppHeader email={user.email} onLogout={() => void handleLogout()} />
+      <DashboardNav activeTab={activeTab} />
 
-      <ErrorBoundary key={activeTab} title={TAB_ERROR_TITLE[activeTab]}>
+      <ErrorBoundary key={location.pathname} title={TAB_ERROR_TITLE[activeTab]}>
         <Suspense fallback={<LoadingSpinner label={TAB_LOADING_LABEL[activeTab]} />}>
-          {activeTab === 'news' ? <NewsTab userId={user.userId} /> : null}
-          {activeTab === 'recommendations' ? (
-            <RecommendationsTab
-              onAddToWatchlist={quickAdd}
-              savingSymbol={savingSymbol}
-              watchlistName={watchlistName}
-            />
-          ) : null}
-          {activeTab === 'watchlist' ? <WatchlistTab user={user} /> : null}
-          {activeTab === 'alerts' ? <AlertsTab userEmail={user.email} /> : null}
+          <Outlet />
         </Suspense>
       </ErrorBoundary>
     </main>

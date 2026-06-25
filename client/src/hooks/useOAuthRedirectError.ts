@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   isOAuthRedirectErrorCode,
   OAUTH_REDIRECT_ERROR_MESSAGES,
@@ -6,9 +7,10 @@ import {
 
 /** Reads ?authError= from the URL after a failed Google OAuth redirect. */
 export function useOAuthRedirectError(setError: (message: string | null) => void): void {
+  const [searchParams, setSearchParams] = useSearchParams()
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const authError = params.get('authError')
+    const authError = searchParams.get('authError')
 
     if (!authError) {
       return
@@ -19,6 +21,6 @@ export function useOAuthRedirectError(setError: (message: string | null) => void
       : OAUTH_REDIRECT_ERROR_MESSAGES.google_sign_in_failed
 
     setError(message)
-    window.history.replaceState({}, '', window.location.pathname)
-  }, [setError])
+    setSearchParams({}, { replace: true })
+  }, [searchParams, setError, setSearchParams])
 }

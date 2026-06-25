@@ -1,62 +1,8 @@
-import { lazy, Suspense } from 'react'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { AuthPage, useAuth } from '@/features/auth'
-import { useOAuthRedirectError } from '@/hooks/useOAuthRedirectError'
-import styles from './App.module.css'
+import AppRoutes from '@/routes/AppRoutes'
 
-const Dashboard = lazy(() => import('@/features/dashboard'))
-
-/** Root app shell with authentication gate. */
+/** Root app shell with client-side routing. */
 function App() {
-  const { user, loading, error, setError, login, signup, logout, startGoogleSignIn } = useAuth()
-
-  useOAuthRedirectError(setError)
-
-  const runAuthAction = async (
-    action: (email: string, password: string) => Promise<void>,
-    email: string,
-    password: string,
-  ) => {
-    try {
-      await action(email, password)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed')
-    }
-  }
-
-  const handleLogin = (email: string, password: string) => runAuthAction(login, email, password)
-  const handleSignup = (email: string, password: string) => runAuthAction(signup, email, password)
-  const handleClearError = () => setError(null)
-  const handleLogout = () => void logout()
-
-  if (loading) {
-    return (
-      <main className={styles.app}>
-        <LoadingSpinner label="Checking session..." />
-      </main>
-    )
-  }
-
-  if (!user) {
-    return (
-      <main className={styles.app}>
-        <h1>Trading Signal</h1>
-        <AuthPage
-          error={error}
-          onClearError={handleClearError}
-          onLogin={handleLogin}
-          onSignup={handleSignup}
-          onGoogleSignIn={startGoogleSignIn}
-        />
-      </main>
-    )
-  }
-
-  return (
-    <Suspense fallback={<LoadingSpinner label="Loading dashboard..." className="mx-auto max-w-6xl px-4 py-6" />}>
-      <Dashboard user={user} onLogout={handleLogout} />
-    </Suspense>
-  )
+  return <AppRoutes />
 }
 
 export default App

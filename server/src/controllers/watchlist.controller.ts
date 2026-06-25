@@ -1,3 +1,4 @@
+import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import type { Request, Response } from "express";
 import { getAuthenticatedUserId } from "../lib/controllerAuth.js";
 import { parseCreateWatchlistBody, parseWatchlistStockBody } from "../lib/parseWatchlistBody.js";
@@ -20,7 +21,7 @@ export async function postWatchlist(req: Request, res: Response): Promise<void> 
 
   try {
     const watchlist = await createWatchlistView(userId, name);
-    res.status(201).json({ watchlist });
+    res.status(HTTP_STATUS.CREATED).json({ watchlist });
   } catch (error) {
     sendWatchlistErrorResponse(res, error, req.path);
   }
@@ -52,13 +53,13 @@ export async function postWatchlistStock(req: Request, res: Response): Promise<v
   const { symbol } = parseWatchlistStockBody(req.body);
 
   if (!watchlistId) {
-    res.status(400).json({ error: "Watchlist id is required" });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Watchlist id is required" });
     return;
   }
 
   try {
     const stock = await saveStockToView(userId, watchlistId, symbol);
-    res.status(201).json({ stock });
+    res.status(HTTP_STATUS.CREATED).json({ stock });
   } catch (error) {
     sendWatchlistErrorResponse(res, error, req.path);
   }
@@ -75,13 +76,13 @@ export async function deleteWatchlistStock(req: Request, res: Response): Promise
   const signalId = req.params.signalId?.trim() ?? "";
 
   if (!watchlistId || !signalId) {
-    res.status(400).json({ error: "Watchlist id and signal id are required" });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Watchlist id and signal id are required" });
     return;
   }
 
   try {
     await removeStockFromView(userId, watchlistId, signalId);
-    res.status(204).send();
+    res.status(HTTP_STATUS.NO_CONTENT).send();
   } catch (error) {
     sendWatchlistErrorResponse(res, error, req.path);
   }

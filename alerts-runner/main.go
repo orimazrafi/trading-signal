@@ -1,19 +1,22 @@
+// Package main boots the price-alert background worker: PostgreSQL, Redis, and the evaluation loop.
 package main
 
 import (
 	"context"
 	"log"
-	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/redis/go-redis/v9"
 
 	"github.com/trading-signal/alerts-runner/internal/config"
 	"github.com/trading-signal/alerts-runner/internal/db"
+	"github.com/trading-signal/alerts-runner/internal/devhttp"
 	"github.com/trading-signal/alerts-runner/internal/runner"
 )
 
+// main loads configuration, connects dependencies, optionally starts the dev HTTP trigger, and runs until shutdown.
 func main() {
 	settings := config.Load()
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -33,15 +36,19 @@ func main() {
 	}
 
 	alertRunner := runner.New(settings, store, redisClient)
-	alertRunner.Start(ctx)
 
-	os.Exit(0)
+	if settings.DevHTTPEnabled {
+		devServer := devhttp.New(alertRunner, settings.DevHTTPPort)
+		go devServer.Start(ctx)
+	}
+
+	alertRunner.Start(ctx)
 }
 
+// redisAddress returns the host:port portion of a redis:// connection URL.
 func redisAddress(redisURL string) string {
-	prefix := "redis://"
-	if len(redisURL) > len(prefix) && redisURL[:len(prefix)] == prefix {
-		return redisURL[len(prefix):]
+	if strings.HasPrefix(redisURL, "redis://") {
+		return strings.TrimPrefix(redisURL, "redis://")
 	}
 
 	return redisURL

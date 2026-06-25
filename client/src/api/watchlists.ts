@@ -1,4 +1,5 @@
 import { api } from './client'
+import type { ApiRequestOptions } from './types'
 import type {
   AddStockResponse,
   ApiWatchlist,
@@ -9,8 +10,8 @@ import type {
 } from '@/types/watchlist'
 
 /** Fetches all custom views for the authenticated user. */
-export async function fetchWatchlists(): Promise<ApiWatchlist[]> {
-  const { data } = await api.get<WatchlistsResponse>('/watchlists')
+export async function fetchWatchlists(options: ApiRequestOptions = {}): Promise<ApiWatchlist[]> {
+  const { data } = await api.get<WatchlistsResponse>('/watchlists', { signal: options.signal })
   return data.watchlists
 }
 

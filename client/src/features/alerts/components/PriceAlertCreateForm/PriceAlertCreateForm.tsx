@@ -27,7 +27,7 @@ function PriceAlertCreateForm({ userEmail, creating, onCreate }: PriceAlertCreat
       await onCreate(parsed.value.symbol, parsed.value.thresholdPercent, emailEnabled)
       setSymbolInput('')
       setEmailEnabled(true)
-      toast.success(`${parsed.value.symbol} alert created.`)
+      toast.success(`${parsed.value.symbol} alert saved.`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Unable to create alert.')
     }

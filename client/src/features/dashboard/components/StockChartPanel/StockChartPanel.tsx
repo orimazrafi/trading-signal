@@ -20,15 +20,11 @@ import { StockPriceChart } from '@/features/dashboard/components/StockPriceChart
 import { mergeLivePriceIntoHistory } from '@/features/dashboard/components/StockPriceChart/stockChartUtils'
 import type { StockChartPanelProps } from './types'
 
-const QUOTE_REFETCH_MS = 60_000
-
 /** Shows live quote details and a historical price chart for the selected symbol. */
 function StockChartPanel({ symbol }: StockChartPanelProps) {
   const [range, setRange] = useState<StockHistoryRange>('1M')
   const isDarkMode = usePrefersDarkMode()
-  const { quote, isLoading: isQuoteLoading, error: quoteError } = useStockQuote(symbol, {
-    refetchIntervalMs: QUOTE_REFETCH_MS,
-  })
+  const { quote, isLoading: isQuoteLoading, error: quoteError } = useStockQuote(symbol)
   const {
     history,
     isLoading: isHistoryLoading,

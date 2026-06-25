@@ -1,17 +1,15 @@
 import axios, { isAxiosError } from "axios";
 import { env } from "../config/env.js";
+import {
+  buildAlertEmailHtml,
+  buildAlertEmailSubject,
+  buildAlertEmailText,
+  formatAlertEmailFrom,
+  type AlertEmailPayload,
+} from "../lib/alertEmailTemplate.js";
 import { log } from "../lib/logger/index.js";
 
 const RESEND_EMAILS_URL = "https://api.resend.com/emails";
-
-export type AlertEmailPayload = {
-  to: string;
-  symbol: string;
-  changePercent: number;
-  price: number;
-  baselinePrice: number;
-  thresholdPercent: number;
-};
 
 type ResendConfig = {
   apiKey: string;
@@ -23,6 +21,7 @@ type ResendEmailRequest = {
   to: string[];
   subject: string;
   text: string;
+  html: string;
 };
 
 /** Returns Resend credentials when both API key and sender are configured. */
@@ -34,38 +33,17 @@ function getResendConfig(): ResendConfig | null {
   return { apiKey: env.resendApiKey, from: env.emailFrom };
 }
 
-/** Builds the plain-text body for a price alert email. */
-function buildAlertEmailText(payload: AlertEmailPayload): string {
-  const direction = payload.changePercent >= 0 ? "up" : "down";
-  const absChange = Math.abs(payload.changePercent).toFixed(2);
-
-  return [
-    `${payload.symbol} is ${direction} ${absChange}%`,
-    "",
-    `Current price: $${payload.price.toFixed(2)}`,
-    `Baseline price: $${payload.baselinePrice.toFixed(2)}`,
-    `Your threshold: ${payload.thresholdPercent.toFixed(2)}%`,
-    "",
-    "Open Trading Signal to review your alert history.",
-  ].join("\n");
-}
-
-/** Builds the subject line for a price alert email. */
-function buildAlertEmailSubject(payload: AlertEmailPayload): string {
-  const sign = payload.changePercent >= 0 ? "+" : "";
-  return `${payload.symbol} price alert: ${sign}${payload.changePercent.toFixed(2)}%`;
-}
-
 /** Maps an alert payload to a Resend API email request. */
 function buildResendAlertEmailRequest(
   payload: AlertEmailPayload,
   from: string,
 ): ResendEmailRequest {
   return {
-    from,
+    from: formatAlertEmailFrom(from),
     to: [payload.to],
     subject: buildAlertEmailSubject(payload),
     text: buildAlertEmailText(payload),
+    html: buildAlertEmailHtml(payload),
   };
 }
 
@@ -115,3 +93,5 @@ export async function sendAlertEmail(payload: AlertEmailPayload): Promise<boolea
   log.info("Sent alert email", { symbol: payload.symbol, to: payload.to });
   return true;
 }
+
+export type { AlertEmailPayload };

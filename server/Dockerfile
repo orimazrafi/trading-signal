@@ -8,6 +8,7 @@ COPY package.json package-lock.json* ./
 COPY packages/contracts/package.json packages/contracts/tsconfig.json ./packages/contracts/
 COPY packages/contracts/src ./packages/contracts/src
 COPY server/package.json server/package-lock.json* ./server/
+COPY server/prisma ./server/prisma
 
 RUN --mount=type=cache,target=/root/.npm \
     npm ci

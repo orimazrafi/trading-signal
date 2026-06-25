@@ -12,14 +12,14 @@
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
     "paths": {
-      "@trading-signal/contracts/alert": ["../packages/contracts/dist/alert.d.ts"],
-      "@trading-signal/contracts/alert.js": ["../packages/contracts/dist/alert.d.ts"],
-      "@trading-signal/contracts/auth": ["../packages/contracts/dist/auth.d.ts"],
-      "@trading-signal/contracts/auth.js": ["../packages/contracts/dist/auth.d.ts"],
-      "@trading-signal/contracts/recommendation": ["../packages/contracts/dist/recommendation.d.ts"],
-      "@trading-signal/contracts/recommendation.js": ["../packages/contracts/dist/recommendation.d.ts"],
-      "@trading-signal/contracts/parseAlertNotification": ["../packages/contracts/dist/parseAlertNotification.d.ts"],
-      "@trading-signal/contracts/parseAlertNotification.js": ["../packages/contracts/dist/parseAlertNotification.d.ts"]
+      "@trading-signal/contracts/alert": ["../packages/contracts/dist/alert.js"],
+      "@trading-signal/contracts/alert.js": ["../packages/contracts/dist/alert.js"],
+      "@trading-signal/contracts/auth": ["../packages/contracts/dist/auth.js"],
+      "@trading-signal/contracts/auth.js": ["../packages/contracts/dist/auth.js"],
+      "@trading-signal/contracts/recommendation": ["../packages/contracts/dist/recommendation.js"],
+      "@trading-signal/contracts/recommendation.js": ["../packages/contracts/dist/recommendation.js"],
+      "@trading-signal/contracts/parseAlertNotification": ["../packages/contracts/dist/parseAlertNotification.js"],
+      "@trading-signal/contracts/parseAlertNotification.js": ["../packages/contracts/dist/parseAlertNotification.js"]
     }
   },
   "include": ["src"]

@@ -1,3 +1,4 @@
+import { HTTP_STATUS, type HttpStatusCode } from "@trading-signal/contracts/httpStatus";
 import type { Signal, Watchlist, WatchlistItem } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { DEFAULT_WATCHLIST_NAME } from "../lib/watchlistConstants.js";
@@ -19,7 +20,7 @@ import { getCachedStockQuote, searchStock } from "./stock.service.js";
 export class WatchlistError extends Error {
   constructor(
     message: string,
-    readonly statusCode = 400,
+    readonly statusCode: HttpStatusCode = HTTP_STATUS.BAD_REQUEST,
   ) {
     super(message);
     this.name = "WatchlistError";
@@ -100,7 +101,7 @@ async function assertWatchlistOwned(userId: string, watchlistId: string): Promis
   const watchlist = await findWatchlistByIdAndUser(watchlistId, userId);
 
   if (!watchlist) {
-    throw new WatchlistError("Watchlist not found", 404);
+    throw new WatchlistError("Watchlist not found", HTTP_STATUS.NOT_FOUND);
   }
 
   return watchlist;
@@ -119,7 +120,7 @@ async function resolveSignalForSymbol(userId: string, symbol: string): Promise<S
   const signal = await findSignalByIdAndUser(searchResult.signalId, userId);
 
   if (!signal) {
-    throw new WatchlistError("Unable to resolve stock signal", 500);
+    throw new WatchlistError("Unable to resolve stock signal", HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 
   return signal;
@@ -150,7 +151,7 @@ export async function createWatchlistView(userId: string, name: string): Promise
     return mapWatchlistView(watchlist);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new WatchlistError("A watchlist with this name already exists", 409);
+      throw new WatchlistError("A watchlist with this name already exists", HTTP_STATUS.CONFLICT);
     }
 
     throw error;
@@ -210,6 +211,6 @@ export async function removeStockFromView(
 
   const result = await removeStockFromWatchlist(watchlistId, signalId);
   if (result.count === 0) {
-    throw new WatchlistError("Stock not found in watchlist", 404);
+    throw new WatchlistError("Stock not found in watchlist", HTTP_STATUS.NOT_FOUND);
   }
 }

@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/api/queryKeys'
 import type { StockHistoryRange } from '@/types/stock'
+import {
+  marketDataQueryOptions,
+  STOCK_HISTORY_GC_TIME_MS,
+  STOCK_HISTORY_STALE_TIME_MS,
+} from '@/lib/marketDataQueryOptions'
 import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import { fetchStockHistory } from '@/api/stocks'
 
@@ -8,9 +13,11 @@ import { fetchStockHistory } from '@/api/stocks'
 export function useStockHistory(symbol: string | null, range: StockHistoryRange) {
   const historyQuery = useQuery({
     queryKey: queryKeys.stocks.history(symbol ?? '', range),
-    queryFn: () => fetchStockHistory(symbol!, range),
+    queryFn: ({ signal }) => fetchStockHistory(symbol!, range, { signal }),
     enabled: Boolean(symbol),
-    staleTime: 5 * 60_000,
+    staleTime: STOCK_HISTORY_STALE_TIME_MS,
+    gcTime: STOCK_HISTORY_GC_TIME_MS,
+    ...marketDataQueryOptions,
     meta: queryErrorHandledMeta,
   })
 

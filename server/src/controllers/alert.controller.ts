@@ -1,3 +1,4 @@
+import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import type { Request, Response } from "express";
 import { sendAlertErrorResponse } from "../lib/alertHttpErrors.js";
 import { getAuthenticatedUserId } from "../lib/controllerAuth.js";
@@ -9,6 +10,7 @@ import {
   registerAlertStreamClient,
   startAlertStream,
 } from "../lib/alertStreamRegistry/index.js";
+import { isAlertRunnerDevTriggerEnabled, triggerAlertsRunnerCheck } from "../lib/alertsRunnerClient.js";
 import {
   createAlertForUser,
   deleteAlertForUser,
@@ -44,7 +46,7 @@ export async function postPriceAlert(req: Request, res: Response): Promise<void>
 
   try {
     const alert = await createAlertForUser(userId, { symbol, thresholdPercent, emailEnabled });
-    res.status(201).json({ alert });
+    res.status(HTTP_STATUS.CREATED).json({ alert });
   } catch (error) {
     sendAlertErrorResponse(res, error, req.path);
   }
@@ -63,7 +65,7 @@ export async function patchPriceAlert(req: Request, res: Response): Promise<void
   );
 
   if (!alertId) {
-    res.status(400).json({ error: "Alert id is required" });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Alert id is required" });
     return;
   }
 
@@ -89,13 +91,13 @@ export async function deletePriceAlert(req: Request, res: Response): Promise<voi
 
   const alertId = req.params.id?.trim() ?? "";
   if (!alertId) {
-    res.status(400).json({ error: "Alert id is required" });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Alert id is required" });
     return;
   }
 
   try {
     await deleteAlertForUser(userId, alertId);
-    res.status(204).send();
+    res.status(HTTP_STATUS.NO_CONTENT).send();
   } catch (error) {
     sendAlertErrorResponse(res, error, req.path);
   }
@@ -125,7 +127,7 @@ export async function patchAlertNotificationRead(req: Request, res: Response): P
 
   const notificationId = req.params.id?.trim() ?? "";
   if (!notificationId) {
-    res.status(400).json({ error: "Notification id is required" });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "Notification id is required" });
     return;
   }
 
@@ -146,4 +148,26 @@ export function getAlertStream(req: Request, res: Response): void {
 
   startAlertStream(res);
   registerAlertStreamClient(userId, res);
+}
+
+/** Triggers an immediate alert check via alerts-runner (development only). */
+export async function postAlertRunCheck(req: Request, res: Response): Promise<void> {
+  if (!getAuthenticatedUserId(req, res)) {
+    return;
+  }
+
+  if (!isAlertRunnerDevTriggerEnabled()) {
+    res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({
+      error:
+        "Alert check trigger is unavailable. Start alerts-runner with ALERT_RUNNER_DEV_HTTP=true and set ALERTS_RUNNER_URL.",
+    });
+    return;
+  }
+
+  try {
+    await triggerAlertsRunnerCheck();
+    res.json({ ok: true });
+  } catch (error) {
+    sendAlertErrorResponse(res, error, req.path);
+  }
 }

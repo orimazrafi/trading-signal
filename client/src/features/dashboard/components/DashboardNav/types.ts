@@ -3,5 +3,4 @@ export type DashboardTab = 'news' | 'recommendations' | 'watchlist' | 'alerts'
 
 export type DashboardNavProps = {
   activeTab: DashboardTab
-  onTabChange: (tab: DashboardTab) => void
 }
