@@ -1,5 +1,8 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import { Badge } from '@/components/Badge'
 import { Button } from '@/components/Button'
+import { useAlertNotifications } from '@/features/alerts/hooks/useAlertNotifications'
+import { countUnreadAlertNotifications } from '@/features/alerts/lib/alertNotificationUtils'
 import { ROUTES } from '@/routes/paths'
 import type { DashboardNavProps, DashboardTab } from './types'
 
@@ -21,6 +24,8 @@ const TAB_ROUTES: Record<DashboardTab, string> = {
 function DashboardNav({ activeTab }: DashboardNavProps) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { notifications } = useAlertNotifications()
+  const unreadAlertCount = countUnreadAlertNotifications(notifications)
 
   /** Navigates to a dashboard section, preserving the watchlist symbol when already on watchlist. */
   const handleTabChange = (tab: DashboardTab) => {
@@ -40,6 +45,7 @@ function DashboardNav({ activeTab }: DashboardNavProps) {
     >
       {TABS.map((tab) => {
         const isActive = activeTab === tab.id
+        const showUnreadBadge = tab.id === 'alerts' && unreadAlertCount > 0
 
         return (
           <Button
@@ -50,7 +56,14 @@ function DashboardNav({ activeTab }: DashboardNavProps) {
             aria-selected={isActive}
             onClick={() => handleTabChange(tab.id)}
           >
-            {tab.label}
+            <span className="inline-flex items-center justify-center gap-1.5">
+              {tab.label}
+              {showUnreadBadge ? (
+                <Badge variant="warning" size="sm" aria-label={`${unreadAlertCount} unread alerts`}>
+                  {unreadAlertCount}
+                </Badge>
+              ) : null}
+            </span>
           </Button>
         )
       })}

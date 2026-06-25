@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
@@ -6,6 +6,7 @@ import { AppHeader } from '@/components/AppHeader'
 import AlertStreamListener from '@/features/alerts/components/AlertStreamListener'
 import { DashboardNav } from '@/features/dashboard/components/DashboardNav'
 import { useAuthContext } from '@/features/auth/AuthProvider'
+import { consumeStoredAuthReturnTo } from '@/lib/authRedirect'
 import { TAB_ERROR_TITLE, TAB_LOADING_LABEL } from './types'
 import { resolveDashboardTab } from '@/routes/resolveDashboardTab'
 import { ROUTES } from '@/routes/paths'
@@ -16,6 +17,25 @@ function DashboardLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const activeTab = resolveDashboardTab(location.pathname)
+
+  /** Sends OAuth sign-ins to their saved destination when Google returns to /dashboard. */
+  useEffect(() => {
+    if (!user) {
+      return
+    }
+
+    const storedReturnTo = consumeStoredAuthReturnTo()
+
+    if (!storedReturnTo) {
+      return
+    }
+
+    const currentPath = `${location.pathname}${location.search}${location.hash}`
+
+    if (storedReturnTo !== currentPath) {
+      navigate(storedReturnTo, { replace: true })
+    }
+  }, [user, location.pathname, location.search, location.hash, navigate])
 
   if (!user) {
     return null

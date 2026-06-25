@@ -1,7 +1,4 @@
-import { EmptyState } from '@/components/EmptyState'
-import { ErrorMessage } from '@/components/ErrorMessage'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { Panel } from '@/components/Panel'
+import { AsyncListPanel } from '@/components/AsyncListPanel'
 import { PriceAlertCard } from '@/features/alerts/components/PriceAlertCard'
 import { PriceAlertCreateForm } from '@/features/alerts/components/PriceAlertCreateForm'
 import { isActivePriceAlert } from '@/features/alerts/lib/priceAlertStatus'
@@ -32,48 +29,44 @@ function PriceAlertsPanel({
   onToggleEnabled,
   onToggleEmail,
   onDelete,
+  onRetry,
 }: PriceAlertsPanelProps) {
   const activeAlerts = listActiveAlerts(alerts)
   const canAddMore = countActiveAlerts(alerts) < MAX_PRICE_ALERTS
 
   return (
-    <Panel
+    <AsyncListPanel
       title="Price alerts"
       description={`Configure up to ${MAX_PRICE_ALERTS} active symbols. Checked every 5 minutes during US market hours. After an alert fires, reset it from Alert history.`}
       variant="section"
-    >
-      {error ? <ErrorMessage message={error} className="mb-4" /> : null}
-
-      {canAddMore ? (
-        <PriceAlertCreateForm userEmail={userEmail} creating={creating} onCreate={onCreate} />
-      ) : (
-        <p className="mb-5 text-sm text-muted-foreground">
-          You reached the limit of {MAX_PRICE_ALERTS} alerts. Remove one to add another.
-        </p>
+      header={
+        canAddMore ? (
+          <PriceAlertCreateForm userEmail={userEmail} creating={creating} onCreate={onCreate} />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            You reached the limit of {MAX_PRICE_ALERTS} alerts. Remove one to add another.
+          </p>
+        )
+      }
+      items={activeAlerts}
+      isLoading={loading}
+      error={error}
+      emptyMessage="No active alerts. Add a symbol or reset one from Alert history."
+      loadingLabel="Loading alerts…"
+      onRetry={onRetry}
+      getItemKey={(alert) => alert.id}
+      renderItem={(alert) => (
+        <PriceAlertCard
+          alert={alert}
+          userEmail={userEmail}
+          updating={updating}
+          deleting={deleting}
+          onToggleEnabled={onToggleEnabled}
+          onToggleEmail={onToggleEmail}
+          onDelete={onDelete}
+        />
       )}
-
-      {loading ? <LoadingSpinner label="Loading alerts…" /> : null}
-
-      {!loading && activeAlerts.length === 0 ? (
-        <EmptyState message="No active alerts. Add a symbol or reset one from Alert history." />
-      ) : null}
-
-      <ul className="space-y-3">
-        {activeAlerts.map((alert) => (
-          <li key={alert.id}>
-            <PriceAlertCard
-              alert={alert}
-              userEmail={userEmail}
-              updating={updating}
-              deleting={deleting}
-              onToggleEnabled={onToggleEnabled}
-              onToggleEmail={onToggleEmail}
-              onDelete={onDelete}
-            />
-          </li>
-        ))}
-      </ul>
-    </Panel>
+    />
   )
 }
 

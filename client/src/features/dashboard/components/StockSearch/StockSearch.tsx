@@ -27,6 +27,7 @@ function StockSearch({
     searchReason,
     handleSymbolInputChange,
     handleSearch: runSearch,
+    retrySearch,
   } = useSearchStock()
 
   const { saveError, saveSuccess, saveSymbol, clearSaveFeedback } = useWatchlistSaveFeedback({
@@ -76,8 +77,11 @@ function StockSearch({
       ) : null}
 
       {searchError ? (
-        <div className="mt-4">
+        <div className="mt-4 space-y-3">
           <ErrorMessage message={searchError} />
+          <Button type="button" variant="secondary" onClick={() => void retrySearch()}>
+            Try again
+          </Button>
         </div>
       ) : null}
 

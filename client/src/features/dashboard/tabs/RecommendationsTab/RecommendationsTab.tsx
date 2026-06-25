@@ -8,7 +8,7 @@ function RecommendationsTab({
   savingSymbol,
   watchlistName,
 }: RecommendationsTabProps) {
-  const { recommendations, isLoading, error, emptyMessage } = useRecommendations()
+  const { recommendations, isLoading, error, emptyMessage, reload } = useRecommendations()
 
   return (
     <RecommendationsFeed
@@ -19,6 +19,7 @@ function RecommendationsTab({
       onAddToWatchlist={onAddToWatchlist}
       savingSymbol={savingSymbol}
       watchlistName={watchlistName}
+      onRetry={() => void reload()}
     />
   )
 }

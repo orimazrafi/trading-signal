@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { toast } from '@/components/Toast'
-import type { AlertNotification, PriceAlert } from '@/types/alert'
+import type { AlertNotification } from '@/types/alert'
 import { AlertHistoryPanel } from '@/features/alerts/components/AlertHistoryPanel'
 import { AlertRunCheckToolbar } from '@/features/alerts/components/AlertRunCheckToolbar'
 import { PriceAlertsPanel } from '@/features/alerts/components/PriceAlertsPanel'
@@ -27,6 +27,7 @@ function AlertsTab({ userEmail }: AlertsTabProps) {
     deleteAlert,
     setUpAlertAgain,
     runAlertCheck,
+    reload: reloadAlerts,
   } = usePriceAlerts()
 
   const {
@@ -35,6 +36,7 @@ function AlertsTab({ userEmail }: AlertsTabProps) {
     error: historyError,
     markingRead,
     markRead,
+    reload: reloadHistory,
   } = useAlertNotifications()
 
   /** Re-arms the alert tied to a history notification. */
@@ -79,6 +81,7 @@ function AlertsTab({ userEmail }: AlertsTabProps) {
           onToggleEnabled={toggleAlertEnabled}
           onToggleEmail={toggleAlertEmail}
           onDelete={deleteAlert}
+          onRetry={() => void reloadAlerts()}
         />
 
         <AlertHistoryPanel
@@ -89,6 +92,7 @@ function AlertsTab({ userEmail }: AlertsTabProps) {
           resettingNotificationId={resettingNotificationId}
           onMarkRead={markRead}
           onResetAlert={handleResetAlert}
+          onRetry={() => void reloadHistory()}
         />
       </div>
     </div>

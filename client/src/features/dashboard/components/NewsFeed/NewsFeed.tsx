@@ -58,6 +58,7 @@ function NewsFeed({
         emptyMessage={emptyMessage}
         loadingLabel="Loading market news…"
         variant={panelVariant}
+        onRetry={onRefresh}
         getItemKey={(article) => `${article.url}-${article.publishedAt}`}
         renderItem={(article: MarketNewsArticle) => {
           if (isLanding) {

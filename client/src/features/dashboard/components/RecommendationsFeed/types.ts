@@ -8,4 +8,5 @@ export type RecommendationsFeedProps = {
   onAddToWatchlist?: (symbol: string) => Promise<void>
   savingSymbol?: string | null
   watchlistName?: string | null
+  onRetry?: () => void
 }

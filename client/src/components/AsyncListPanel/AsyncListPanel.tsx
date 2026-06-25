@@ -1,5 +1,6 @@
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorMessage } from '@/components/ErrorMessage'
+import { Button } from '@/components/Button'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Panel } from '@/components/Panel'
 import type { AsyncListPanelProps } from './types'
@@ -8,6 +9,7 @@ import type { AsyncListPanelProps } from './types'
 function AsyncListPanel<TItem>({
   title,
   description,
+  header,
   items,
   isLoading,
   error,
@@ -15,6 +17,7 @@ function AsyncListPanel<TItem>({
   loadingLabel,
   variant = 'page',
   className = '',
+  onRetry,
   getItemKey,
   renderItem,
 }: AsyncListPanelProps<TItem>) {
@@ -23,8 +26,21 @@ function AsyncListPanel<TItem>({
 
   return (
     <Panel title={title} description={description} variant={variant} className={className}>
+      {header ? <div className="mb-5">{header}</div> : null}
+
       {isLoading ? <LoadingSpinner label={loadingLabel} /> : null}
-      {error ? <ErrorMessage message={error} /> : null}
+
+      {error ? (
+        <div className="space-y-3">
+          <ErrorMessage message={error} />
+          {onRetry ? (
+            <Button type="button" variant="secondary" onClick={onRetry}>
+              Try again
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
       {isEmpty ? <EmptyState message={emptyMessage} /> : null}
 
       {hasItems ? (

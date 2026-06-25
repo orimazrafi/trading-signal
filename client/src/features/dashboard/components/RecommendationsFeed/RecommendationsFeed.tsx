@@ -14,6 +14,7 @@ function RecommendationsFeed({
   onAddToWatchlist,
   savingSymbol,
   watchlistName,
+  onRetry,
 }: RecommendationsFeedProps) {
   return (
     <AsyncListPanel
@@ -25,6 +26,7 @@ function RecommendationsFeed({
       emptyMessage={emptyMessage ?? DEFAULT_EMPTY_MESSAGE}
       loadingLabel="Loading market ideas…"
       variant="page"
+      onRetry={onRetry}
       getItemKey={(recommendation) => recommendation.id}
       renderItem={(recommendation) => (
         <RecommendationCard

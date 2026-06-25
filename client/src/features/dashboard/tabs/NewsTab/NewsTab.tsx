@@ -5,7 +5,7 @@ import type { NewsTabProps } from './types'
 
 /** Default home tab with the full-width watchlist news feed. */
 function NewsTab({ userId }: NewsTabProps) {
-  const { news, isLoading, error } = useNewsFeed()
+  const { news, isLoading, error, reload } = useNewsFeed()
   const { quickAdd, savingSymbol, watchlistName, watchlistSymbols } = useQuickAddToWatchlist(userId)
 
   return (
@@ -18,6 +18,7 @@ function NewsTab({ userId }: NewsTabProps) {
       onAddToWatchlist={quickAdd}
       savingSymbol={savingSymbol}
       watchlistName={watchlistName}
+      onRefresh={() => void reload()}
     />
   )
 }

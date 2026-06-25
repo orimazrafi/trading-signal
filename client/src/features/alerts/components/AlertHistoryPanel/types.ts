@@ -8,4 +8,5 @@ export type AlertHistoryPanelProps = {
   resettingNotificationId: string | null
   onMarkRead: (notificationId: string) => Promise<void>
   onResetAlert: (notification: AlertNotification) => Promise<void>
+  onRetry: () => void
 }

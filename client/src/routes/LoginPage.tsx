@@ -1,14 +1,17 @@
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AuthPage } from '@/features/auth'
 import { useAuthContext } from '@/features/auth/AuthProvider'
 import { useOAuthRedirectError } from '@/hooks/useOAuthRedirectError'
-import { ROUTES } from '@/routes/paths'
+import { resolvePostAuthPath, storeAuthReturnTo } from '@/lib/authRedirect'
+import { readLoginRedirectFrom } from '@/lib/locationState'
 import styles from '@/App.module.css'
 
-/** Public sign-in page; redirects authenticated users to the dashboard. */
+/** Public sign-in page; redirects authenticated users to their intended destination. */
 function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, error, setError, login, signup, startGoogleSignIn } = useAuthContext()
+  const redirectFrom = readLoginRedirectFrom(location.state)
 
   useOAuthRedirectError(setError)
 
@@ -19,7 +22,7 @@ function LoginPage() {
   ) => {
     try {
       await action(email, password)
-      navigate(ROUTES.dashboard, { replace: true })
+      navigate(resolvePostAuthPath(redirectFrom), { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed')
     }
@@ -29,8 +32,14 @@ function LoginPage() {
   const handleSignup = (email: string, password: string) => runAuthAction(signup, email, password)
   const handleClearError = () => setError(null)
 
+  /** Stores the intended path before redirecting to Google OAuth. */
+  const handleGoogleSignIn = () => {
+    storeAuthReturnTo(resolvePostAuthPath(redirectFrom))
+    startGoogleSignIn()
+  }
+
   if (user) {
-    return <Navigate to={ROUTES.dashboard} replace />
+    return <Navigate to={resolvePostAuthPath(redirectFrom)} replace />
   }
 
   return (
@@ -41,7 +50,7 @@ function LoginPage() {
         onClearError={handleClearError}
         onLogin={handleLogin}
         onSignup={handleSignup}
-        onGoogleSignIn={startGoogleSignIn}
+        onGoogleSignIn={handleGoogleSignIn}
       />
     </main>
   )
