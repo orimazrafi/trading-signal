@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { AppHeader } from '@/components/AppHeader'
-import AlertStreamListener from '@/features/alerts/components/AlertStreamListener'
+import { AlertNotificationCenterProvider } from '@/features/alerts/context'
 import { DashboardNav } from '@/features/dashboard/components/DashboardNav'
 import { useAuthContext } from '@/features/auth/AuthProvider'
 import { consumeStoredAuthReturnTo } from '@/lib/authRedirect'
@@ -48,17 +48,18 @@ function DashboardLayout() {
   }
 
   return (
-    <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-6 px-4 py-6 text-left">
-      <AlertStreamListener />
-      <AppHeader email={user.email} onLogout={() => void handleLogout()} />
-      <DashboardNav activeTab={activeTab} />
+    <AlertNotificationCenterProvider>
+      <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-6 px-4 py-6 text-left">
+        <AppHeader email={user.email} onLogout={() => void handleLogout()} />
+        <DashboardNav activeTab={activeTab} />
 
-      <ErrorBoundary key={location.pathname} title={TAB_ERROR_TITLE[activeTab]}>
-        <Suspense fallback={<LoadingSpinner label={TAB_LOADING_LABEL[activeTab]} />}>
-          <Outlet />
-        </Suspense>
-      </ErrorBoundary>
-    </main>
+        <ErrorBoundary key={location.pathname} title={TAB_ERROR_TITLE[activeTab]}>
+          <Suspense fallback={<LoadingSpinner label={TAB_LOADING_LABEL[activeTab]} />}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
+      </main>
+    </AlertNotificationCenterProvider>
   )
 }
 

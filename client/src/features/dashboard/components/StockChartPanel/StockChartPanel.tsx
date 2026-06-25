@@ -3,6 +3,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { ErrorMessage } from '@/components/ErrorMessage'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Panel } from '@/components/Panel'
+import { SimulatedLivePrice } from '@/components/SimulatedLivePrice'
 import {
   Select,
   SelectContent,
@@ -37,7 +38,7 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
     DEFAULT_CHART_OVERLAY_VISIBILITY,
   )
   const isDarkMode = usePrefersDarkMode()
-  const { quote, isLoading: isQuoteLoading, error: quoteError } = useStockQuote(symbol)
+  const { quote, isLoading: isQuoteLoading, error: quoteError, dataUpdatedAt } = useStockQuote(symbol)
   const {
     history,
     isLoading: isHistoryLoading,
@@ -117,8 +118,8 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
           </div>
           <div>
             <dt className="text-muted-foreground">Live price</dt>
-            <dd className="text-lg font-semibold text-foreground">
-              ${quote.price.toFixed(2)}
+            <dd>
+              <SimulatedLivePrice price={quote.price} lastSyncedAtMs={dataUpdatedAt} />
             </dd>
           </div>
           <div>

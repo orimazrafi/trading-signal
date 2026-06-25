@@ -48,7 +48,17 @@ function enqueueToast(variant: ToastVariant, message: string, options: ToastOpti
   const id = crypto.randomUUID()
   const durationMs = options.durationMs ?? TOAST_DEFAULT_DURATION_MS
 
-  toasts = [...toasts, { id, message, variant, durationMs }]
+  toasts = [
+    ...toasts,
+    {
+      id,
+      title: options.title,
+      message,
+      variant,
+      durationMs,
+      actions: options.actions,
+    },
+  ]
   emit()
 
   const timer = setTimeout(() => dismissToast(id), durationMs)

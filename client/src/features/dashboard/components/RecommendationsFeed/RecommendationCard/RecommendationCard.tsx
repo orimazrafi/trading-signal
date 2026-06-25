@@ -1,6 +1,8 @@
 import { Badge } from '@/components/Badge'
 import { Card } from '@/components/Card'
 import { ConfidenceGauge } from '@/components/ConfidenceGauge'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { SimulatedLivePrice } from '@/components/SimulatedLivePrice'
 import { StockLogo } from '@/components/StockLogo'
 import { AddToWatchlistButton } from '@/features/watchlists/components/AddToWatchlistButton'
 import RecommendationFactors from '../RecommendationFactors'
@@ -17,8 +19,13 @@ function RecommendationCard({
   onAddToWatchlist,
   saving = false,
   watchlistName,
+  liveQuote = null,
+  liveQuoteLoading = false,
+  liveQuoteSyncedAtMs = null,
 }: RecommendationCardProps) {
   const isHoldIdea = recommendation.action === 'HOLD'
+  const displayPrice = liveQuote?.price ?? recommendation.price
+  const showSimulatedLive = liveQuote !== null && liveQuoteSyncedAtMs !== null
 
   return (
     <Card
@@ -51,7 +58,17 @@ function RecommendationCard({
         <div>
           <dt className="text-muted-foreground">Price</dt>
           <dd className="font-semibold text-foreground">
-            ${recommendation.price.toFixed(2)}
+            {liveQuoteLoading ? (
+              <LoadingSpinner label="Loading live quote…" className="py-1" />
+            ) : showSimulatedLive ? (
+              <SimulatedLivePrice
+                price={displayPrice}
+                lastSyncedAtMs={liveQuoteSyncedAtMs}
+                className="text-base"
+              />
+            ) : (
+              <>${recommendation.price.toFixed(2)}</>
+            )}
           </dd>
         </div>
         <div>

@@ -1,4 +1,5 @@
 import { AsyncListPanel } from '@/components/AsyncListPanel'
+import { LazyStockCard } from '@/features/dashboard/components/LazyStockCard'
 import RecommendationCard from './RecommendationCard'
 import type { RecommendationsFeedProps } from './types'
 
@@ -29,12 +30,19 @@ function RecommendationsFeed({
       onRetry={onRetry}
       getItemKey={(recommendation) => recommendation.id}
       renderItem={(recommendation) => (
-        <RecommendationCard
-          recommendation={recommendation}
-          onAddToWatchlist={onAddToWatchlist}
-          saving={savingSymbol === recommendation.symbol}
-          watchlistName={watchlistName}
-        />
+        <LazyStockCard symbol={recommendation.symbol}>
+          {({ quote, isLoading, lastSyncedAtMs }) => (
+            <RecommendationCard
+              recommendation={recommendation}
+              onAddToWatchlist={onAddToWatchlist}
+              saving={savingSymbol === recommendation.symbol}
+              watchlistName={watchlistName}
+              liveQuote={quote}
+              liveQuoteLoading={isLoading}
+              liveQuoteSyncedAtMs={lastSyncedAtMs}
+            />
+          )}
+        </LazyStockCard>
       )}
     />
   )

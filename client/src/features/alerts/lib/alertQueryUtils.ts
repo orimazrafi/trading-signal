@@ -1,5 +1,12 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query'
 import { getApiErrorMessage } from '@/api/client'
+import { queryKeys } from '@/api/queryKeys'
+
+/** Invalidates alert list and notification caches after a live SSE event. */
+export function invalidateAlertQueries(queryClient: QueryClient): void {
+  void queryClient.invalidateQueries({ queryKey: queryKeys.alerts.notifications })
+  void queryClient.invalidateQueries({ queryKey: queryKeys.alerts.list })
+}
 
 /** Returns the first API error message from a list of query/mutation errors. */
 export function getFirstApiErrorMessage(errors: readonly unknown[]): string | null {
