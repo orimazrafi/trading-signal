@@ -1,5 +1,7 @@
 import { Badge } from '@/components/Badge'
 import { Card } from '@/components/Card'
+import { ConfidenceGauge } from '@/components/ConfidenceGauge'
+import { StockLogo } from '@/components/StockLogo'
 import { AddToWatchlistButton } from '@/features/watchlists/components/AddToWatchlistButton'
 import RecommendationFactors from '../RecommendationFactors'
 import {
@@ -23,33 +25,33 @@ function RecommendationCard({
       variant="muted"
       className={`shadow-none ${isHoldIdea ? 'bg-muted/80' : ''}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground">
-            {recommendation.symbol}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {recommendation.name} · {recommendation.sector}
-          </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <StockLogo symbol={recommendation.symbol} size="lg" />
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold text-foreground">
+              {recommendation.symbol}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              {recommendation.name} · {recommendation.sector}
+            </p>
+          </div>
         </div>
-        <Badge variant={recommendationBadgeVariant(recommendation.action)}>
-          {formatRecommendationAction(recommendation.action)}
-        </Badge>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <Badge variant={recommendationBadgeVariant(recommendation.action)}>
+            {formatRecommendationAction(recommendation.action)}
+          </Badge>
+          <ConfidenceGauge value={recommendation.confidence} action={recommendation.action} />
+        </div>
       </div>
 
       <p className="mt-3 text-sm text-foreground/90">{recommendation.summary}</p>
 
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-muted-foreground">Price</dt>
           <dd className="font-semibold text-foreground">
             ${recommendation.price.toFixed(2)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-muted-foreground">Score</dt>
-          <dd className="font-semibold text-foreground">
-            {recommendation.confidence}%
           </dd>
         </div>
         <div>

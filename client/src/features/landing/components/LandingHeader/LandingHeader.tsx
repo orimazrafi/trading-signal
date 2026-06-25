@@ -1,4 +1,5 @@
 import { Button } from '@/components/Button'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import type { LandingHeaderProps } from './types'
 
 /** Public landing header with sign-in call to action. */
@@ -9,9 +10,12 @@ function LandingHeader({ onSignIn }: LandingHeaderProps) {
         <h1 className="text-2xl font-semibold text-foreground">Trading Signal</h1>
         <p className="mt-1 text-sm text-muted-foreground">Live market headlines — no sign-in required</p>
       </div>
-      <Button variant="primary" onClick={onSignIn}>
-        Sign in
-      </Button>
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        <Button variant="primary" onClick={onSignIn}>
+          Sign in
+        </Button>
+      </div>
     </header>
   )
 }

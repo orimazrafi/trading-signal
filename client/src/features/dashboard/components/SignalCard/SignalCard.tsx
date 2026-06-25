@@ -1,6 +1,7 @@
-import { Button } from '@/components/Button'
 import { Badge } from '@/components/Badge'
+import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
+import { StockLogo } from '@/components/StockLogo'
 import {
   changePercentClass,
   formatChangePercent,
@@ -47,9 +48,12 @@ function SignalCard({
       tabIndex={isInteractive ? 0 : undefined}
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground">{signal.symbol}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{signal.reason}</p>
+        <div className="flex items-start gap-3">
+          <StockLogo symbol={signal.symbol} size="md" />
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">{signal.symbol}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{signal.reason}</p>
+          </div>
         </div>
         <Badge variant={signalActionBadgeVariant(signal.action)}>{signal.action}</Badge>
       </div>

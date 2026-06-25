@@ -6,6 +6,7 @@ import { ErrorMessage } from '@/components/ErrorMessage'
 import { FormField } from '@/components/FormField'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Panel } from '@/components/Panel'
+import { StockLogo } from '@/components/StockLogo'
 import { signalActionBadgeVariant } from '@/lib/signalUtils'
 import { useSearchStock } from '@/features/stocks/hooks/useSearchStock'
 import { useWatchlistSaveFeedback } from '@/features/watchlists/hooks/useWatchlistSaveFeedback'
@@ -88,11 +89,14 @@ function StockSearch({
       {searchResult && searchAction && searchReason ? (
         <Card variant="muted" className="mt-5 shadow-none">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">
-                {searchResult.quote.symbol}
-              </h3>
-              <p className="text-sm text-muted-foreground">{searchResult.quote.name}</p>
+            <div className="flex items-start gap-3">
+              <StockLogo symbol={searchResult.quote.symbol} size="lg" />
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  {searchResult.quote.symbol}
+                </h3>
+                <p className="text-sm text-muted-foreground">{searchResult.quote.name}</p>
+              </div>
             </div>
             <Badge variant={signalActionBadgeVariant(searchAction)}>{searchAction}</Badge>
           </div>

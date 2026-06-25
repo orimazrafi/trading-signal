@@ -1,12 +1,12 @@
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AuthPage } from '@/features/auth'
+import { AuthHero } from '@/features/auth/components/AuthHero'
 import { useAuthContext } from '@/features/auth/AuthProvider'
 import { useOAuthRedirectError } from '@/hooks/useOAuthRedirectError'
 import { resolvePostAuthPath, storeAuthReturnTo } from '@/lib/authRedirect'
 import { readLoginRedirectFrom } from '@/lib/locationState'
-import styles from '@/App.module.css'
 
-/** Public sign-in page; redirects authenticated users to their intended destination. */
+/** Public sign-in page with split layout; redirects authenticated users. */
 function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -43,15 +43,17 @@ function LoginPage() {
   }
 
   return (
-    <main className={styles.app}>
-      <h1>Trading Signal</h1>
-      <AuthPage
-        error={error}
-        onClearError={handleClearError}
-        onLogin={handleLogin}
-        onSignup={handleSignup}
-        onGoogleSignIn={handleGoogleSignIn}
-      />
+    <main className="flex min-h-svh bg-background">
+      <div className="flex w-full flex-col justify-center px-6 py-10 sm:px-10 lg:w-[42%] lg:max-w-xl lg:px-14">
+        <AuthPage
+          error={error}
+          onClearError={handleClearError}
+          onLogin={handleLogin}
+          onSignup={handleSignup}
+          onGoogleSignIn={handleGoogleSignIn}
+        />
+      </div>
+      <AuthHero />
     </main>
   )
 }

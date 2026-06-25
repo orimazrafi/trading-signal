@@ -11,109 +11,156 @@
   --radius-xl: 1rem;
   --radius-2xl: 1rem;
 
-  --background: #ffffff;
-  --foreground: #08060d;
+  --background: #f8fafc;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #08060d;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #08060d;
+  --popover-foreground: #0f172a;
 
-  --primary: #7c3aed;
-  --primary-foreground: #ffffff;
+  --primary: #0c4a6e;
+  --primary-foreground: #f8fafc;
 
   --secondary: #334155;
-  --secondary-foreground: #ffffff;
+  --secondary-foreground: #f8fafc;
 
-  --muted: #f8fafc;
+  --muted: #f1f5f9;
   --muted-foreground: #64748b;
 
-  --accent: rgba(170, 59, 255, 0.12);
-  --accent-foreground: #6b21a8;
+  --accent: rgba(5, 150, 105, 0.12);
+  --accent-foreground: #047857;
 
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
 
-  --border: #e5e4e7;
-  --input: #e2e8f0;
-  --ring: #aa3bff;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #0e7490;
 
   --positive: #059669;
   --positive-muted: #d1fae5;
   --negative: #dc2626;
   --negative-muted: #fee2e2;
   --warning: #d97706;
-    --warning-muted: #fef3c7;
+  --warning-muted: #fef3c7;
 
-    --chart-background: var(--card);
-    --chart-text: var(--muted-foreground);
-    --chart-grid: var(--border);
-    --chart-line: var(--primary);
-    --chart-area-top: color-mix(in srgb, var(--primary) 35%, transparent);
-    --chart-area-bottom: color-mix(in srgb, var(--primary) 2%, transparent);
+  --chart-background: var(--card);
+  --chart-text: var(--muted-foreground);
+  --chart-grid: var(--border);
+  --chart-line: var(--positive);
+  --chart-area-top: color-mix(in srgb, var(--positive) 35%, transparent);
+  --chart-area-bottom: color-mix(in srgb, var(--positive) 2%, transparent);
 
-    --shadow-panel: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --shadow-panel: rgba(15, 23, 42, 0.08) 0 10px 15px -3px, rgba(15, 23, 42, 0.04) 0 4px 6px -2px;
 
-  /* Legacy aliases used by global layout styles */
   --text: var(--muted-foreground);
   --text-h: var(--foreground);
   --bg: var(--background);
-  --code-bg: #f4f3ec;
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
+  --code-bg: #eef2f7;
+  --accent-border: rgba(14, 116, 144, 0.35);
+  --social-bg: rgba(241, 245, 249, 0.8);
   --shadow: var(--shadow-panel);
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Segoe UI', system-ui, Roboto, sans-serif;
+  --heading: 'Segoe UI', system-ui, Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 }
 
+.dark {
+  --background: #0b1220;
+  --foreground: #e2e8f0;
+  --card: #111827;
+  --card-foreground: #f1f5f9;
+  --popover: #111827;
+  --popover-foreground: #f1f5f9;
+
+  --primary: #38bdf8;
+  --primary-foreground: #0b1220;
+
+  --secondary: #1e293b;
+  --secondary-foreground: #e2e8f0;
+
+  --muted: #1a2332;
+  --muted-foreground: #94a3b8;
+
+  --accent: rgba(52, 211, 153, 0.14);
+  --accent-foreground: #6ee7b7;
+
+  --destructive: #f87171;
+  --destructive-foreground: #0b1220;
+
+  --border: #243044;
+  --input: #334155;
+  --ring: #22d3ee;
+
+  --positive: #34d399;
+  --positive-muted: rgba(6, 78, 59, 0.45);
+  --negative: #f87171;
+  --negative-muted: rgba(127, 29, 29, 0.45);
+  --warning: #fbbf24;
+  --warning-muted: rgba(120, 53, 15, 0.45);
+
+  --chart-background: var(--card);
+  --chart-text: var(--muted-foreground);
+  --chart-grid: var(--border);
+  --chart-line: var(--positive);
+  --chart-area-top: color-mix(in srgb, var(--positive) 35%, transparent);
+  --chart-area-bottom: color-mix(in srgb, var(--positive) 2%, transparent);
+
+  --code-bg: #1a2332;
+  --accent-border: rgba(56, 189, 248, 0.35);
+  --social-bg: rgba(26, 35, 50, 0.8);
+  --shadow-panel:
+    rgba(0, 0, 0, 0.45) 0 10px 15px -3px, rgba(0, 0, 0, 0.3) 0 4px 6px -2px;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #16171d;
-    --foreground: #f3f4f6;
-    --card: #1f2028;
-    --card-foreground: #f3f4f6;
-    --popover: #1f2028;
-    --popover-foreground: #f3f4f6;
+  :root:not(.light) {
+    --background: #0b1220;
+    --foreground: #e2e8f0;
+    --card: #111827;
+    --card-foreground: #f1f5f9;
+    --popover: #111827;
+    --popover-foreground: #f1f5f9;
 
-    --primary: #a855f7;
-    --primary-foreground: #ffffff;
+    --primary: #38bdf8;
+    --primary-foreground: #0b1220;
 
-    --secondary: #334155;
-    --secondary-foreground: #f1f5f9;
+    --secondary: #1e293b;
+    --secondary-foreground: #e2e8f0;
 
-    --muted: #2e303a;
-    --muted-foreground: #9ca3af;
+    --muted: #1a2332;
+    --muted-foreground: #94a3b8;
 
-    --accent: rgba(192, 132, 252, 0.15);
-    --accent-foreground: #e9d5ff;
+    --accent: rgba(52, 211, 153, 0.14);
+    --accent-foreground: #6ee7b7;
 
     --destructive: #f87171;
-    --destructive-foreground: #ffffff;
+    --destructive-foreground: #0b1220;
 
-    --border: #2e303a;
-    --input: #3f4250;
-    --ring: #c084fc;
+    --border: #243044;
+    --input: #334155;
+    --ring: #22d3ee;
 
     --positive: #34d399;
-    --positive-muted: rgba(6, 78, 59, 0.4);
+    --positive-muted: rgba(6, 78, 59, 0.45);
     --negative: #f87171;
-    --negative-muted: rgba(127, 29, 29, 0.4);
+    --negative-muted: rgba(127, 29, 29, 0.45);
     --warning: #fbbf24;
-    --warning-muted: rgba(120, 53, 15, 0.4);
+    --warning-muted: rgba(120, 53, 15, 0.45);
 
     --chart-background: var(--card);
     --chart-text: var(--muted-foreground);
     --chart-grid: var(--border);
-    --chart-line: var(--primary);
-    --chart-area-top: color-mix(in srgb, var(--primary) 35%, transparent);
-    --chart-area-bottom: color-mix(in srgb, var(--primary) 2%, transparent);
+    --chart-line: var(--positive);
+    --chart-area-top: color-mix(in srgb, var(--positive) 35%, transparent);
+    --chart-area-bottom: color-mix(in srgb, var(--positive) 2%, transparent);
 
-    --code-bg: #1f2028;
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
+    --code-bg: #1a2332;
+    --accent-border: rgba(56, 189, 248, 0.35);
+    --social-bg: rgba(26, 35, 50, 0.8);
     --shadow-panel:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+      rgba(0, 0, 0, 0.45) 0 10px 15px -3px, rgba(0, 0, 0, 0.3) 0 4px 6px -2px;
   }
 }
 
