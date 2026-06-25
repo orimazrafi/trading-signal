@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { optionalAuth } from "../controllers/auth.controller.js";
+import { optionalAuth } from "../middleware/auth.js";
 import { getDashboardNews } from "../controllers/news.controller.js";
 
 /** Maps dashboard news HTTP paths to controller handlers. */

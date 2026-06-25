@@ -1,9 +1,8 @@
 import { Redis } from "ioredis";
-
-const redisUrl = process.env.REDIS_URL ?? "redis://localhost:6379";
+import { env } from "./env.js";
 
 /** Shared Redis client for cache and leaderboard operations. */
-export const redis = new Redis(redisUrl, {
+export const redis = new Redis(env.redisUrl, {
   maxRetriesPerRequest: 3,
   lazyConnect: true,
 });

@@ -5,8 +5,8 @@ import {
 } from "../lib/recommendationConstants.js";
 import { log } from "../lib/logger/index.js";
 import { parseStockRecommendations } from "../lib/parseRecommendations/index.js";
-import { redis } from "../config/redis.js";
-import { getStockQuote } from "./stock.service.js";
+import { readJsonFromRedis, writeJsonToRedis } from "../lib/redisJsonCache.js";
+import { getStockQuote } from "./stock-quote.service.js";
 import type { StockQuote } from "../types/stock.js";
 import type {
   RecommendationAction,
@@ -194,28 +194,21 @@ function buildRecommendation(
 
 /** Reads processed recommendations from Redis, or null on cache miss. */
 async function readRecommendationsFromRedis(): Promise<StockRecommendation[] | null> {
-  try {
-    const cached = await redis.get(env.dashboardRecommendationsRedisKey);
-
-    if (!cached) {
-      return null;
-    }
-
-    return parseStockRecommendations(JSON.parse(cached));
-  } catch (error) {
-    log.error("Failed to read recommendations from Redis", error, {
-      key: env.dashboardRecommendationsRedisKey,
-    });
-    return null;
-  }
+  return readJsonFromRedis(env.dashboardRecommendationsRedisKey, parseStockRecommendations, {
+    key: env.dashboardRecommendationsRedisKey,
+  });
 }
 
 /** Persists the recommendations feed back to Redis. */
 async function saveRecommendationsToRedis(recommendations: StockRecommendation[]): Promise<void> {
-  await redis.set(env.dashboardRecommendationsRedisKey, JSON.stringify(recommendations));
-  log.info("Cached dashboard recommendations in Redis", {
-    key: env.dashboardRecommendationsRedisKey,
-    recommendationCount: recommendations.length,
+  await writeJsonToRedis(env.dashboardRecommendationsRedisKey, recommendations, {
+    ttlSeconds: env.dashboardRecommendationsCacheTtlSeconds,
+    logMessage: "Cached dashboard recommendations in Redis",
+    logContext: {
+      key: env.dashboardRecommendationsRedisKey,
+      recommendationCount: recommendations.length,
+      ttlSeconds: env.dashboardRecommendationsCacheTtlSeconds,
+    },
   });
 }
 
@@ -238,7 +231,7 @@ function filterRecommendations(
     filtered = filtered.filter(
       (recommendation) =>
         allowed.has(recommendation.primarySource) ||
-        recommendation.factors.some((factor) => allowed.has(factor.source)),
+        recommendation.factors.some((factor: RecommendationFactor) => allowed.has(factor.source)),
     );
   }
 

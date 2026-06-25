@@ -38,3 +38,14 @@ describe("GET /api/stock/:symbol", () => {
     expect(response.body).toEqual({ error: "Unauthorized" });
   });
 });
+
+describe("unknown API routes", () => {
+  it("returns 404 for unmatched paths", async () => {
+    const app = createApp();
+
+    const response = await request(app).get("/api/does-not-exist");
+
+    expect(response.status).toBe(HTTP_STATUS.NOT_FOUND);
+    expect(response.body).toEqual({ error: "Not found" });
+  });
+});

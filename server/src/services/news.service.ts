@@ -1,7 +1,8 @@
 import { env } from "../config/env.js";
 import { diversifyNewsArticles } from "../lib/diversifyNewsArticles.js";
 import { log } from "../lib/logger/index.js";
-import { redis } from "../config/redis.js";
+import { NewsFeedError } from "../lib/newsError.js";
+import { readJsonFromRedis, writeJsonToRedis } from "../lib/redisJsonCache.js";
 import { parseProcessedNewsArticles } from "../lib/parseNews.js";
 import { getWatchlistSymbolsForUser } from "../services/watchlist.service.js";
 import {
@@ -50,20 +51,9 @@ function analyzeHeadlineSentiment(headline: string): NewsSentiment {
 
 /** Reads processed dashboard news from Redis, or null on miss. */
 async function readProcessedNewsFromRedis(): Promise<ProcessedNewsArticle[] | null> {
-  try {
-    const cached = await redis.get(env.dashboardNewsRedisKey);
-
-    if (!cached) {
-      return null;
-    }
-
-    return parseProcessedNewsArticles(JSON.parse(cached));
-  } catch (error) {
-    log.error("Failed to read processed news from Redis", error, {
-      key: env.dashboardNewsRedisKey,
-    });
-    return null;
-  }
+  return readJsonFromRedis(env.dashboardNewsRedisKey, parseProcessedNewsArticles, {
+    key: env.dashboardNewsRedisKey,
+  });
 }
 
 /** Maps an incoming article to a processed dashboard article. */
@@ -113,10 +103,14 @@ async function refreshProcessedNewsFromApi(): Promise<ProcessedNewsArticle[]> {
 
 /** Persists the processed news feed back to Redis. */
 async function saveProcessedNewsToRedis(articles: ProcessedNewsArticle[]): Promise<void> {
-  await redis.set(env.dashboardNewsRedisKey, JSON.stringify(articles));
-  log.info("Cached dashboard news list in Redis", {
-    key: env.dashboardNewsRedisKey,
-    articleCount: articles.length,
+  await writeJsonToRedis(env.dashboardNewsRedisKey, articles, {
+    ttlSeconds: env.dashboardNewsCacheTtlSeconds,
+    logMessage: "Cached dashboard news list in Redis",
+    logContext: {
+      key: env.dashboardNewsRedisKey,
+      articleCount: articles.length,
+      ttlSeconds: env.dashboardNewsCacheTtlSeconds,
+    },
   });
 }
 
@@ -141,7 +135,7 @@ export class NewsService {
       log.error("Failed to refresh dashboard news from provider", error, {
         key: env.dashboardNewsRedisKey,
       });
-      return [];
+      throw new NewsFeedError("Market news is temporarily unavailable. Please try again shortly.");
     }
   }
 

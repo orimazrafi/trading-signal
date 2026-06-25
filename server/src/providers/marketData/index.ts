@@ -35,7 +35,7 @@ export function getHistoryMarketDataProvider(): MarketDataProvider {
   if (!cachedHistoryProvider) {
     const historyProviderId = resolveHistoryProviderId(
       env.marketDataProvider,
-      process.env.MARKET_DATA_HISTORY_PROVIDER,
+      env.marketDataHistoryProvider || undefined,
     );
     cachedHistoryProvider = createMarketDataProvider(
       resolveMarketDataProviderId(historyProviderId),

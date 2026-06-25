@@ -26,10 +26,14 @@ const nodeEnv = process.env.NODE_ENV ?? "development";
 
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN ?? "1h";
 
+const newsIngestIntervalMs = Number(process.env.NEWS_INGEST_INTERVAL_MS) || 300_000;
+const recommendationsIntervalMs = Number(process.env.RECOMMENDATIONS_INTERVAL_MS) || 300_000;
+
 /** Centralized environment configuration and app constants. */
 export const env = {
   port: Number(process.env.PORT) || 3000,
   nodeEnv,
+  databaseUrl: trimEnv(process.env.DATABASE_URL),
   jwtSecret: process.env.JWT_SECRET ?? DEV_JWT_SECRET,
   jwtExpiresIn,
   jwtExpiresInMs: parseDurationToMs(jwtExpiresIn),
@@ -43,24 +47,31 @@ export const env = {
   stockCacheTtlSeconds: Number(process.env.STOCK_CACHE_TTL_SECONDS) || 300,
   stockHistoryCacheTtlSeconds: Number(process.env.STOCK_HISTORY_CACHE_TTL_SECONDS) || 3600,
   marketDataProvider: resolveMarketDataProviderId(process.env.MARKET_DATA_PROVIDER),
+  marketDataHistoryProvider: trimEnv(process.env.MARKET_DATA_HISTORY_PROVIDER),
   finnhubApiKey: trimEnv(process.env.FINNHUB_API_KEY),
   twelveDataApiKey: trimEnv(process.env.TWELVE_DATA_API_KEY),
   rabbitmqUrl: process.env.RABBITMQ_URL ?? "amqp://localhost:5672",
   stockTicksQueue: "stock_ticks",
   marketNewsQueue: "market_news",
   dashboardNewsRedisKey: "dashboard:news",
+  dashboardNewsCacheTtlSeconds:
+    Number(process.env.DASHBOARD_NEWS_CACHE_TTL_SECONDS) ||
+    Math.max(60, Math.floor(newsIngestIntervalMs / 1000)),
   newsMaxArticles: 40,
   newsIngestEnabled: process.env.NEWS_INGEST_ENABLED !== "false",
-  newsIngestIntervalMs: Number(process.env.NEWS_INGEST_INTERVAL_MS) || 300_000,
+  newsIngestIntervalMs,
   newsIngestBatchSize: Number(process.env.NEWS_INGEST_BATCH_SIZE) || 5,
   newsIngestSymbols: (process.env.NEWS_INGEST_SYMBOLS ?? "AAPL,MSFT,TSLA,NVDA,GOOGL")
     .split(",")
     .map((symbol) => symbol.trim().toUpperCase())
     .filter(Boolean),
   dashboardRecommendationsRedisKey: "dashboard:recommendations",
+  dashboardRecommendationsCacheTtlSeconds:
+    Number(process.env.DASHBOARD_RECOMMENDATIONS_CACHE_TTL_SECONDS) ||
+    Math.max(60, Math.floor(recommendationsIntervalMs / 1000)),
   recommendationsMaxItems: Number(process.env.RECOMMENDATIONS_MAX_ITEMS) || 20,
   recommendationsEnabled: process.env.RECOMMENDATIONS_ENABLED !== "false",
-  recommendationsIntervalMs: Number(process.env.RECOMMENDATIONS_INTERVAL_MS) || 300_000,
+  recommendationsIntervalMs,
   recommendationSymbols: (
     process.env.RECOMMENDATION_SYMBOLS ??
     process.env.NEWS_INGEST_SYMBOLS ??

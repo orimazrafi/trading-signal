@@ -8,6 +8,10 @@
       "types": "./dist/recommendation.d.ts",
       "import": "./dist/recommendation.js"
     },
+    "./recommendation.js": {
+      "types": "./dist/recommendation.d.ts",
+      "import": "./dist/recommendation.js"
+    },
     "./alert": {
       "types": "./dist/alert.d.ts",
       "import": "./dist/alert.js"

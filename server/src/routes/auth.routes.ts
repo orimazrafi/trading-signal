@@ -6,8 +6,8 @@ import {
   postLogin,
   postLogout,
   postSignup,
-  requireAuth,
 } from "../controllers/auth.controller.js";
+import { requireAuth } from "../middleware/auth.js";
 
 /** Public and protected authentication HTTP routes. */
 export const authRoutes = Router();

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "../controllers/auth.controller.js";
+import { requireAuth } from "../middleware/auth.js";
 import { stockQuoteRateLimiter } from "../lib/rateLimiters.js";
 import {
   getHealth,
