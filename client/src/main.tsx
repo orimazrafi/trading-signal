@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { PwaRegistration } from '@/components/PwaRegistration'
 import { ToastProvider } from '@/components/Toast'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthProvider } from '@/features/auth/AuthProvider'
@@ -22,6 +23,7 @@ createRoot(document.getElementById('root')!).render(
       <ThemeProvider>
         <TooltipProvider>
           <ToastProvider>
+            <PwaRegistration />
             <ErrorBoundary title="The app failed to load">
               <AuthProvider>
                 <BrowserRouter>

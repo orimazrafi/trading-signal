@@ -3,6 +3,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
+import { PWA_MANIFEST } from './pwa.manifest'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const contractsSrc = path.resolve(__dirname, '../packages/contracts/src')
@@ -12,7 +14,23 @@ const pollingInterval = Number(process.env.CHOKIDAR_INTERVAL ?? '300')
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [tailwindcss(), react()],
+  plugins: [
+    tailwindcss(),
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['pwa/icon-192.png', 'pwa/icon-512.png'],
+      manifest: PWA_MANIFEST,
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//],
+      },
+      devOptions: {
+        enabled: true,
+      },
+    }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),

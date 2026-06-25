@@ -1,3 +1,5 @@
+import type { BeforeInstallPromptEvent, PwaInstallOutcome } from '@/lib/pwa/types'
+
 /** Options for the Intersection Observer viewport hook. */
 export type UseIntersectionObserverOptions = {
   enabled?: boolean
@@ -12,4 +14,24 @@ export type UseIntersectionObserverOptions = {
 export type UseIntersectionObserverResult = {
   ref: (node: Element | null) => void
   isIntersecting: boolean
+}
+
+/** Handlers for PWA install browser events wired by usePwaInstallBrowserEvents. */
+export type PwaInstallBrowserEventHandlers = {
+  onBeforeInstallPrompt: (event: BeforeInstallPromptEvent) => void
+  onAppInstalled: () => void
+}
+
+/** Result of useBeforeInstallPrompt — captured install prompt and install state. */
+export type UseBeforeInstallPromptResult = {
+  installPrompt: BeforeInstallPromptEvent | null
+  setInstallPrompt: (event: BeforeInstallPromptEvent | null) => void
+  isInstalled: boolean
+}
+
+/** Result of usePwaInstallPrompt for the Install App button. */
+export type UsePwaInstallPromptResult = {
+  canInstall: boolean
+  isInstalling: boolean
+  promptInstall: () => Promise<PwaInstallOutcome>
 }

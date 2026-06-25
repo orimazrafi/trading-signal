@@ -1,4 +1,5 @@
 import { Button } from '@/components/Button'
+import { InstallAppButton } from '@/components/InstallAppButton'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import type { AppHeaderProps } from './types'
 
@@ -13,6 +14,7 @@ function AppHeader({ email, onLogout }: AppHeaderProps) {
         <p className="mt-1 text-sm text-muted-foreground">Signed in as {email}</p>
       </div>
       <div className="flex items-center gap-2">
+        <InstallAppButton />
         <ThemeToggle />
         <Button variant="secondary" onClick={onLogout}>
           Sign out
