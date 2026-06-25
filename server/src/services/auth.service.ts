@@ -34,6 +34,7 @@ type GoogleTokenResponse = {
 type GoogleUserInfo = {
   id: string;
   email: string;
+  picture?: string;
 };
 
 type GoogleOAuthErrorBody = {
@@ -50,6 +51,7 @@ type CredentialUser = {
 type GoogleProfile = {
   googleId: string;
   email: string;
+  pictureUrl: string | null;
 };
 
 export class AuthError extends Error {
@@ -342,6 +344,21 @@ async function fetchGoogleUserProfile(accessToken: string): Promise<GoogleUserIn
   return userInfoResponse.data;
 }
 
+/** Returns a validated HTTPS profile picture URL from Google userinfo. */
+function parseGooglePictureUrl(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed.startsWith("https://")) {
+    return null;
+  }
+
+  return trimmed;
+}
+
 /** Normalizes Google profile fields required for sign-in. */
 function parseGoogleProfile(profile: GoogleUserInfo): GoogleProfile | null {
   const googleId = profile.id;
@@ -351,7 +368,11 @@ function parseGoogleProfile(profile: GoogleUserInfo): GoogleProfile | null {
     return null;
   }
 
-  return { googleId, email };
+  return {
+    googleId,
+    email,
+    pictureUrl: parseGooglePictureUrl(profile.picture),
+  };
 }
 
 /** Throws when Google profile data is incomplete. */
@@ -369,7 +390,7 @@ export async function authenticateWithGoogleCode(code: string): Promise<Authenti
   const profile = parseGoogleProfile(await fetchGoogleUserProfile(accessToken));
   assertGoogleProfile(profile);
 
-  const user = await upsertGoogleUser(profile.googleId, profile.email);
+  const user = await upsertGoogleUser(profile.googleId, profile.email, profile.pictureUrl);
   await ensureDefaultWatchlistForUser(user.id);
   return toAuthenticatedUser(user);
 }

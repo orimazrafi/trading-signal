@@ -1,33 +1,62 @@
 import { Button } from '@/components/Button'
 import type { AddToWatchlistButtonProps } from './types'
 
-/** Saves a symbol to the active watchlist from news or idea cards. */
+/** Saves or removes a symbol in the active watchlist from news or idea cards. */
 function AddToWatchlistButton({
   symbol,
   onAdd,
+  onRemove,
+  isInWatchlist = false,
   saving = false,
-  disabled = false,
+  removing = false,
   watchlistName,
 }: AddToWatchlistButtonProps) {
+  const watchlistLabel = watchlistName ?? 'watchlist'
+
   /** Adds the symbol to the active watchlist. */
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleAdd = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
     event.stopPropagation()
     void onAdd(symbol)
   }
 
-  const label = watchlistName ? `Add to ${watchlistName}` : 'Add to watchlist'
+  /** Removes the symbol from the active watchlist. */
+  const handleRemove = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (!onRemove) {
+      return
+    }
+
+    void onRemove(symbol)
+  }
+
+  if (isInWatchlist && onRemove) {
+    return (
+      <Button
+        type="button"
+        variant="danger"
+        disabled={removing}
+        loading={removing}
+        loadingLabel="Removing…"
+        onClick={handleRemove}
+      >
+        Remove from {watchlistLabel}
+      </Button>
+    )
+  }
 
   return (
     <Button
       type="button"
       variant="secondary"
-      disabled={disabled || saving}
+      disabled={saving || isInWatchlist}
       loading={saving}
       loadingLabel="Saving…"
-      onClick={handleClick}
+      onClick={handleAdd}
     >
-      {label}
+      {isInWatchlist ? `In ${watchlistLabel}` : `Add to ${watchlistLabel}`}
     </Button>
   )
 }

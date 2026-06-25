@@ -1,4 +1,5 @@
 import type { StockHistoryRange } from "../../../types/stockHistory.js";
+import { resolveYearToDateFromSeconds } from "../../../lib/yearToDateRange.js";
 
 type FinnhubCandleParams = {
   resolution: string;
@@ -51,6 +52,14 @@ export function resolveFinnhubCandleParams(range: StockHistoryRange): FinnhubCan
       return {
         resolution: "D",
         from: to - 180 * SECONDS_PER_DAY,
+        to,
+        interval: "1day",
+        isIntraday: false,
+      };
+    case "YTD":
+      return {
+        resolution: "D",
+        from: resolveYearToDateFromSeconds(),
         to,
         interval: "1day",
         isIntraday: false,

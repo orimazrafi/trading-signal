@@ -1,4 +1,5 @@
 import { Button } from '@/components/Button'
+import { MarketStatusIndicator } from '@/components/MarketStatusIndicator'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import type { LandingHeaderProps } from './types'
 
@@ -9,6 +10,7 @@ function LandingHeader({ onSignIn }: LandingHeaderProps) {
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Trading Signal</h1>
         <p className="mt-1 text-sm text-muted-foreground">Live market headlines — no sign-in required</p>
+        <MarketStatusIndicator className="mt-2" />
       </div>
       <div className="flex items-center gap-2">
         <ThemeToggle />

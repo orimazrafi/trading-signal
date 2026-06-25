@@ -10,7 +10,7 @@ import { ROUTES } from '@/routes/paths'
 function LandingPage() {
   const navigate = useNavigate()
   const { user, loading } = useAuthContext()
-  const { news, isLoading, isRefreshing, error, reload } = useNewsFeed()
+  const { news, isLoading, isRefreshing, isLoadingMore, hasMore, error, reload, loadMore } = useNewsFeed()
 
   if (loading) {
     return (
@@ -31,9 +31,12 @@ function LandingPage() {
         news={news}
         isLoading={isLoading}
         isRefreshing={isRefreshing}
+        isLoadingMore={isLoadingMore}
+        hasMore={hasMore}
         error={error}
         variant="landing"
         onRefresh={() => void reload()}
+        onLoadMore={loadMore}
       />
     </main>
   )

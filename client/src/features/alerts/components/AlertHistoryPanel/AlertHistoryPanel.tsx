@@ -22,6 +22,7 @@ function AlertHistoryPanel({
       title="Alert history"
       description="Past triggers from your configured price alerts. Unread items are bold — tap to mark read."
       variant="section"
+      listClassName="space-y-2"
       header={
         !loading && unreadCount > 0 ? (
           <Badge variant="warning">{unreadCount} unread</Badge>

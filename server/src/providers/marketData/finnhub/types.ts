@@ -12,9 +12,7 @@ export type FinnhubProfileResponse = {
 
 /** Finnhub `/stock/metric` response fields used by the app. */
 export type FinnhubMetricResponse = {
-  metric?: {
-    peBasic?: number;
-  };
+  metric?: Record<string, number | undefined>;
 };
 
 /** Finnhub `/stock/candle` response. */

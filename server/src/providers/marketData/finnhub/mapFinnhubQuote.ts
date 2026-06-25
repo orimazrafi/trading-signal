@@ -1,5 +1,6 @@
 import type { StockQuote } from "../../../types/stock.js";
 import type { FinnhubMetricResponse, FinnhubProfileResponse, FinnhubQuoteResponse } from "./types.js";
+import { resolveFinnhubPeRatio } from "./resolveFinnhubPeRatio.js";
 
 /** Resolves a usable live price from Finnhub quote fields. */
 function resolveQuotePrice(quote: FinnhubQuoteResponse, symbol: string): number {
@@ -24,13 +25,13 @@ export function mapFinnhubQuote(
   metrics: FinnhubMetricResponse | null,
 ): StockQuote {
   const price = resolveQuotePrice(quote, symbol);
-  const peRatio = Number(metrics?.metric?.peBasic ?? 0);
+  const peRatio = resolveFinnhubPeRatio(metrics, price);
 
   return {
     symbol,
     name: String(profile?.name ?? `${symbol} Inc.`),
     price,
-    peRatio: Number.isFinite(peRatio) ? peRatio : 0,
+    peRatio: Number.isFinite(peRatio) && peRatio > 0 ? peRatio : 0,
     sector: String(profile?.finnhubIndustry ?? "Unknown"),
   };
 }

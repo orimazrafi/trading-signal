@@ -38,6 +38,25 @@ export function chartTimesEqual(left: Time, right: Time): boolean {
   return chartTimeKey(left) === chartTimeKey(right)
 }
 
+/** Converts a history point time to milliseconds for stable sorting. */
+function historyPointTimeMs(time: string | number): number {
+  if (typeof time === 'number') {
+    return time > 1_000_000_000_000 ? time : time * 1000
+  }
+
+  const parsed = Date.parse(time)
+  return Number.isNaN(parsed) ? 0 : parsed
+}
+
+/** Sorts OHLCV points chronologically before chart rendering. */
+export function sortHistoryPointsByTime(
+  points: readonly StockHistoryPoint[],
+): StockHistoryPoint[] {
+  return [...points].sort(
+    (left, right) => historyPointTimeMs(left.time) - historyPointTimeMs(right.time),
+  )
+}
+
 /** Maps API history bar time to a lightweight-charts Time value. */
 export function toChartTime(time: string | number): Time {
   if (typeof time === 'string') {

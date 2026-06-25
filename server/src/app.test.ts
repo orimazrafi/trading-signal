@@ -25,6 +25,8 @@ describe("GET /api/dashboard/news", () => {
 
     expect(response.status).toBe(HTTP_STATUS.OK);
     expect(Array.isArray(response.body.news)).toBe(true);
+    expect(typeof response.body.hasMore).toBe("boolean");
+    expect(typeof response.body.nextOffset).toBe("number");
   });
 });
 

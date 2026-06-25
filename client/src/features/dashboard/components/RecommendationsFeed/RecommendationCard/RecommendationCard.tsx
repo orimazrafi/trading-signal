@@ -17,6 +17,8 @@ import type { RecommendationCardProps } from './types'
 function RecommendationCard({
   recommendation,
   onAddToWatchlist,
+  onRemoveFromWatchlist,
+  isInWatchlist = false,
   saving = false,
   watchlistName,
   liveQuote = null,
@@ -86,7 +88,10 @@ function RecommendationCard({
           <AddToWatchlistButton
             symbol={recommendation.symbol}
             onAdd={onAddToWatchlist}
+            onRemove={onRemoveFromWatchlist}
+            isInWatchlist={isInWatchlist}
             saving={saving}
+            removing={saving}
             watchlistName={watchlistName}
           />
         </div>

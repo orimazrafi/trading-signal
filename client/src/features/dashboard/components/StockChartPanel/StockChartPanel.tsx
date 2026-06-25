@@ -4,6 +4,9 @@ import { ErrorMessage } from '@/components/ErrorMessage'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Panel } from '@/components/Panel'
 import { SimulatedLivePrice } from '@/components/SimulatedLivePrice'
+import { ChartPriceAlertDialog } from '@/features/alerts/components/ChartPriceAlertDialog'
+import { usePriceAlerts } from '@/features/alerts/hooks/usePriceAlerts'
+import { useAuthContext } from '@/features/auth/AuthProvider'
 import {
   Select,
   SelectContent,
@@ -11,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { usePrefersDarkMode } from '@/hooks/usePrefersDarkMode'
+import { useTheme } from '@/features/theme/ThemeProvider'
 import { useStockHistory } from '@/features/stocks/hooks/useStockHistory'
 import { useStockQuote } from '@/features/stocks/hooks/useStockQuote'
 import { useWorkerCalculation } from '@/features/stocks/hooks/useWorkerCalculation'
@@ -22,8 +25,10 @@ import {
   toggleChartOverlayVisibility,
   type ChartOverlayVisibility,
 } from '@/features/stocks/lib/chartOverlayVisibility'
-import { mergeLivePriceIntoHistory, toAreaSeriesData } from '@/features/stocks/lib/chartSeries'
+import { mergeLivePriceIntoHistory, sortHistoryPointsByTime, toAreaSeriesData } from '@/features/stocks/lib/chartSeries'
 import { StockChart } from '@/features/watchlists/components/StockChart'
+import type { ChartPriceClickPayload } from '@/features/watchlists/components/StockChart/types'
+import { cn } from '@/lib/utils'
 import { STOCK_HISTORY_RANGES } from '@/lib/stockHistoryConstants'
 import { isStockHistoryRange } from '@/lib/stockHistoryUtils'
 import type { StockHistoryRange } from '@/types/stock'
@@ -37,7 +42,10 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
   const [overlayVisibility, setOverlayVisibility] = useState<ChartOverlayVisibility>(
     DEFAULT_CHART_OVERLAY_VISIBILITY,
   )
-  const isDarkMode = usePrefersDarkMode()
+  const [chartAlertDraft, setChartAlertDraft] = useState<ChartPriceClickPayload | null>(null)
+  const { user } = useAuthContext()
+  const { createAlert, creating: isCreatingAlert } = usePriceAlerts()
+  const { resolvedDark: isDarkMode } = useTheme()
   const { quote, isLoading: isQuoteLoading, error: quoteError, dataUpdatedAt } = useStockQuote(symbol)
   const {
     history,
@@ -52,10 +60,12 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
     }
 
     if (!quote?.price) {
-      return history.points
+      return sortHistoryPointsByTime(history.points)
     }
 
-    return mergeLivePriceIntoHistory(history.points, quote.price, range)
+    return sortHistoryPointsByTime(
+      mergeLivePriceIntoHistory(history.points, quote.price, range),
+    )
   }, [history?.points, quote?.price, range])
 
   const chartSeries = useMemo(() => toAreaSeriesData(chartPoints), [chartPoints])
@@ -82,12 +92,35 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
     [chartSeries, indicatorAnalysis],
   )
 
-  const isChartLoading =
-    isHistoryLoading || (isHistoryFetching && chartSeries.length === 0)
+  const isChartInitialLoading = isHistoryLoading && chartSeries.length === 0
+  const isChartRefreshing = isHistoryFetching && chartSeries.length > 0
 
   /** Toggles one moving-average overlay on the chart. */
   function handleOverlayToggle(key: ChartOverlayKey) {
     setOverlayVisibility((current) => toggleChartOverlayVisibility(current, key))
+  }
+
+  /** Opens the alert dialog for a price level selected on the chart. */
+  function handleChartPriceClick(payload: ChartPriceClickPayload) {
+    setChartAlertDraft(payload)
+  }
+
+  /** Creates a price alert from the chart-selected baseline. */
+  async function handleCreateChartAlert(input: {
+    thresholdPercent: number
+    emailEnabled: boolean
+    baselinePrice: number
+  }) {
+    if (!symbol) {
+      return
+    }
+
+    await createAlert({
+      symbol,
+      thresholdPercent: input.thresholdPercent,
+      emailEnabled: input.emailEnabled,
+      baselinePrice: input.baselinePrice,
+    })
   }
 
   if (!symbol) {
@@ -153,7 +186,11 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
               }
             }}
           >
-            <SelectTrigger className="w-[7rem]" aria-label="Chart range">
+            <SelectTrigger
+              className={cn('w-[7rem]', isChartRefreshing && 'opacity-70')}
+              aria-label="Chart range"
+              aria-busy={isChartRefreshing}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -170,21 +207,27 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
       </div>
 
       <div className="flex min-h-[16rem] flex-1 flex-col rounded-xl border border-border bg-muted/40 p-2">
+        <p className="px-1 pb-2 text-xs text-muted-foreground">
+          Click the chart to add a price alert at a specific level.
+        </p>
         {historyError ? <ErrorMessage message={historyError} /> : null}
         {workerError ? <ErrorMessage message={workerError} /> : null}
 
-        {!historyError && (isChartLoading || chartSeries.length > 0) ? (
+        {!historyError && (isChartInitialLoading || chartSeries.length > 0) ? (
           <StockChart
             symbol={symbol}
             series={chartSeries}
             overlays={chartOverlays}
             overlayVisibility={overlayVisibility}
             isDarkMode={isDarkMode}
-            isLoading={isChartLoading}
+            isLoading={isChartInitialLoading}
+            isRefreshing={isChartRefreshing}
+            fitContentKey={`${symbol ?? ''}-${range}`}
+            onPriceClick={handleChartPriceClick}
           />
         ) : null}
 
-        {!isChartLoading && !historyError && history?.points.length === 0 ? (
+        {!isChartInitialLoading && !historyError && history?.points.length === 0 ? (
           <EmptyState
             message="No historical data available for this range."
             variant="plain"
@@ -192,6 +235,23 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
           />
         ) : null}
       </div>
+
+      {symbol && chartAlertDraft && user ? (
+        <ChartPriceAlertDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setChartAlertDraft(null)
+            }
+          }}
+          symbol={symbol}
+          baselinePrice={chartAlertDraft.price}
+          timeLabel={chartAlertDraft.timeLabel}
+          userEmail={user.email}
+          creating={isCreatingAlert}
+          onCreate={handleCreateChartAlert}
+        />
+      ) : null}
     </Panel>
   )
 }

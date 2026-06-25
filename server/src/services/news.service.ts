@@ -1,12 +1,15 @@
 import { env } from "../config/env.js";
+import { redis } from "../config/redis.js";
 import { diversifyNewsArticles } from "../lib/diversifyNewsArticles.js";
 import { log } from "../lib/logger/index.js";
 import { NewsFeedError } from "../lib/newsError.js";
 import { readJsonFromRedis, writeJsonToRedis } from "../lib/redisJsonCache.js";
 import { parseProcessedNewsArticles } from "../lib/parseNews.js";
+import { rotateNewsIngestSymbols } from "../lib/rotateNewsIngestSymbols.js";
 import { getWatchlistSymbolsForUser } from "../services/watchlist.service.js";
 import {
   fetchLatestMarketNewsArticles,
+  fetchMarketNewsArticlesForSymbols,
   markIncomingArticlesAsSeen,
 } from "../services/news-ingest.service.js";
 import type { IncomingNewsArticle, ProcessedNewsArticle } from "../types/news.js";
@@ -22,6 +25,20 @@ const NEGATIVE_KEYWORDS = [
   "risk",
   "inflation",
 ] as const;
+
+/** Options for a paginated dashboard news request. */
+export type NewsFeedPageOptions = {
+  limit: number;
+  offset: number;
+  refresh: boolean;
+};
+
+/** Paginated dashboard news payload returned by the HTTP handler. */
+export type NewsFeedPage = {
+  news: ProcessedNewsArticle[];
+  hasMore: boolean;
+  nextOffset: number;
+};
 
 /** Scores headline text and maps the result to a sentiment label. */
 function analyzeHeadlineSentiment(headline: string): NewsSentiment {
@@ -83,6 +100,47 @@ function filterNewsByWatchlistSymbols(
   return filtered.length > 0 ? filtered : articles;
 }
 
+/** Deduplicates processed articles by URL, keeping the first occurrence. */
+function dedupeProcessedArticlesByUrl(
+  articles: ProcessedNewsArticle[],
+): ProcessedNewsArticle[] {
+  const seenUrls = new Set<string>();
+
+  return articles.filter((article) => {
+    if (seenUrls.has(article.url)) {
+      return false;
+    }
+
+    seenUrls.add(article.url);
+    return true;
+  });
+}
+
+/** Increments and returns the refresh rotation counter stored in Redis. */
+async function incrementNewsRefreshCount(): Promise<number> {
+  return redis.incr(env.dashboardNewsRefreshCountRedisKey);
+}
+
+/** Resolves the symbol batch for a provider fetch based on the refresh counter. */
+function resolveRotatedNewsSymbols(refreshCount: number): string[] {
+  return rotateNewsIngestSymbols(env.newsIngestSymbols, refreshCount);
+}
+
+/** Fetches a rotated symbol batch from the provider and merges it into the Redis pool. */
+async function fetchAndMergeNewsPool(refreshCount: number): Promise<ProcessedNewsArticle[]> {
+  const symbols = resolveRotatedNewsSymbols(refreshCount);
+  const incomingArticles = await fetchMarketNewsArticlesForSymbols(symbols);
+  const freshProcessed = incomingArticles.map((article) => processIncomingArticle(article));
+  const existingArticles = (await readProcessedNewsFromRedis()) ?? [];
+  const mergedArticles = dedupeProcessedArticlesByUrl([...freshProcessed, ...existingArticles]);
+  const diversifiedArticles = diversifyNewsArticles(mergedArticles, env.newsMaxPoolArticles);
+
+  await saveProcessedNewsToRedis(diversifiedArticles);
+  await markIncomingArticlesAsSeen(incomingArticles);
+
+  return diversifiedArticles;
+}
+
 /** Fetches market news from the configured provider, processes it, and caches the feed. */
 async function refreshProcessedNewsFromApi(): Promise<ProcessedNewsArticle[]> {
   log.warn("Cache miss for dynamic data, fetching from external provider", {
@@ -92,7 +150,7 @@ async function refreshProcessedNewsFromApi(): Promise<ProcessedNewsArticle[]> {
   const incomingArticles = await fetchLatestMarketNewsArticles();
   const processedArticles = diversifyNewsArticles(
     incomingArticles.map((article) => processIncomingArticle(article)),
-    env.newsMaxArticles,
+    env.newsMaxPoolArticles,
   );
 
   await saveProcessedNewsToRedis(processedArticles);
@@ -112,6 +170,22 @@ async function saveProcessedNewsToRedis(articles: ProcessedNewsArticle[]): Promi
       ttlSeconds: env.dashboardNewsCacheTtlSeconds,
     },
   });
+}
+
+/** Slices a filtered feed and reports whether another page may exist. */
+function sliceNewsFeedPage(
+  articles: ProcessedNewsArticle[],
+  limit: number,
+  offset: number,
+): NewsFeedPage {
+  const page = articles.slice(offset, offset + limit);
+  const nextOffset = offset + page.length;
+
+  return {
+    news: page,
+    hasMore: nextOffset < articles.length,
+    nextOffset,
+  };
 }
 
 /** Processes market news articles and serves the dashboard feed from Redis. */
@@ -139,19 +213,78 @@ export class NewsService {
     }
   }
 
-  /** Returns the full diversified dashboard feed (public landing page). */
-  async getPublicNewsFeed(): Promise<ProcessedNewsArticle[]> {
-    return this.getProcessedNews();
+  /** Returns a paginated news page, optionally forcing a provider refresh. */
+  async getNewsFeedPage(options: NewsFeedPageOptions): Promise<NewsFeedPage> {
+    const articles = await this.ensurePoolCoversOffset(await this.resolveNewsPool(options), options);
+    return sliceNewsFeedPage(articles, options.limit, options.offset);
   }
 
-  /** Returns news filtered to the user's watchlist symbols when available. */
-  async getProcessedNewsForUser(userId: string): Promise<ProcessedNewsArticle[]> {
-    const [articles, watchlistSymbols] = await Promise.all([
-      this.getProcessedNews(),
-      getWatchlistSymbolsForUser(userId),
-    ]);
+  /** Returns a paginated news page filtered to the user's watchlist symbols. */
+  async getNewsFeedPageForUser(userId: string, options: NewsFeedPageOptions): Promise<NewsFeedPage> {
+    const watchlistSymbols = await getWatchlistSymbolsForUser(userId);
+    let poolArticles = await this.resolveNewsPool(options);
+    let filteredArticles = filterNewsByWatchlistSymbols(poolArticles, watchlistSymbols);
 
-    return filterNewsByWatchlistSymbols(articles, watchlistSymbols);
+    if (!options.refresh) {
+      while (options.offset >= filteredArticles.length) {
+        const previousLength = filteredArticles.length;
+        const refreshCount = await incrementNewsRefreshCount();
+        poolArticles = await fetchAndMergeNewsPool(refreshCount);
+        filteredArticles = filterNewsByWatchlistSymbols(poolArticles, watchlistSymbols);
+
+        if (filteredArticles.length <= previousLength) {
+          break;
+        }
+      }
+    }
+
+    return sliceNewsFeedPage(filteredArticles, options.limit, options.offset);
+  }
+
+  /** Loads the news pool from cache or provider, forcing a refresh when requested. */
+  private async resolveNewsPool(options: NewsFeedPageOptions): Promise<ProcessedNewsArticle[]> {
+    try {
+      if (options.refresh) {
+        const refreshCount = await incrementNewsRefreshCount();
+        return await fetchAndMergeNewsPool(refreshCount);
+      }
+
+      return await this.getProcessedNews();
+    } catch (error) {
+      if (error instanceof NewsFeedError) {
+        throw error;
+      }
+
+      log.error("Failed to resolve dashboard news pool", error, {
+        key: env.dashboardNewsRedisKey,
+        refresh: options.refresh,
+      });
+      throw new NewsFeedError("Market news is temporarily unavailable. Please try again shortly.");
+    }
+  }
+
+  /** Fetches additional provider batches until the pool can satisfy the requested offset. */
+  private async ensurePoolCoversOffset(
+    articles: ProcessedNewsArticle[],
+    options: NewsFeedPageOptions,
+  ): Promise<ProcessedNewsArticle[]> {
+    if (options.refresh || options.offset < articles.length) {
+      return articles;
+    }
+
+    let pool = articles;
+
+    while (options.offset >= pool.length) {
+      const previousLength = pool.length;
+      const refreshCount = await incrementNewsRefreshCount();
+      pool = await fetchAndMergeNewsPool(refreshCount);
+
+      if (pool.length <= previousLength) {
+        break;
+      }
+    }
+
+    return pool;
   }
 
   /** Scores, prepends, trims, and stores an incoming news article. */
@@ -159,7 +292,10 @@ export class NewsService {
     const processedArticle = processIncomingArticle(article);
 
     const existingArticles = (await readProcessedNewsFromRedis()) ?? [];
-    const updatedArticles = [processedArticle, ...existingArticles].slice(0, env.newsMaxArticles);
+    const updatedArticles = dedupeProcessedArticlesByUrl([
+      processedArticle,
+      ...existingArticles,
+    ]).slice(0, env.newsMaxPoolArticles);
 
     await saveProcessedNewsToRedis(updatedArticles);
 

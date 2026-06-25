@@ -6,8 +6,9 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Panel } from '@/components/Panel'
 import { toast } from '@/components/Toast'
 import { WatchlistTabs } from '@/features/watchlists/components/WatchlistTabs'
+import { useWatchlistInitialSelection } from '@/features/watchlists/hooks/useWatchlistInitialSelection'
 import { useWatchlists } from '@/features/watchlists/hooks/useWatchlists'
-import { SignalCard } from '@/features/dashboard/components/SignalCard'
+import { WatchlistSignalCard } from '@/features/watchlists/components/WatchlistSignalCard'
 import { StockChartPanel } from '@/features/dashboard/components/StockChartPanel'
 import { StockSearch } from '@/features/dashboard/components/StockSearch'
 import { normalizeWatchlistSymbolParam, ROUTES } from '@/routes/paths'
@@ -37,6 +38,13 @@ function WatchlistTab({ user }: WatchlistTabProps) {
     () => watchlists.find((watchlist) => watchlist.id === activeWatchlistId) ?? null,
     [watchlists, activeWatchlistId],
   )
+
+  useWatchlistInitialSelection({
+    activeWatchlist,
+    activeWatchlistId,
+    selectedSymbol,
+    watchlistsLoading,
+  })
 
   /** Updates the watchlist route when a stock is selected or cleared. */
   const handleSelectSymbol = (symbol: string | null) => {
@@ -100,23 +108,32 @@ function WatchlistTab({ user }: WatchlistTabProps) {
         />
       </section>
 
-      <div className="grid flex-1 gap-6 lg:grid-cols-12">
-        <div className="flex flex-col gap-6 lg:col-span-5">
+      <div className="grid flex-1 gap-6 lg:grid-cols-12 lg:items-start">
+        <div className="flex min-h-0 flex-col gap-4 lg:col-span-5 lg:max-h-[calc(100svh-11rem)]">
+          <StockSearch
+            layout="sticky"
+            activeWatchlistId={activeWatchlistId}
+            activeWatchlistName={activeWatchlist?.name}
+            saving={saving}
+            onSave={handleSaveStock}
+          />
+
           <Panel
             title={activeWatchlist ? activeWatchlist.name : 'Active view'}
             description={watchlistDescription}
             variant="section"
-            className="bg-muted/50"
+            className="flex min-h-0 flex-1 flex-col bg-muted/50"
+            bodyClassName="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
           >
             {!activeWatchlist ? (
               <EmptyState message="Create a custom view with the + button above to start saving stocks." />
             ) : activeWatchlist.signals.length === 0 ? (
-              <EmptyState message="No stocks saved yet. Search below or use Add to watchlist on News and Market Ideas." />
+              <EmptyState message="No stocks saved yet. Search above or use Add to watchlist on News and Market Ideas." />
             ) : (
               <ul className="space-y-3">
                 {activeWatchlist.signals.map((signal) => (
                   <li key={signal.id}>
-                    <SignalCard
+                    <WatchlistSignalCard
                       signal={signal}
                       isSelected={selectedSymbol === signal.symbol}
                       onSelect={handleSelectSavedSymbol}
@@ -128,13 +145,6 @@ function WatchlistTab({ user }: WatchlistTabProps) {
               </ul>
             )}
           </Panel>
-
-          <StockSearch
-            activeWatchlistId={activeWatchlistId}
-            activeWatchlistName={activeWatchlist?.name}
-            saving={saving}
-            onSave={handleSaveStock}
-          />
         </div>
 
         <div className="lg:col-span-7">

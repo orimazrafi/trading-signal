@@ -5,6 +5,11 @@ import {
   chartOverlaysFingerprintsEqual,
 } from './chartOverlayCompare'
 
+/** Returns true when the chart should show the initial loading skeleton. */
+function showsChartSkeleton(props: StockChartProps): boolean {
+  return Boolean(props.isLoading) && props.series.length === 0
+}
+
 /** Returns true when two area-series snapshots represent the same visible chart data. */
 function chartSeriesFingerprintsEqual(
   previous: readonly ChartAreaPoint[],
@@ -39,33 +44,31 @@ function chartSeriesFingerprintsEqual(
   )
 }
 
+/** Compares props that are cheap scalars or simple derived flags. */
+function areStaticStockChartPropsEqual(previous: StockChartProps, next: StockChartProps): boolean {
+  return (
+    previous.symbol === next.symbol &&
+    previous.fitContentKey === next.fitContentKey &&
+    previous.isDarkMode === next.isDarkMode &&
+    previous.isRefreshing === next.isRefreshing &&
+    showsChartSkeleton(previous) === showsChartSkeleton(next) &&
+    Boolean(previous.onPriceClick) === Boolean(next.onPriceClick)
+  )
+}
+
+/** Compares props that depend on series snapshots or overlay state. */
+function areStockChartDataPropsEqual(previous: StockChartProps, next: StockChartProps): boolean {
+  return (
+    chartSeriesFingerprintsEqual(previous.series, next.series) &&
+    chartOverlaysFingerprintsEqual(previous.overlays, next.overlays) &&
+    chartOverlayVisibilityEqual(previous.overlayVisibility, next.overlayVisibility)
+  )
+}
+
 /** Custom React.memo comparator that avoids redundant lightweight-charts canvas updates. */
 export function stockChartPropsAreEqual(
   previous: StockChartProps,
   next: StockChartProps,
 ): boolean {
-  if (previous.symbol !== next.symbol) {
-    return false
-  }
-
-  if (previous.isDarkMode !== next.isDarkMode) {
-    return false
-  }
-
-  const previousShowsSkeleton = previous.isLoading && previous.series.length === 0
-  const nextShowsSkeleton = next.isLoading && next.series.length === 0
-
-  if (previousShowsSkeleton !== nextShowsSkeleton) {
-    return false
-  }
-
-  if (!chartSeriesFingerprintsEqual(previous.series, next.series)) {
-    return false
-  }
-
-  if (!chartOverlaysFingerprintsEqual(previous.overlays, next.overlays)) {
-    return false
-  }
-
-  return chartOverlayVisibilityEqual(previous.overlayVisibility, next.overlayVisibility)
+  return areStaticStockChartPropsEqual(previous, next) && areStockChartDataPropsEqual(previous, next)
 }

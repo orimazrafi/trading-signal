@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from 'react'
 import { applyThemeMode, readStoredThemeMode, writeStoredThemeMode } from './themeStorage'
 import type { ThemeMode } from './types'
 
@@ -14,16 +20,35 @@ type ThemeProviderProps = {
   children: ReactNode
 }
 
+/** Resolves whether the active theme should render as dark. */
+function resolveIsDark(mode: ThemeMode, prefersDark: boolean): boolean {
+  if (mode === 'dark') {
+    return true
+  }
+
+  if (mode === 'light') {
+    return false
+  }
+
+  return prefersDark
+}
+
 /** Provides theme mode state and applies CSS variables on the document root. */
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [mode, setModeState] = useState<ThemeMode>(() => readStoredThemeMode())
-  const [resolvedDark, setResolvedDark] = useState(false)
+  const [resolvedDark, setResolvedDark] = useState(() => {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    return resolveIsDark(readStoredThemeMode(), prefersDark)
+  })
 
   /** Updates theme mode in state, storage, and on the document root. */
   const setMode = (nextMode: ThemeMode) => {
-    setModeState(nextMode)
-    writeStoredThemeMode(nextMode)
     applyThemeMode(nextMode)
+    writeStoredThemeMode(nextMode)
+
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    setResolvedDark(resolveIsDark(nextMode, prefersDark))
+    setModeState(nextMode)
   }
 
   useEffect(() => {
@@ -33,10 +58,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
     /** Syncs resolved dark state when system preference or mode changes. */
     const syncResolved = () => {
-      const isDark =
-        mode === 'dark' || (mode === 'system' && media.matches)
-      setResolvedDark(isDark)
-      applyThemeMode(mode)
+      setResolvedDark(resolveIsDark(mode, media.matches))
     }
 
     syncResolved()

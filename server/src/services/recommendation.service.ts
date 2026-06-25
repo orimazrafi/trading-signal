@@ -31,7 +31,7 @@ function buildRecommendationsFromQuotes(quotes: StockQuote[]): StockRecommendati
   const generatedAt = new Date().toISOString();
 
   return quotes
-    .map((quote) => buildRecommendation(quote, sectorAverages.get(quote.sector) ?? 0, generatedAt))
+    .map((quote) => buildRecommendation(quote, sectorAverages.get(quote.sector) ?? 0, generatedAt, quotes))
     .sort((left, right) => {
       const actionRank = (action: RecommendationAction) => {
         if (action === "STRONG_BUY") return 0;
@@ -71,10 +71,32 @@ function resolveFundamentalAction(peRatio: number): RecommendationAction {
   return "HOLD";
 }
 
+/** Builds a fallback confidence score when P/E is unavailable, spread across the universe. */
+function resolveLimitedDataConfidence(quote: StockQuote, universe: StockQuote[]): number {
+  const prices = universe
+    .map((item) => item.price)
+    .filter((price) => price > 0)
+    .sort((left, right) => left - right)
+
+  if (prices.length <= 1) {
+    return 45
+  }
+
+  const rank = prices.findIndex((price) => price === quote.price)
+  const percentile = rank >= 0 ? rank / (prices.length - 1) : 0.5
+
+  return Math.round(32 + percentile * 36)
+}
+
 /** Builds a 0–100 confidence score from valuation and sector context. */
-function resolveConfidence(peRatio: number, sectorAveragePe: number): number {
+function resolveConfidence(
+  peRatio: number,
+  sectorAveragePe: number,
+  quote: StockQuote,
+  universe: StockQuote[],
+): number {
   if (peRatio <= 0) {
-    return 40;
+    return resolveLimitedDataConfidence(quote, universe)
   }
 
   let score = 100 - peRatio * 2.5;
@@ -100,6 +122,10 @@ function buildSummary(action: RecommendationAction, quote: StockQuote, sectorAve
     return `${quote.symbol} P/E is above the ${quote.sector} sector average (${sectorAveragePe.toFixed(1)}).`;
   }
 
+  if (quote.peRatio <= 0) {
+    return `${quote.symbol} has limited valuation data — P/E is unavailable from the market data provider.`;
+  }
+
   return `${quote.symbol} valuation is outside the current buy thresholds.`;
 }
 
@@ -113,7 +139,7 @@ function buildFactors(
     {
       source: "fundamental",
       label: "P/E ratio",
-      value: quote.peRatio.toFixed(2),
+      value: quote.peRatio > 0 ? quote.peRatio.toFixed(2) : "Unavailable",
       weight: 0.6,
     },
   ];
@@ -130,11 +156,20 @@ function buildFactors(
     });
   }
 
-  if (action === "HOLD") {
+  if (action === "HOLD" && quote.peRatio > 0) {
     factors.push({
       source: "fundamental",
       label: "Valuation",
       value: "Outside buy range (0–25 P/E)",
+      weight: 0.2,
+    });
+  }
+
+  if (action === "HOLD" && quote.peRatio <= 0) {
+    factors.push({
+      source: "fundamental",
+      label: "Valuation",
+      value: "Insufficient P/E data for a buy signal",
       weight: 0.2,
     });
   }
@@ -171,9 +206,10 @@ function buildRecommendation(
   quote: StockQuote,
   sectorAveragePe: number,
   generatedAt: string,
+  universe: StockQuote[],
 ): StockRecommendation {
   const action = resolveFundamentalAction(quote.peRatio);
-  const confidence = resolveConfidence(quote.peRatio, sectorAveragePe);
+  const confidence = resolveConfidence(quote.peRatio, sectorAveragePe, quote, universe);
   const primarySource: RecommendationSource =
     action === "HOLD" ? "fundamental" : sectorAveragePe > 0 ? "sector" : "fundamental";
 

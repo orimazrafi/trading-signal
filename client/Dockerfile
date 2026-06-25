@@ -23,7 +23,7 @@ RUN npm run build
 
 FROM base AS dev
 
-COPY client/index.html client/vite.config.ts client/tsconfig.json client/tsconfig.app.json client/tsconfig.node.json ./
+COPY client/index.html client/vite.config.ts client/pwa.manifest.ts client/tsconfig.json client/tsconfig.app.json client/tsconfig.node.json ./
 COPY client/public ./public
 
 EXPOSE 5173

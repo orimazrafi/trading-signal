@@ -64,6 +64,7 @@ export const createPriceAlertInputSchema = z.object({
   symbol: z.string(),
   thresholdPercent: z.number().finite(),
   emailEnabled: z.boolean().optional(),
+  baselinePrice: z.number().finite().positive().optional(),
 });
 
 export const updatePriceAlertInputSchema = z.object({

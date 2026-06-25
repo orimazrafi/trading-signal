@@ -48,7 +48,18 @@ async function markArticlePublished(articleId: string): Promise<void> {
 
 /** Fetches the latest market news articles from the configured provider. */
 export async function fetchLatestMarketNewsArticles(): Promise<IncomingNewsArticle[]> {
-  return getMarketDataProvider().fetchNewsArticles(env.newsIngestSymbols);
+  return fetchMarketNewsArticlesForSymbols(env.newsIngestSymbols);
+}
+
+/** Fetches market news for an explicit symbol list (used for rotated refresh batches). */
+export async function fetchMarketNewsArticlesForSymbols(
+  symbols: readonly string[],
+): Promise<IncomingNewsArticle[]> {
+  if (symbols.length === 0) {
+    return [];
+  }
+
+  return getMarketDataProvider().fetchNewsArticles(symbols);
 }
 
 /** Publishes unseen articles to RabbitMQ and returns the number queued. */

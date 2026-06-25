@@ -4,6 +4,7 @@ import { safeParseApiResponse } from "./lib/zodApi.js";
 export const authenticatedUserSchema = z.object({
   userId: z.string(),
   email: z.string(),
+  pictureUrl: z.string().url().nullable().optional(),
 });
 
 export const authResponseSchema = z.object({

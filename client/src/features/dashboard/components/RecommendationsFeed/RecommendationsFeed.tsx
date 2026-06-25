@@ -13,6 +13,8 @@ function RecommendationsFeed({
   error,
   emptyMessage,
   onAddToWatchlist,
+  onRemoveFromWatchlist,
+  isSymbolInActiveWatchlist,
   savingSymbol,
   watchlistName,
   onRetry,
@@ -35,6 +37,8 @@ function RecommendationsFeed({
             <RecommendationCard
               recommendation={recommendation}
               onAddToWatchlist={onAddToWatchlist}
+              onRemoveFromWatchlist={onRemoveFromWatchlist}
+              isInWatchlist={isSymbolInActiveWatchlist?.(recommendation.symbol) ?? false}
               saving={savingSymbol === recommendation.symbol}
               watchlistName={watchlistName}
               liveQuote={quote}

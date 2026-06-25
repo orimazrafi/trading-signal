@@ -2,6 +2,7 @@ import { Badge } from '@/components/Badge'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { StockLogo } from '@/components/StockLogo'
+import { formatMinutesSinceSync } from '@/lib/simulatedLivePrice'
 import {
   changePercentClass,
   formatChangePercent,
@@ -16,6 +17,8 @@ function SignalCard({
   onSelect,
   onRemove,
   removing = false,
+  liveQuoteSyncedAtMs = null,
+  className,
 }: SignalCardProps) {
   const isInteractive = Boolean(onSelect)
 
@@ -46,6 +49,7 @@ function SignalCard({
       onKeyDown={isInteractive ? handleKeyDown : undefined}
       role={isInteractive ? 'button' : undefined}
       tabIndex={isInteractive ? 0 : undefined}
+      className={className}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
@@ -63,7 +67,9 @@ function SignalCard({
             ${signal.price.toFixed(2)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Saved at snapshot · tap to view chart
+            {liveQuoteSyncedAtMs
+              ? `Live quote · synced ${formatMinutesSinceSync(liveQuoteSyncedAtMs)} min ago`
+              : 'Saved at snapshot · tap to view chart'}
           </p>
         </div>
         <p className={`text-sm font-semibold ${changePercentClass(signal.changePercent)}`}>
@@ -74,6 +80,7 @@ function SignalCard({
         <Button
           type="button"
           variant="danger"
+          className="mt-4"
           disabled={removing}
           loading={removing}
           loadingLabel="Removing…"

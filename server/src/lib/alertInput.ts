@@ -23,3 +23,12 @@ export function normalizeAlertThresholdPercent(thresholdPercent: number): number
 
   return Math.round(thresholdPercent * 100) / 100;
 }
+
+/** Validates and normalizes a chart-selected or client-provided alert baseline price. */
+export function normalizeAlertBaselinePrice(baselinePrice: number): number {
+  if (!Number.isFinite(baselinePrice) || baselinePrice <= 0) {
+    throw new AlertError("Baseline price must be greater than zero");
+  }
+
+  return Math.round(baselinePrice * 100) / 100;
+}

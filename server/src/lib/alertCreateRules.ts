@@ -1,7 +1,7 @@
 import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import { MAX_ALERTS_PER_USER } from "./alertConstants.js";
 import { AlertError } from "./alertError.js";
-import { normalizeAlertSymbol, normalizeAlertThresholdPercent } from "./alertInput.js";
+import { normalizeAlertSymbol, normalizeAlertBaselinePrice, normalizeAlertThresholdPercent } from "./alertInput.js";
 import { isActivePriceAlert } from "./priceAlertStatus.js";
 import type { PriceAlertRecord } from "../types/alertDb.js";
 
@@ -9,12 +9,14 @@ export type CreateAlertServiceInput = {
   symbol: string;
   thresholdPercent: number;
   emailEnabled?: boolean;
+  baselinePrice?: number;
 };
 
 export type ValidatedCreateAlertFields = {
   symbol: string;
   thresholdPercent: number;
   emailEnabled: boolean;
+  baselinePrice?: number;
 };
 
 /** Validates create-alert input into normalized service fields. */
@@ -29,6 +31,10 @@ export function parseCreateAlertFields(input: CreateAlertServiceInput): Validate
     symbol,
     thresholdPercent: normalizeAlertThresholdPercent(input.thresholdPercent),
     emailEnabled: input.emailEnabled ?? true,
+    baselinePrice:
+      input.baselinePrice === undefined
+        ? undefined
+        : normalizeAlertBaselinePrice(input.baselinePrice),
   };
 }
 

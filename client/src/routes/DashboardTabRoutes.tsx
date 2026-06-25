@@ -21,7 +21,8 @@ export function NewsTabRoute() {
 /** Market ideas tab route element. */
 export function RecommendationsTabRoute() {
   const { user } = useAuthContext()
-  const { quickAdd, savingSymbol, watchlistName } = useQuickAddToWatchlist(user?.userId ?? '')
+  const { quickAdd, quickRemove, isSymbolInActiveWatchlist, savingSymbol, watchlistName } =
+    useQuickAddToWatchlist(user?.userId ?? '')
 
   if (!user) {
     return null
@@ -30,6 +31,8 @@ export function RecommendationsTabRoute() {
   return (
     <RecommendationsTab
       onAddToWatchlist={quickAdd}
+      onRemoveFromWatchlist={quickRemove}
+      isSymbolInActiveWatchlist={isSymbolInActiveWatchlist}
       savingSymbol={savingSymbol}
       watchlistName={watchlistName}
     />

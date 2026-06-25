@@ -14,6 +14,8 @@ const FILTERED_EMPTY_MESSAGE = 'No market ideas match your filters. Try adjustin
 /** Market ideas tab backed by the dashboard recommendations API. */
 function RecommendationsTab({
   onAddToWatchlist,
+  onRemoveFromWatchlist,
+  isSymbolInActiveWatchlist,
   savingSymbol,
   watchlistName,
 }: RecommendationsTabProps) {
@@ -63,6 +65,8 @@ function RecommendationsTab({
         error={error}
         emptyMessage={displayEmptyMessage}
         onAddToWatchlist={onAddToWatchlist}
+        onRemoveFromWatchlist={onRemoveFromWatchlist}
+        isSymbolInActiveWatchlist={isSymbolInActiveWatchlist}
         savingSymbol={savingSymbol}
         watchlistName={watchlistName}
         onRetry={() => void reload()}

@@ -39,7 +39,7 @@ function AlertHistoryCard({
   return (
     <Card
       variant={isUnread ? 'unread' : 'muted'}
-      className="shadow-none"
+      className="shadow-none p-3"
       onClick={handleOpen}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -50,53 +50,57 @@ function AlertHistoryCard({
       role={isUnread ? 'button' : undefined}
       tabIndex={isUnread ? 0 : undefined}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3
-            className={cn(
-              'text-lg text-foreground',
-              isUnread ? 'font-bold' : 'font-medium text-muted-foreground',
-            )}
-          >
-            {notification.symbol}
-          </h3>
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <h3
+              className={cn(
+                'text-sm',
+                isUnread ? 'font-bold text-foreground' : 'font-medium text-muted-foreground',
+              )}
+            >
+              {notification.symbol}
+            </h3>
+            {isUnread ? <Badge variant="warning" size="sm">Unread</Badge> : null}
+            <Badge variant={notification.emailSent ? 'positive' : 'muted'} size="sm">
+              {notification.emailSent ? 'Email sent' : 'No email'}
+            </Badge>
+          </div>
           <p
             className={cn(
-              'mt-1 text-sm',
-              isUnread ? 'font-semibold text-foreground' : 'font-normal text-muted-foreground',
+              'mt-0.5 text-xs leading-snug',
+              isUnread ? 'font-medium text-foreground' : 'text-muted-foreground',
             )}
           >
             Moved {direction} {Math.abs(notification.changePercent).toFixed(2)}% to $
             {notification.price.toFixed(2)}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground/80">
-            Baseline ${notification.baselinePrice.toFixed(2)} ·{' '}
-            {new Date(notification.createdAt).toLocaleString()}
+            <span className="text-muted-foreground/80">
+              {' '}
+              · Baseline ${notification.baselinePrice.toFixed(2)} ·{' '}
+              {new Date(notification.createdAt).toLocaleString(undefined, {
+                month: 'numeric',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+              })}
+            </span>
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {isUnread ? <Badge variant="warning">Unread</Badge> : null}
-          <Badge variant={notification.emailSent ? 'positive' : 'muted'}>
-            {notification.emailSent ? 'Email sent' : 'No email'}
-          </Badge>
-        </div>
-      </div>
-
-      {onResetAlert ? (
-        <div className="mt-4">
+        {onResetAlert ? (
           <Button
             type="button"
-            variant="primary"
+            variant="secondary"
+            className="shrink-0 px-2.5 py-1 text-xs"
             disabled={resetting}
             loading={resetting}
             loadingLabel="Resetting…"
             onClick={handleResetAlert}
           >
-            Reset alert
+            Reset
           </Button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </Card>
   )
 }

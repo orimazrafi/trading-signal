@@ -4,6 +4,8 @@ import type { StockQuote } from '@/types/stock'
 export type RecommendationCardProps = {
   recommendation: StockRecommendation
   onAddToWatchlist?: (symbol: string) => Promise<void>
+  onRemoveFromWatchlist?: (symbol: string) => Promise<void>
+  isInWatchlist?: boolean
   saving?: boolean
   watchlistName?: string | null
   liveQuote?: StockQuote | null

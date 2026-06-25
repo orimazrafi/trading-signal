@@ -8,4 +8,7 @@ export type NewsFeedProps = {
   variant?: 'landing' | 'market'
   onRefresh?: () => void
   isRefreshing?: boolean
+  hasMore?: boolean
+  isLoadingMore?: boolean
+  onLoadMore?: () => void
 }

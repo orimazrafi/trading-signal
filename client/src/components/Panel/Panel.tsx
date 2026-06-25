@@ -9,7 +9,7 @@ function panelLayoutClass(variant: PanelVariant): string {
   }
 
   if (variant === 'feed') {
-    return 'max-h-[32rem]'
+    return 'flex min-h-0 max-h-[32rem] flex-col'
   }
 
   return 'p-5'
@@ -21,7 +21,7 @@ function panelBodyClass(variant: PanelVariant, bodyClassName: string): string {
     return bodyClassName
   }
 
-  return cn('min-h-0 flex-1 overflow-y-auto px-5 py-4', bodyClassName)
+  return cn('min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-5 py-4', bodyClassName)
 }
 
 /** Returns header classes for a panel variant. */
@@ -40,6 +40,7 @@ function Panel({
   children,
   className = '',
   bodyClassName = '',
+  bodyRef,
   variant = 'section',
 }: PanelProps) {
   return (
@@ -49,7 +50,9 @@ function Panel({
         {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
       </header>
 
-      <div className={panelBodyClass(variant, bodyClassName)}>{children}</div>
+      <div ref={bodyRef} className={panelBodyClass(variant, bodyClassName)}>
+        {children}
+      </div>
     </section>
   )
 }

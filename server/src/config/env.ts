@@ -58,6 +58,9 @@ export const env = {
     Number(process.env.DASHBOARD_NEWS_CACHE_TTL_SECONDS) ||
     Math.max(60, Math.floor(newsIngestIntervalMs / 1000)),
   newsMaxArticles: 40,
+  newsMaxPoolArticles: Number(process.env.NEWS_MAX_POOL_ARTICLES) || 80,
+  newsDefaultPageSize: Number(process.env.NEWS_DEFAULT_PAGE_SIZE) || 15,
+  dashboardNewsRefreshCountRedisKey: "dashboard:news:refresh-count",
   newsIngestEnabled: process.env.NEWS_INGEST_ENABLED !== "false",
   newsIngestIntervalMs,
   newsIngestBatchSize: Number(process.env.NEWS_INGEST_BATCH_SIZE) || 5,

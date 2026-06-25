@@ -16,6 +16,8 @@ export function parseCreatePriceAlertBody(body: unknown): CreatePriceAlertBody {
     thresholdPercent:
       body.thresholdPercent === undefined ? Number.NaN : Number(body.thresholdPercent),
     emailEnabled: typeof body.emailEnabled === "boolean" ? body.emailEnabled : undefined,
+    baselinePrice:
+      body.baselinePrice === undefined ? undefined : Number(body.baselinePrice),
   };
 }
 

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { safeParseApiResponse } from "./lib/zodApi.js";
 
 /** Supported lookback window for GET /api/stock/:symbol/history. */
-export const STOCK_HISTORY_RANGES = ["1D", "1W", "1M", "3M", "6M", "1Y"] as const;
+export const STOCK_HISTORY_RANGES = ["1D", "1W", "1M", "3M", "6M", "YTD", "1Y"] as const;
 
 export const stockHistoryRangeSchema = z.enum(STOCK_HISTORY_RANGES);
 

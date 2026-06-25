@@ -20,34 +20,34 @@ import {
   type ChartTooltipPayload,
 } from '@/features/stocks/lib/chartOverlayVisibility'
 import { resolveChartThemeColors } from '@/lib/chartTheme'
-import StockChartSkeleton from './StockChartSkeleton'
+import { cn } from '@/lib/utils'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { applyStockChartTheme } from './applyStockChartTheme'
 import StockChartTooltip from './StockChartTooltip'
 import { stockChartPropsAreEqual } from './stockChartPropsAreEqual'
 import type { StockChartProps } from './types'
-
-const OVERLAY_LINE_COLORS: Record<ChartOverlayKey, keyof ReturnType<typeof resolveChartThemeColors>> = {
-  [CHART_OVERLAY_KEYS.SMA20]: 'sma20',
-  [CHART_OVERLAY_KEYS.SMA50]: 'sma50',
-  [CHART_OVERLAY_KEYS.EMA12]: 'ema12',
-}
-
-type ChartTooltipState = {
-  payload: ChartTooltipPayload
-  position: { x: number; y: number }
-}
 
 /** Applies the latest series snapshot to the active area series. */
 function applySeriesData(
   chart: IChartApi,
   areaSeries: ISeriesApi<'Area'>,
   series: StockChartProps['series'],
+  shouldFitContent: boolean,
 ): void {
   if (series.length === 0) {
     return
   }
 
   areaSeries.setData([...series])
-  chart.timeScale().fitContent()
+
+  if (shouldFitContent) {
+    chart.timeScale().fitContent()
+  }
+}
+
+type ChartTooltipState = {
+  payload: ChartTooltipPayload
+  position: { x: number; y: number }
 }
 
 /** Applies indicator overlay data and visibility to line series. */
@@ -96,18 +96,24 @@ function StockChartComponent({
   overlayVisibility = DEFAULT_CHART_OVERLAY_VISIBILITY,
   isDarkMode = false,
   isLoading = false,
+  isRefreshing = false,
+  fitContentKey = '',
+  onPriceClick,
 }: StockChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Area'> | null>(null)
   const overlaySeriesRef = useRef<Partial<Record<ChartOverlayKey, ISeriesApi<'Line'>>>>({})
+  const lastFitContentKeyRef = useRef('')
   const overlaysRef = useRef(overlays)
   const visibilityRef = useRef(overlayVisibility)
+  const onPriceClickRef = useRef(onPriceClick)
   const [tooltip, setTooltip] = useState<ChartTooltipState | null>(null)
   const showSkeleton = isLoading && series.length === 0
 
   overlaysRef.current = overlays
   visibilityRef.current = overlayVisibility
+  onPriceClickRef.current = onPriceClick
 
   useEffect(() => {
     const container = containerRef.current
@@ -131,6 +137,8 @@ function StockChartComponent({
       },
       timeScale: {
         borderVisible: false,
+        rightOffset: 12,
+        lockVisibleTimeRangeOnResize: true,
       },
       crosshair: {
         vertLine: { labelVisible: true },
@@ -151,9 +159,8 @@ function StockChartComponent({
     const overlaySeries: Partial<Record<ChartOverlayKey, ISeriesApi<'Line'>>> = {}
 
     for (const overlayKey of Object.values(CHART_OVERLAY_KEYS)) {
-      const colorKey = OVERLAY_LINE_COLORS[overlayKey]
       overlaySeries[overlayKey] = chart.addSeries(LineSeries, {
-        color: colors[colorKey],
+        color: colors.ema12,
         lineWidth: 2,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -161,10 +168,13 @@ function StockChartComponent({
       })
     }
 
+    applyStockChartTheme(chart, areaSeries, overlaySeries, colors)
+
     chartRef.current = chart
     seriesRef.current = areaSeries
     overlaySeriesRef.current = overlaySeries
-    applySeriesData(chart, areaSeries, series)
+    lastFitContentKeyRef.current = ''
+    applySeriesData(chart, areaSeries, series, true)
     applyOverlayData(overlaySeries, overlays, overlayVisibility)
 
     const handleCrosshairMove = (param: MouseEventParams) => {
@@ -215,6 +225,27 @@ function StockChartComponent({
 
     chart.subscribeCrosshairMove(handleCrosshairMove)
 
+    const handleClick = (param: MouseEventParams) => {
+      const clickHandler = onPriceClickRef.current
+
+      if (!clickHandler || param.point === undefined) {
+        return
+      }
+
+      const priceValue = areaSeries.coordinateToPrice(param.point.y)
+
+      if (priceValue === null || !Number.isFinite(priceValue) || priceValue <= 0) {
+        return
+      }
+
+      clickHandler({
+        price: priceValue,
+        timeLabel: param.time === undefined ? undefined : formatChartTooltipTime(param.time),
+      })
+    }
+
+    chart.subscribeClick(handleClick)
+
     const resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0]
 
@@ -232,14 +263,27 @@ function StockChartComponent({
 
     return () => {
       chart.unsubscribeCrosshairMove(handleCrosshairMove)
+      chart.unsubscribeClick(handleClick)
       resizeObserver.disconnect()
       chart.remove()
       chartRef.current = null
       seriesRef.current = null
       overlaySeriesRef.current = {}
+      lastFitContentKeyRef.current = ''
       setTooltip(null)
     }
-  }, [symbol, isDarkMode])
+  }, [symbol])
+
+  useEffect(() => {
+    const chart = chartRef.current
+    const areaSeries = seriesRef.current
+
+    if (!chart || !areaSeries) {
+      return
+    }
+
+    applyStockChartTheme(chart, areaSeries, overlaySeriesRef.current, resolveChartThemeColors())
+  }, [isDarkMode])
 
   useLayoutEffect(() => {
     const chart = chartRef.current
@@ -249,21 +293,31 @@ function StockChartComponent({
       return
     }
 
-    applySeriesData(chart, areaSeries, series)
+    const shouldFitContent = fitContentKey !== lastFitContentKeyRef.current
+
+    if (shouldFitContent) {
+      lastFitContentKeyRef.current = fitContentKey
+    }
+
+    applySeriesData(chart, areaSeries, series, shouldFitContent)
     applyOverlayData(overlaySeriesRef.current, overlays, overlayVisibility)
-  }, [series, overlays, overlayVisibility, symbol])
+  }, [series, overlays, overlayVisibility, symbol, fitContentKey])
 
   return (
     <div className="relative flex min-h-[16rem] flex-1 flex-col" data-symbol={symbol}>
       {showSkeleton ? (
-        <div className="absolute inset-0 z-10 bg-muted/40">
-          <StockChartSkeleton />
+        <div className="absolute inset-0 z-10 flex items-center justify-center">
+          <LoadingSpinner label="Loading chart…" />
         </div>
       ) : null}
       <StockChartTooltip payload={tooltip?.payload ?? null} position={tooltip?.position ?? null} />
       <div
         ref={containerRef}
-        className="min-h-[16rem] flex-1 w-full"
+        className={cn(
+          'min-h-[16rem] flex-1 w-full transition-opacity duration-200',
+          onPriceClick ? 'cursor-crosshair' : undefined,
+          isRefreshing ? 'opacity-60' : 'opacity-100',
+        )}
         aria-label={`${symbol} price chart`}
       />
     </div>

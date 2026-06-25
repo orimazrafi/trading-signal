@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import { PWA_MANIFEST } from './pwa.manifest'
+import { PWA_MANIFEST } from './pwa.manifest.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const contractsSrc = path.resolve(__dirname, '../packages/contracts/src')

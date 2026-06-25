@@ -16,8 +16,21 @@ describe("parseCreateAlertFields", () => {
     });
   });
 
-  it("throws when symbol is empty", () => {
-    expect(() => parseCreateAlertFields({ symbol: "  ", thresholdPercent: 5 })).toThrow(AlertError);
+  it("normalizes optional baseline price", () => {
+    expect(
+      parseCreateAlertFields({ symbol: "AAPL", thresholdPercent: 5, baselinePrice: 105.555 }),
+    ).toEqual({
+      symbol: "AAPL",
+      thresholdPercent: 5,
+      emailEnabled: true,
+      baselinePrice: 105.56,
+    });
+  });
+
+  it("throws when baseline price is invalid", () => {
+    expect(() =>
+      parseCreateAlertFields({ symbol: "AAPL", thresholdPercent: 5, baselinePrice: 0 }),
+    ).toThrow(AlertError);
   });
 });
 

@@ -1,20 +1,55 @@
 import { marketNewsResponseSchema } from '@trading-signal/contracts/news'
+import type { MarketNewsResponse } from '@trading-signal/contracts/news'
 import { recommendationsResponseSchema } from '@trading-signal/contracts/recommendation'
-import type { MarketNewsArticle } from '@/types/news'
 import type { RecommendationsResponse } from '@/types/recommendation'
 import type { ApiRequestOptions } from './types'
 import { fetchValidated } from './fetchValidated'
 
-/** Fetches the compiled market news feed from the dashboard API. */
-export async function fetchMarketNews(options: ApiRequestOptions = {}): Promise<MarketNewsArticle[]> {
-  const data = await fetchValidated(
+/** Query parameters for a paginated market news request. */
+export type FetchMarketNewsParams = ApiRequestOptions & {
+  limit?: number
+  offset?: number
+  refresh?: boolean
+}
+
+/** Builds axios query params for GET /dashboard/news. */
+function buildMarketNewsQueryParams({
+  limit,
+  offset,
+  refresh,
+}: Pick<FetchMarketNewsParams, 'limit' | 'offset' | 'refresh'>): Record<string, string | number> {
+  const query: Record<string, string | number> = {}
+
+  if (limit !== undefined) {
+    query.limit = limit
+  }
+
+  if (offset !== undefined) {
+    query.offset = offset
+  }
+
+  if (refresh) {
+    query.refresh = 'true'
+  }
+
+  return query
+}
+
+/** Fetches a paginated market news page from the dashboard API. */
+export async function fetchMarketNews(
+  params: FetchMarketNewsParams = {},
+): Promise<MarketNewsResponse> {
+  const { limit, offset, refresh, signal } = params
+
+  return fetchValidated(
     '/dashboard/news',
     marketNewsResponseSchema,
     'market news',
-    { signal: options.signal },
+    {
+      signal,
+      params: buildMarketNewsQueryParams({ limit, offset, refresh }),
+    },
   )
-
-  return data.news
 }
 
 /** Fetches pre-computed stock recommendations from the dashboard API. */

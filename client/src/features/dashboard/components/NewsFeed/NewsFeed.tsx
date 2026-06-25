@@ -1,9 +1,9 @@
+import { useEffect, useState } from 'react'
 import { FeedRefreshButton } from '@/components/FeedRefreshButton'
-import type { MarketNewsArticle } from '@/types/news'
-import { Badge } from '@/components/Badge'
 import { AsyncListPanel } from '@/components/AsyncListPanel'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { NewsHeadlineRow } from '@/features/dashboard/components/NewsHeadlineRow'
-import { sentimentBadgeVariant } from './newsFeedUtils'
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver'
 import type { NewsFeedProps } from './types'
 
 const LANDING_TITLE = 'Industry headlines (live)'
@@ -22,13 +22,36 @@ function NewsFeed({
   variant = 'market',
   onRefresh,
   isRefreshing = false,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
 }: NewsFeedProps) {
   const isLanding = variant === 'landing'
+  const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null)
 
   const title = isLanding ? LANDING_TITLE : MARKET_TITLE
   const description = isLanding ? LANDING_DESCRIPTION : MARKET_DESCRIPTION
   const emptyMessage = isLanding ? LANDING_EMPTY : MARKET_EMPTY
   const panelVariant = isLanding ? 'page' : 'feed'
+
+  const { ref: loadMoreRef, isIntersecting } = useIntersectionObserver({
+    enabled: Boolean(onLoadMore) && hasMore && !isLoading && !isLoadingMore,
+    root: scrollRoot,
+    freezeOnceVisible: false,
+  })
+
+  useEffect(() => {
+    if (isIntersecting && hasMore && !isLoadingMore && onLoadMore) {
+      onLoadMore()
+    }
+  }, [hasMore, isIntersecting, isLoadingMore, onLoadMore])
+
+  const listFooter =
+    hasMore || isLoadingMore ? (
+      <div ref={loadMoreRef} className="flex justify-center py-3">
+        {isLoadingMore ? <LoadingSpinner label="Loading more headlines…" /> : null}
+      </div>
+    ) : null
 
   return (
     <div className="space-y-3">
@@ -47,24 +70,20 @@ function NewsFeed({
         emptyMessage={emptyMessage}
         loadingLabel="Loading market news…"
         variant={panelVariant}
+        className={isLanding ? undefined : 'max-h-[calc(100svh-13rem)]'}
+        bodyClassName={isLanding ? undefined : 'scrollable-feed'}
+        bodyRef={setScrollRoot}
+        listClassName="space-y-3 pb-2"
+        listFooter={listFooter}
         onRetry={onRefresh}
         getItemKey={(article) => `${article.url}-${article.publishedAt}`}
-        renderItem={(article: MarketNewsArticle) => {
-          if (isLanding) {
-            return <NewsHeadlineRow article={article} />
-          }
-
-          return (
-            <div className="space-y-2">
-              <NewsHeadlineRow article={article} showSymbol />
-              <div className="px-1">
-                <Badge variant={sentimentBadgeVariant(article.sentiment)} size="sm">
-                  {article.sentiment}
-                </Badge>
-              </div>
-            </div>
-          )
-        }}
+        renderItem={(article) => (
+          <NewsHeadlineRow
+            article={article}
+            showSymbol={!isLanding}
+            showSentiment={!isLanding}
+          />
+        )}
       />
     </div>
   )

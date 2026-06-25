@@ -50,7 +50,11 @@ function DashboardLayout() {
   return (
     <AlertNotificationCenterProvider>
       <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-6 px-4 py-6 text-left">
-        <AppHeader email={user.email} onLogout={() => void handleLogout()} />
+        <AppHeader
+          email={user.email}
+          pictureUrl={user.pictureUrl}
+          onLogout={() => void handleLogout()}
+        />
         <DashboardNav activeTab={activeTab} />
 
         <ErrorBoundary key={location.pathname} title={TAB_ERROR_TITLE[activeTab]}>

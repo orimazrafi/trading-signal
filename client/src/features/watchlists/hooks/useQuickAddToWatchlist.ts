@@ -1,23 +1,31 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { toast } from '@/components/Toast'
 import { useWatchlists } from '@/features/watchlists/hooks/useWatchlists'
 
-/** Exposes a one-click save action targeting the user's active watchlist. */
+/** Exposes quick save/remove actions targeting the user's active watchlist. */
 export function useQuickAddToWatchlist(userId: string) {
   const {
     watchlists,
     activeWatchlistId,
     handleSaveStockToWatchlist,
+    handleRemoveStockFromWatchlist,
     saving,
+    removing,
   } = useWatchlists({ userId })
 
-  const [savingSymbol, setSavingSymbol] = useState<string | null>(null)
+  const [pendingSymbol, setPendingSymbol] = useState<string | null>(null)
 
-  const activeWatchlist = watchlists.find((watchlist) => watchlist.id === activeWatchlistId)
+  const activeWatchlist = useMemo(
+    () => watchlists.find((watchlist) => watchlist.id === activeWatchlistId) ?? null,
+    [watchlists, activeWatchlistId],
+  )
 
-  const watchlistSymbols = [
-    ...new Set(watchlists.flatMap((watchlist) => watchlist.signals.map((signal) => signal.symbol))),
-  ]
+  /** Returns true when the symbol is already saved in the active watchlist. */
+  const isSymbolInActiveWatchlist = useCallback(
+    (symbol: string) =>
+      activeWatchlist?.signals.some((signal) => signal.symbol === symbol) ?? false,
+    [activeWatchlist],
+  )
 
   /** Saves a symbol to the active watchlist and surfaces toast feedback. */
   const quickAdd = async (symbol: string) => {
@@ -26,7 +34,11 @@ export function useQuickAddToWatchlist(userId: string) {
       return
     }
 
-    setSavingSymbol(symbol)
+    if (isSymbolInActiveWatchlist(symbol)) {
+      return
+    }
+
+    setPendingSymbol(symbol)
 
     try {
       await handleSaveStockToWatchlist(activeWatchlistId, symbol)
@@ -34,16 +46,41 @@ export function useQuickAddToWatchlist(userId: string) {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Unable to save stock to your watchlist.')
     } finally {
-      setSavingSymbol(null)
+      setPendingSymbol(null)
+    }
+  }
+
+  /** Removes a symbol from the active watchlist and surfaces toast feedback. */
+  const quickRemove = async (symbol: string) => {
+    if (!activeWatchlistId) {
+      return
+    }
+
+    const signal = activeWatchlist?.signals.find((item) => item.symbol === symbol)
+
+    if (!signal) {
+      return
+    }
+
+    setPendingSymbol(symbol)
+
+    try {
+      await handleRemoveStockFromWatchlist(activeWatchlistId, signal.id)
+      toast.success(`${symbol} removed from ${activeWatchlist?.name ?? 'your watchlist'}.`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Unable to remove stock from your watchlist.')
+    } finally {
+      setPendingSymbol(null)
     }
   }
 
   return {
     quickAdd,
-    saving: saving || savingSymbol !== null,
-    savingSymbol,
+    quickRemove,
+    isSymbolInActiveWatchlist,
+    saving: saving || removing || pendingSymbol !== null,
+    savingSymbol: pendingSymbol,
     watchlistName: activeWatchlist?.name ?? null,
     hasWatchlist: Boolean(activeWatchlistId),
-    watchlistSymbols,
   }
 }

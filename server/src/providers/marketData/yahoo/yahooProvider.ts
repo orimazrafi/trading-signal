@@ -74,6 +74,13 @@ function resolveYahooChartParams(range: StockHistoryRange): YahooChartParams {
         intervalLabel: "1day",
         isIntraday: false,
       };
+    case "YTD":
+      return {
+        period1: new Date(Date.UTC(new Date(now).getUTCFullYear(), 0, 1)),
+        interval: "1d",
+        intervalLabel: "1day",
+        isIntraday: false,
+      };
     case "1Y":
       return {
         period1: new Date(now - 365 * MILLISECONDS_PER_DAY),

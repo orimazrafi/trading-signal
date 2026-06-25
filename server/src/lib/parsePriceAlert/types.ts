@@ -2,6 +2,7 @@ export type CreatePriceAlertBody = {
   symbol: string;
   thresholdPercent: number;
   emailEnabled?: boolean;
+  baselinePrice?: number;
 };
 
 export type UpdatePriceAlertBody = {

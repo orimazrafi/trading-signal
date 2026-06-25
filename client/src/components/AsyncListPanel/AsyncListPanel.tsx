@@ -17,6 +17,10 @@ function AsyncListPanel<TItem>({
   loadingLabel,
   variant = 'page',
   className = '',
+  bodyClassName = '',
+  bodyRef,
+  listClassName = 'space-y-3',
+  listFooter,
   onRetry,
   getItemKey,
   renderItem,
@@ -25,7 +29,14 @@ function AsyncListPanel<TItem>({
   const isEmpty = !isLoading && !error && items.length === 0
 
   return (
-    <Panel title={title} description={description} variant={variant} className={className}>
+    <Panel
+      title={title}
+      description={description}
+      variant={variant}
+      className={className}
+      bodyClassName={bodyClassName}
+      bodyRef={bodyRef}
+    >
       {header ? <div className="mb-5">{header}</div> : null}
 
       {isLoading ? <LoadingSpinner label={loadingLabel} /> : null}
@@ -44,10 +55,11 @@ function AsyncListPanel<TItem>({
       {isEmpty ? <EmptyState message={emptyMessage} /> : null}
 
       {hasItems ? (
-        <ul className="space-y-3">
+        <ul className={listClassName}>
           {items.map((item) => (
             <li key={getItemKey(item)}>{renderItem(item)}</li>
           ))}
+          {listFooter ? <li>{listFooter}</li> : null}
         </ul>
       ) : null}
     </Panel>

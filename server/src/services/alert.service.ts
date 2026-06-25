@@ -37,10 +37,12 @@ export async function createAlertForUser(
     symbol: string;
     thresholdPercent: number;
     emailEnabled?: boolean;
+    baselinePrice?: number;
   },
 ): Promise<PriceAlert> {
   const fields = parseCreateAlertFields(input);
-  const baselinePrice = await fetchAlertBaselinePrice(fields.symbol);
+  const baselinePrice =
+    fields.baselinePrice ?? (await fetchAlertBaselinePrice(fields.symbol));
   const existing = await findUserPriceAlertBySymbol(userId, fields.symbol);
 
   if (existing) {

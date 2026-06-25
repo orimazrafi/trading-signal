@@ -148,12 +148,14 @@ services:
       - ./client/src:/app/client/src
       - ./client/index.html:/app/client/index.html
       - ./client/vite.config.ts:/app/client/vite.config.ts
+      - ./client/pwa.manifest.ts:/app/client/pwa.manifest.ts
       - ./client/package.json:/app/client/package.json
       - ./client/package-lock.json:/app/client/package-lock.json
       - ./client/public:/app/client/public
       - ./packages/contracts/src:/app/packages/contracts/src
     environment:
       API_PROXY_TARGET: http://server:3000
+      VITE_ALERT_RUN_CHECK_ENABLED: "true"
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "300"
     ports:

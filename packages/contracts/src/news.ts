@@ -14,6 +14,8 @@ export const marketNewsArticleSchema = z.object({
 
 export const marketNewsResponseSchema = z.object({
   news: z.array(marketNewsArticleSchema),
+  hasMore: z.boolean(),
+  nextOffset: z.number().int().nonnegative(),
 });
 
 /** Sentiment label assigned to a market news headline. */

@@ -14,6 +14,7 @@ describe("stock parsers", () => {
       expect(isStockHistoryRange(range)).toBe(true);
     }
     expect(isStockHistoryRange("2Y")).toBe(false);
+    expect(isStockHistoryRange("YTD")).toBe(true);
   });
 
   it("parses a valid stock quote", () => {

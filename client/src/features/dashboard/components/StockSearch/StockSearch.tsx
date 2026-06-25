@@ -7,7 +7,9 @@ import { FormField } from '@/components/FormField'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Panel } from '@/components/Panel'
 import { StockLogo } from '@/components/StockLogo'
+import { PANEL_SHELL_CLASS } from '@/lib/surfaceClasses'
 import { signalActionBadgeVariant } from '@/lib/signalUtils'
+import { cn } from '@/lib/utils'
 import { useSearchStock } from '@/features/stocks/hooks/useSearchStock'
 import { useWatchlistSaveFeedback } from '@/features/watchlists/hooks/useWatchlistSaveFeedback'
 import type { StockSearchProps } from './types'
@@ -18,6 +20,7 @@ function StockSearch({
   activeWatchlistName,
   saving,
   onSave,
+  layout = 'default',
 }: StockSearchProps) {
   const {
     symbolInput,
@@ -52,24 +55,37 @@ function StockSearch({
     await saveSymbol(searchResult.quote.symbol)
   }
 
-  return (
-    <Panel
-      title="Stock search"
-      description="Look up a symbol to get a live quote and recommendation."
-      variant="section"
+  const isSticky = layout === 'sticky'
+
+  const searchForm = (
+    <form
+      className={cn(isSticky ? 'flex flex-col gap-3 sm:flex-row sm:items-end' : 'space-y-3')}
+      onSubmit={handleSearch}
     >
-      <form className="space-y-3" onSubmit={handleSearch}>
+      <div className={cn(isSticky ? 'min-w-0 flex-1' : undefined)}>
         <FormField
           label="Symbol"
           value={symbolInput}
           onChange={handleSymbolInputChange}
           placeholder="AAPL, TSLA…"
         />
+      </div>
 
-        <Button type="submit" fullWidth loading={isLoading} loadingLabel="Searching…">
-          Search
-        </Button>
-      </form>
+      <Button
+        type="submit"
+        fullWidth={!isSticky}
+        className={cn(isSticky ? 'sm:shrink-0' : undefined)}
+        loading={isLoading}
+        loadingLabel="Searching…"
+      >
+        Search
+      </Button>
+    </form>
+  )
+
+  const searchBody = (
+    <>
+      {searchForm}
 
       {isLoading ? (
         <div className="mt-4">
@@ -152,6 +168,30 @@ function StockSearch({
           ) : null}
         </Card>
       ) : null}
+    </>
+  )
+
+  if (isSticky) {
+    return (
+      <section className={cn(PANEL_SHELL_CLASS, 'shrink-0 p-4')}>
+        <header className="mb-3">
+          <h2 className="text-base font-semibold text-foreground">Stock search</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Look up a symbol to get a live quote and recommendation.
+          </p>
+        </header>
+        {searchBody}
+      </section>
+    )
+  }
+
+  return (
+    <Panel
+      title="Stock search"
+      description="Look up a symbol to get a live quote and recommendation."
+      variant="section"
+    >
+      {searchBody}
     </Panel>
   )
 }

@@ -1,8 +1,10 @@
 import { formatTimeAgo } from '@/lib/formatDate'
+import { Badge } from '@/components/Badge'
+import { sentimentBadgeVariant } from '@/features/dashboard/components/NewsFeed/newsFeedUtils'
 import type { NewsHeadlineRowProps } from './types'
 
 /** Compact headline row with source, relative time, and external article link. */
-function NewsHeadlineRow({ article, showSymbol = false }: NewsHeadlineRowProps) {
+function NewsHeadlineRow({ article, showSymbol = false, showSentiment = false }: NewsHeadlineRowProps) {
   return (
     <a
       href={article.url}
@@ -10,15 +12,22 @@ function NewsHeadlineRow({ article, showSymbol = false }: NewsHeadlineRowProps) 
       rel="noopener noreferrer"
       className="block rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:border-primary/40 hover:bg-muted/40"
     >
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        <span className="text-foreground/80">{article.source}</span>
-        <span aria-hidden="true">·</span>
-        <time dateTime={article.publishedAt}>{formatTimeAgo(article.publishedAt)}</time>
-        {showSymbol ? (
-          <>
-            <span aria-hidden="true">·</span>
-            <span>{article.symbol}</span>
-          </>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="text-foreground/80">{article.source}</span>
+          <span aria-hidden="true">·</span>
+          <time dateTime={article.publishedAt}>{formatTimeAgo(article.publishedAt)}</time>
+          {showSymbol ? (
+            <>
+              <span aria-hidden="true">·</span>
+              <span>{article.symbol}</span>
+            </>
+          ) : null}
+        </div>
+        {showSentiment ? (
+          <Badge variant={sentimentBadgeVariant(article.sentiment)} size="sm">
+            {article.sentiment}
+          </Badge>
         ) : null}
       </div>
       <p className="text-sm font-medium leading-snug text-foreground">{article.headline}</p>

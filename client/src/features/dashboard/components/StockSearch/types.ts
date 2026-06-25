@@ -3,4 +3,5 @@ export type StockSearchProps = {
   activeWatchlistName?: string
   saving: boolean
   onSave: (symbol: string) => Promise<void>
+  layout?: 'default' | 'sticky'
 }

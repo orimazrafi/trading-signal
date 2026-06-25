@@ -10,6 +10,7 @@ import {
   requireTwelveDataApiKey,
   TWELVE_DATA_ENDPOINTS,
 } from "../../../lib/twelveData.js";
+import { resolveYearToDateDayCount } from "../../../lib/yearToDateRange.js";
 import {
   requestTwelveDataPrice,
   requestTwelveDataProfile,
@@ -72,6 +73,8 @@ function resolveOutputSize(range: StockHistoryRange): number {
       return 66;
     case "6M":
       return 132;
+    case "YTD":
+      return resolveYearToDateDayCount();
     case "1Y":
       return 252;
   }

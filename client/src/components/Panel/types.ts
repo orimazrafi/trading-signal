@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ReactNode, Ref } from 'react'
 
 export type PanelVariant = 'section' | 'feed' | 'page'
 
@@ -8,5 +8,6 @@ export type PanelProps = {
   children: ReactNode
   className?: string
   bodyClassName?: string
+  bodyRef?: Ref<HTMLDivElement>
   variant?: PanelVariant
 }

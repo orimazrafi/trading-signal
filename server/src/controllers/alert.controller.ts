@@ -42,10 +42,15 @@ export async function postPriceAlert(req: Request, res: Response): Promise<void>
     return;
   }
 
-  const { symbol, thresholdPercent, emailEnabled } = parseCreatePriceAlertBody(req.body);
+  const { symbol, thresholdPercent, emailEnabled, baselinePrice } = parseCreatePriceAlertBody(req.body);
 
   try {
-    const alert = await createAlertForUser(userId, { symbol, thresholdPercent, emailEnabled });
+    const alert = await createAlertForUser(userId, {
+      symbol,
+      thresholdPercent,
+      emailEnabled,
+      baselinePrice,
+    });
     res.status(HTTP_STATUS.CREATED).json({ alert });
   } catch (error) {
     sendAlertErrorResponse(res, error, req.path);

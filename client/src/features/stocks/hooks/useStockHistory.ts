@@ -8,6 +8,7 @@ import {
 } from '@/lib/marketDataQueryOptions'
 import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import { fetchStockHistory } from '@/api/stocks'
+import { resolveStockHistoryPlaceholder } from '@/features/stocks/lib/stockHistoryPlaceholder'
 
 /** Loads daily OHLCV history for charting via React Query. */
 export function useStockHistory(symbol: string | null, range: StockHistoryRange) {
@@ -17,6 +18,8 @@ export function useStockHistory(symbol: string | null, range: StockHistoryRange)
     enabled: Boolean(symbol),
     staleTime: STOCK_HISTORY_STALE_TIME_MS,
     gcTime: STOCK_HISTORY_GC_TIME_MS,
+    placeholderData: (previousData, previousQuery) =>
+      resolveStockHistoryPlaceholder(previousData, previousQuery, symbol ?? ''),
     ...marketDataQueryOptions,
     meta: queryErrorHandledMeta,
   })

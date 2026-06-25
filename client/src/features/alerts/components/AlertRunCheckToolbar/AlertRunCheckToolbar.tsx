@@ -1,11 +1,12 @@
 import { Button } from '@/components/Button'
 import { ErrorMessage } from '@/components/ErrorMessage'
 import { toast } from '@/components/Toast'
+import { isAlertRunCheckEnabled } from '@/lib/isAlertRunCheckEnabled'
 import type { AlertRunCheckToolbarProps } from './types'
 
 /** Dev-only toolbar to run an immediate check across all enabled alerts. */
 function AlertRunCheckToolbar({ running, error, onRunCheck }: AlertRunCheckToolbarProps) {
-  if (!import.meta.env.DEV) {
+  if (!isAlertRunCheckEnabled()) {
     return null
   }
 
