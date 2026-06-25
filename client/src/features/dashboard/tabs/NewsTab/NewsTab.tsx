@@ -1,23 +1,17 @@
 import { useNewsFeed } from '@/features/dashboard/hooks/useNewsFeed'
 import { NewsFeed } from '@/features/dashboard/components/NewsFeed'
-import { useQuickAddToWatchlist } from '@/features/watchlists/hooks/useQuickAddToWatchlist'
-import type { NewsTabProps } from './types'
 
-/** Default home tab with the full-width watchlist news feed. */
-function NewsTab({ userId }: NewsTabProps) {
-  const { news, isLoading, error, reload } = useNewsFeed()
-  const { quickAdd, savingSymbol, watchlistName, watchlistSymbols } = useQuickAddToWatchlist(userId)
+/** Dashboard market news tab with live headlines. */
+function NewsTab() {
+  const { news, isLoading, isRefreshing, error, reload } = useNewsFeed()
 
   return (
     <NewsFeed
       news={news}
       isLoading={isLoading}
+      isRefreshing={isRefreshing}
       error={error}
-      variant="watchlist"
-      watchlistSymbols={watchlistSymbols}
-      onAddToWatchlist={quickAdd}
-      savingSymbol={savingSymbol}
-      watchlistName={watchlistName}
+      variant="market"
       onRefresh={() => void reload()}
     />
   )

@@ -15,7 +15,7 @@ export function NewsTabRoute() {
     return null
   }
 
-  return <NewsTab userId={user.userId} />
+  return <NewsTab />
 }
 
 /** Market ideas tab route element. */

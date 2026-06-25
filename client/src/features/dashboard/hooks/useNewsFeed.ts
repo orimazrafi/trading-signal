@@ -24,6 +24,7 @@ export function useNewsFeed() {
   return {
     news: newsQuery.data ?? [],
     isLoading: newsQuery.isLoading,
+    isRefreshing: newsQuery.isFetching && !newsQuery.isLoading,
     error: queryError,
     reload: () => newsQuery.refetch(),
   }
