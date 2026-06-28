@@ -23,6 +23,7 @@ import {
   type RecommendationAction,
   type RecommendationSource,
 } from '@/types/recommendation'
+import { DASHBOARD_STICKY_SUBBAR_SHELL_CLASS } from '@/lib/surfaceClasses'
 import type { RecommendationsToolbarProps } from './types'
 
 const SORT_LABELS: Record<RecommendationSortKey, string> = {
@@ -96,7 +97,8 @@ function RecommendationsToolbar({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/40 p-4">
+    <div className={DASHBOARD_STICKY_SUBBAR_SHELL_CLASS}>
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/40 p-4">
       <div className="flex flex-wrap items-end gap-3">
         <FilterSelect
           label="Sector"
@@ -157,6 +159,7 @@ function RecommendationsToolbar({
           </Button>
         </div>
       ) : null}
+      </div>
     </div>
   )
 }

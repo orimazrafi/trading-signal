@@ -7,6 +7,8 @@ import { AlertNotificationCenterProvider } from '@/features/alerts/context'
 import { useAuthContext } from '@/features/auth/AuthProvider'
 import { DashboardNav } from '@/features/dashboard/components/DashboardNav'
 import { consumeStoredAuthReturnTo } from '@/lib/authRedirect'
+import { DASHBOARD_STICKY_NAV_SHELL_CLASS } from '@/lib/surfaceClasses'
+import { cn } from '@/lib/utils'
 import { ROUTES } from '@/routes/paths'
 import { resolveDashboardTab } from '@/routes/resolveDashboardTab'
 import { TAB_ERROR_TITLE, TAB_LOADING_LABEL } from './types'
@@ -55,7 +57,9 @@ function DashboardLayout() {
           pictureUrl={user.pictureUrl}
           onLogout={() => void handleLogout()}
         />
-        <DashboardNav activeTab={activeTab} />
+        <div className={cn(DASHBOARD_STICKY_NAV_SHELL_CLASS, 'mb-2')}>
+          <DashboardNav activeTab={activeTab} />
+        </div>
 
         <ErrorBoundary key={location.pathname} title={TAB_ERROR_TITLE[activeTab]}>
           <Suspense fallback={<LoadingSpinner label={TAB_LOADING_LABEL[activeTab]} />}>

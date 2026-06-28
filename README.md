@@ -1,75 +1,76 @@
 # Trading Signal
 
-פלטפורמת מסחר אישית לניהול watchlist, חדשות שוק, רעיונות השקעה (Market Ideas), והתראות מחיר — עם ממשק React מודרני ו-API מבוסס Express.
+A personal trading dashboard for watchlists, market news, investment ideas (Market Ideas), and price alerts — with a React frontend and Express API.
 
 ---
 
-## תוכן עניינים
+## Table of contents
 
-1. [סקירה כללית](#סקירה-כללית)
-2. [מבנה המונורפו](#מבנה-המונורפו)
-3. [ארכיטקטורה](#ארכיטקטורה)
-4. [מחסנית טכנולוגית](#מחסנית-טכנולוגית)
-5. [התחלה מהירה](#התחלה-מהירה)
-6. [משתני סביבה](#משתני-סביבה)
-7. [מסד נתונים](#מסד-נתונים)
+1. [Overview](#overview)
+2. [Monorepo layout](#monorepo-layout)
+3. [Architecture](#architecture)
+4. [Tech stack](#tech-stack)
+5. [Quick start](#quick-start)
+6. [Environment variables](#environment-variables)
+7. [Database](#database)
 8. [API](#api)
-9. [ממשק משתמש (Client)](#ממשק-משתמש-client)
-10. [החלטות ארכיטקטוניות](#החלטות-ארכיטקטוניות)
-11. [פיתוח יומיומי](#פיתוח-יומיומי)
-12. [בדיקות ו-CI](#בדיקות-ו-ci)
-13. [פריסה (Production)](#פריסה-production)
-14. [כללי קוד ו-Cursor](#כללי-קוד-ו-cursor)
+9. [Client UI](#client-ui)
+10. [Architectural decisions](#architectural-decisions)
+11. [Daily development](#daily-development)
+12. [Tests and CI](#tests-and-ci)
+13. [Production deployment](#production-deployment)
+14. [Code conventions and Cursor rules](#code-conventions-and-cursor-rules)
 
 ---
 
-## סקירה כללית
+## Overview
 
-**Trading Signal** מאפשר למשתמש רשום:
+**Trading Signal** gives signed-in users:
 
-| יכולת | תיאור |
-|--------|--------|
-| **Market News** | חדשות שוק מגוונות (Finnhub + ingest) |
-| **Market Ideas** | המלצות מבוססות P/E וסקטור, עם פילטרים ב-URL |
-| **Watchlist** | רשימות מותאמות אישית, חיפוש מניה, גרף מחיר |
-| **Price Alerts** | עד 3 התראות מחיר פעילות, אימייל, היסטוריה, SSE בזמן אמת |
-| **Landing** | דף נחיתה ציבורי עם חדשות ללא התחברות |
+| Feature | Description |
+|---------|-------------|
+| **Market News** | Market headlines (Finnhub + background ingest) |
+| **Market Ideas** | P/E and sector-based recommendations with URL-synced filters |
+| **Watchlist** | Custom views, symbol search, price chart |
+| **Price Alerts** | Up to 3 active alerts, email notifications, history, real-time SSE toasts |
+| **Landing** | Public page with news (no login required) |
 
-**אימות:** אימייל/סיסמה + Google OAuth (JWT ב-cookie httpOnly).
+**Authentication:** email/password and Google OAuth (JWT in an httpOnly cookie).
 
 ---
 
-## מבנה המונורפו
+## Monorepo layout
 
 ```
 trading-signal/
 ├── client/                 # React + Vite + Tailwind
-├── server/                 # Express API + Prisma + Worker
-├── alerts-runner/          # Go — בדיקת התראות מחיר + אימייל
+├── server/                 # Express API + Prisma + background worker
+├── alerts-runner/          # Go — price alert checks + email + SSE pub/sub
 ├── packages/
-│   └── contracts/          # טיפוסים משותפים (client + server)
-├── docker-compose.dev.yml  # סביבת פיתוח מלאה
-├── docker-compose.prod.yml   # בניית production
-└── .cursor/rules/          # כללי Cursor לפי תחום
+│   └── contracts/          # Shared types and constants (client + server)
+├── docker-compose.dev.yml  # Full local stack
+├── docker-compose.prod.yml # Production builds
+└── .cursor/rules/          # Scoped Cursor rules by package
 ```
 
 **npm workspaces:** `client`, `server`, `packages/*`
 
 ```bash
-npm install          # מהשורש — בונה גם את contracts (postinstall)
+npm install          # From repo root — also builds contracts (postinstall)
 npm run build        # contracts → server → client
-npm run test         # contracts + server
+npm run test         # contracts + server (Vitest)
+npm run lint         # client + server (ESLint)
 ```
 
 ---
 
-## ארכיטקטורה
+## Architecture
 
-### תרשים שירותים (Docker Dev)
+### Service diagram (Docker dev)
 
 ```mermaid
 flowchart TB
-  subgraph browser [דפדפן]
+  subgraph browser [Browser]
     Client[Vite :5173]
   end
 
@@ -82,19 +83,19 @@ flowchart TB
     AlertsRunner[alerts-runner :8081]
   end
 
-  subgraph data [תשתית]
+  subgraph data [Infrastructure]
     PG[(PostgreSQL)]
     Redis[(Redis)]
     RMQ[RabbitMQ]
   end
 
-  subgraph external [חיצוני]
+  subgraph external [External]
     Finnhub[Finnhub / Yahoo / Twelve Data]
     Resend[Resend Email]
     Google[Google OAuth]
   end
 
-  Client -->|/api proxy| Server
+  Client -->|/api/v1 + /health proxy| Server
   Server --> PG
   Server --> Redis
   Server --> Worker
@@ -106,202 +107,215 @@ flowchart TB
   AlertsRunner --> Finnhub
   AlertsRunner --> Resend
   Server --> Google
-  AlertsRunner -->|Redis pub/sub SSE| Server
+  AlertsRunner -->|Redis pub/sub| Server
+  Server -->|SSE| Client
 ```
 
-### הפרדת אחריות
+### Responsibility split
 
-| שכבה | אחריות |
-|------|--------|
-| **client** | UI, React Query, routing, עיצוב |
-| **server (HTTP)** | Routes → Controllers → Services → Repositories |
-| **server (worker)** | Ingest חדשות, המלצות, צרכני RabbitMQ — **לא** בדיקת alerts |
-| **alerts-runner** | Cron בדיקת מחיר, trigger, אימייל, פרסום SSE |
-| **packages/contracts** | מודלים משותפים, `HTTP_STATUS`, parsers |
+| Layer | Role |
+|-------|------|
+| **client** | UI, React Query, routing, design system |
+| **server (HTTP)** | Routes → controllers → services → repositories |
+| **server (worker)** | News ingest, recommendations refresh, RabbitMQ consumers — **not** alert checking |
+| **alerts-runner** | Scheduled price checks, triggers, email, Redis pub/sub for SSE |
+| **packages/contracts** | Shared models, `HTTP_STATUS`, API path constants, Zod parsers |
 
-### זרימת התראת מחיר
+### Price alert flow
 
-1. משתמש יוצר `PriceAlert` (baseline + אחוז סף).
-2. **alerts-runner** (כל 5 דק' בשעות מסחר US) שואב מחיר מ-Redis/Finnhub.
-3. אם חריגה → רשומה ב-`AlertNotification`, alert מושבת (`enabled: false`).
-4. אופציונלי: אימייל דרך Resend.
-5. Redis pub/sub → Server SSE → Toast + badge בניווט ב-client.
+1. User creates a `PriceAlert` (baseline price + threshold %).
+2. **alerts-runner** (every ~5 min during US market hours) reads price from Redis/Finnhub.
+3. On breach → row in `AlertNotification`, alert disabled (`enabled: false`).
+4. Optional: branded email via Resend.
+5. Redis pub/sub → server SSE → client toast + unread badge on Alerts tab.
 
 ---
 
-## מחסנית טכנולוגית
+## Tech stack
 
 ### Client
 
-| כלי | שימוש |
-|-----|--------|
+| Tool | Use |
+|------|-----|
 | React 19 | UI |
-| Vite 8 | Build + dev server |
-| TypeScript 6 | טיפוסים |
-| Tailwind CSS 4 | עיצוב + design tokens |
-| TanStack React Query | מצב שרת, cache, mutations |
-| React Router 7 | ניווט |
-| Axios | HTTP (עם `withCredentials`) |
-| lightweight-charts | גרף מניה |
+| Vite 8 | Dev server and production build |
+| TypeScript 6 | Types |
+| Tailwind CSS 4 | Styling + design tokens |
+| TanStack React Query | Server state, cache, mutations |
+| React Router 7 | Routing |
+| Axios | HTTP (`withCredentials`, base URL `/api/v1`) |
+| lightweight-charts | Stock chart |
 | Radix UI | Dialog, Select, Dropdown |
-| Lucide | אייקונים |
+| Lucide | Icons |
+| ESLint | Recommended TS + React Hooks + import order (`eslint-plugin-perfectionist`) |
 
 ### Server
 
-| כלי | שימוש |
-|-----|--------|
+| Tool | Use |
+|------|-----|
 | Express 4 | HTTP API |
 | Prisma 6 | ORM + migrations |
-| PostgreSQL 16 | DB עיקרי |
-| Redis (ioredis) | Cache מחירים, חדשות, המלצות, leaderboard |
-| RabbitMQ | תורי `stock_ticks`, `market_news` |
-| axios | קריאות לספקי market data |
-| bcrypt + JWT | אימות |
-| Vitest + Supertest | בדיקות |
+| PostgreSQL 16 | Primary database |
+| Redis (ioredis) | Quote/history cache, dashboard feeds, alert pub/sub |
+| RabbitMQ | `stock_ticks`, `market_news` queues |
+| axios | Outbound market-data HTTP |
+| bcrypt + JWT | Authentication |
+| Vitest + Supertest | Tests |
+| ESLint | Recommended TS, `no-console` (except `lib/logger/`) |
 
-### Alerts Runner
+### Alerts runner
 
-| כלי | שימוש |
-|-----|--------|
-| Go 1.22 | שירות התראות |
-| PostgreSQL | אותו DB כמו השרת |
-| Redis | מחירים + pub/sub ל-SSE |
+| Tool | Use |
+|------|-----|
+| Go 1.22 | Alert evaluation service |
+| PostgreSQL | Same DB as the Node server |
+| Redis | Quotes + pub/sub for SSE |
+| Resend | Alert emails |
 
-### Contracts
+### Contracts (`@trading-signal/contracts`)
 
-חבילת `@trading-signal/contracts` — טיפוסי TypeScript משותפים:
+Shared TypeScript package consumed by client and server:
 
-- `alert`, `auth`, `recommendation`
-- `httpStatus` — קודי HTTP אחידים
-- `parseAlertNotification` — ולידציה ל-SSE
+| Export | Purpose |
+|--------|---------|
+| `alert`, `auth`, `recommendation`, `stock`, `signal`, `news`, `watchlist` | Domain schemas and types |
+| `httpStatus` | Standard HTTP status codes |
+| `apiPath` | `API_VERSION`, `API_BASE_PATH`, `buildApiPath()` — single source for `/api/v1` |
+| `pagination` | Paginated list response shapes |
+| `zodApi` | `parseApiResponse()` and shared validation helpers |
+| `parseAlertNotification` | SSE event parsing |
+
+Pin API version in **one place** (`packages/contracts/src/apiPath.ts`); client axios and server mount both import from there.
 
 ---
 
-## התחלה מהירה
+## Quick start
 
-### דרישות
+### Requirements
 
 - Docker + Docker Compose
-- מפתח **Finnhub** (חינמי) — [finnhub.io](https://finnhub.io)
-- אופציונלי: Google OAuth, Resend (אימייל התראות)
+- **Finnhub** API key (free tier) — [finnhub.io](https://finnhub.io)
+- Optional: Google OAuth credentials, Resend (alert emails)
 
-### שלבים
+### Steps
 
 ```bash
-# 1. שכפול והתקנה
 git clone <repo-url> trading-signal
 cd trading-signal
 npm install
 
-# 2. הגדרת סביבה
 cp server/.env.example server/.env
-# ערוך server/.env — לפחות FINNHUB_API_KEY
+# Edit server/.env — at minimum set FINNHUB_API_KEY
 
-# 3. הרמת כל השירותים
 docker compose -f docker-compose.dev.yml up -d --build
 ```
 
-### כתובות (פיתוח)
+### Dev URLs
 
-| שירות | URL |
-|--------|-----|
+| Service | URL |
+|---------|-----|
 | Client | http://localhost:5173 |
-| API | http://localhost:3000/api |
-| RabbitMQ Management | http://localhost:15672 (guest/guest) |
+| API | http://localhost:3000/api/v1 |
+| Health | http://localhost:3000/health |
+| RabbitMQ UI | http://localhost:15672 (guest/guest) |
 | alerts-runner (dev trigger) | http://localhost:8081 |
 
-### פיתוח מקומי ללא Docker (חלקי)
+### Local development without full Docker (partial)
 
 ```bash
-# טרמינל 1 — תשתית בלבד
+# Terminal 1 — infrastructure only
 docker compose -f docker-compose.dev.yml up postgres redis rabbitmq -d
 
-# טרמינל 2 — שרת
+# Terminal 2 — API
 cd server && npm run dev
 
-# טרמינל 3 — worker
+# Terminal 3 — worker
 cd server && npm run dev:worker
 
-# טרמינל 4 — client
+# Terminal 4 — client
 cd client && npm run dev
 
-# טרמינל 5 — alerts-runner (נדרש Go)
+# Terminal 5 — alerts-runner (requires Go)
 cd alerts-runner && go run .
 ```
 
+Vite proxies `/api` and `/health` to the server (`API_PROXY_TARGET`, default `http://localhost:3000` in Docker: `http://server:3000`).
+
 ---
 
-## משתני סביבה
+## Environment variables
 
-קובץ מלא: `server/.env.example`
+Full reference: `server/.env.example`
 
-### חובה לפיתוח
+### Required for development
 
-| משתנה | תיאור |
-|--------|--------|
-| `DATABASE_URL` | PostgreSQL |
-| `REDIS_URL` | Redis |
-| `JWT_SECRET` | חתימת JWT |
-| `FINNHUB_API_KEY` | נתוני שוק (כש-`MARKET_DATA_PROVIDER=finnhub`) |
-| `CLIENT_URL` | מקור ה-client (אימיילים, CORS) |
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `REDIS_URL` | Redis connection string |
+| `JWT_SECRET` | JWT signing secret |
+| `FINNHUB_API_KEY` | Market data (when `MARKET_DATA_PROVIDER=finnhub`) |
+| `CLIENT_URL` | Client origin (CORS, emails, OAuth redirects) |
 
-### אימות
+### Authentication
 
-| משתנה | תיאור |
-|--------|--------|
-| `GOOGLE_CLIENT_ID` / `SECRET` | OAuth |
-| `GOOGLE_CALLBACK_URL` | בדרך כלל `http://localhost:5173/api/auth/google/callback` |
-| `AUTH_ALLOW_MOCK` | `true` רק לפיתוח — משתמש מזויף |
+| Variable | Description |
+|----------|-------------|
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth |
+| `GOOGLE_CALLBACK_URL` | Must match Google Console — e.g. `http://localhost:5173/api/v1/auth/google/callback` |
+| `AUTH_ALLOW_MOCK` | `true` for dev only — fake user |
 
-### Market Data
+Register the **exact** callback URL in [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials) (including `/api/v1`).
 
-| משתנה | ברירת מחדל | תיאור |
-|--------|------------|--------|
-| `MARKET_DATA_PROVIDER` | `finnhub` | `finnhub` \| `twelveData` |
-| `MARKET_DATA_HISTORY_PROVIDER` | yahoo (עם Finnhub חינמי) | גרפים |
-| `STOCK_CACHE_TTL_SECONDS` | 300 | TTL מחיר ב-Redis |
-| `STOCK_HISTORY_CACHE_TTL_SECONDS` | 3600 | TTL היסטוריה |
+### Market data
 
-### חדשות והמלצות
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MARKET_DATA_PROVIDER` | `finnhub` | `finnhub` or `twelveData` |
+| `MARKET_DATA_HISTORY_PROVIDER` | yahoo (with free Finnhub) | Chart history provider |
+| `STOCK_CACHE_TTL_SECONDS` | 300 | Quote TTL in Redis |
+| `STOCK_HISTORY_CACHE_TTL_SECONDS` | 3600 | History TTL in Redis |
 
-| משתנה | תיאור |
-|--------|--------|
-| `NEWS_INGEST_*` | Worker שואב חדשות לתור |
-| `RECOMMENDATIONS_*` | Worker מחשב Market Ideas |
-| `DASHBOARD_NEWS_CACHE_TTL_SECONDS` | TTL Redis לחדשות |
-| `DASHBOARD_RECOMMENDATIONS_CACHE_TTL_SECONDS` | TTL Redis להמלצות |
+### News and recommendations
 
-### התראות
+| Variable | Description |
+|----------|-------------|
+| `NEWS_INGEST_*` | Worker pulls news into RabbitMQ |
+| `RECOMMENDATIONS_*` | Worker computes Market Ideas |
+| `DASHBOARD_NEWS_CACHE_TTL_SECONDS` | Redis TTL for news feed |
+| `DASHBOARD_RECOMMENDATIONS_CACHE_TTL_SECONDS` | Redis TTL for recommendations |
 
-| משתנה | תיאור |
-|--------|--------|
-| `RESEND_API_KEY` / `EMAIL_FROM` | אימייל התראות |
-| `ALERTS_RUNNER_URL` | `http://localhost:8081` — כפתור "Run check" בפיתוח |
-| `ALERT_CHECK_INTERVAL_MS` | מרווח בדיקה (Go) |
+### Alerts
+
+| Variable | Description |
+|----------|-------------|
+| `RESEND_API_KEY` / `EMAIL_FROM` | Alert emails (Resend) |
+| `ALERTS_RUNNER_URL` | e.g. `http://localhost:8081` — dev “Run check now” button |
+| `ALERT_CHECK_INTERVAL_MS` | Check interval in alerts-runner (Go) |
 
 ### Production
 
-ב-`NODE_ENV=production` השרת מריץ `validateProductionEnv` — דורש JWT חזק, אוסר mock auth, בודק `DATABASE_URL`, מפתחות ספק, ועוד.
+When `NODE_ENV=production`, the server runs `validateProductionEnv` — strong JWT, no mock auth, required `DATABASE_URL`, provider keys, and related checks.
 
 ---
 
-## מסד נתונים
+## Database
 
-Prisma: `server/prisma/schema.prisma`
+Prisma schema: `server/prisma/schema.prisma`
 
-| מודל | תפקיד |
-|------|--------|
-| `User` | משתמש (אימייל, hash, googleId) |
-| `Signal` | תוצאת חיפוש/טיק — snapshot מחיר + המלצה |
-| `Watchlist` / `WatchlistItem` | רשימות מותאמות + קישור ל-Signal |
-| `PriceAlert` | התראת מחיר (symbol, threshold, baseline) |
-| `AlertNotification` | אירוע trigger + `readAt` |
+| Model | Role |
+|-------|------|
+| `User` | Account (email, password hash, googleId, pictureUrl) |
+| `Signal` | Search/tick snapshot — price + recommendation |
+| `Watchlist` / `WatchlistItem` | Custom views linked to signals |
+| `PriceAlert` | Alert config (symbol, threshold, baseline) |
+| `AlertNotification` | Trigger event + `readAt` |
 
-מיגרציות:
+Migrations:
 
 ```bash
 cd server
-npm run db:migrate:dev    # פיתוח
+npm run db:migrate:dev    # development
 npm run db:migrate        # production (deploy)
 ```
 
@@ -309,170 +323,192 @@ npm run db:migrate        # production (deploy)
 
 ## API
 
-בסיס: `/api`
+### Versioning and health
 
-### Auth (`/api/auth`)
+- All REST endpoints live under **`/api/v1`** (constant: `@trading-signal/contracts/apiPath`).
+- **`GET /health`** is mounted at the app root (not under `/api/v1`) — used by Docker health checks; returns DB and Redis status.
 
-| Method | Path | תיאור |
-|--------|------|--------|
-| POST | `/signup`, `/login`, `/logout` | אימייל/סיסמה |
-| GET | `/me` | משתמש נוכחי (דורש cookie) |
-| GET | `/google`, `/google/callback` | OAuth |
+The client axios instance uses `baseURL: '/api/v1'`. Vite/nginx proxy `/api` to the server.
+
+### Pagination
+
+List endpoints accept `?page=1&limit=20` (defaults from server env). Responses include pagination metadata from `@trading-signal/contracts/pagination`.
+
+Paginated today: **price alerts**, **alert notifications**, **watchlists**.
+
+### Auth (`/api/v1/auth`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/signup`, `/login`, `/logout` | Email/password |
+| GET | `/me` | Current user (requires cookie) |
+| GET | `/google`, `/google/callback` | Google OAuth |
 
 ### Dashboard
 
-| Method | Path | Auth | תיאור |
-|--------|------|------|--------|
-| GET | `/dashboard/news` | אופציונלי | חדשות (ציבורי / מותאם watchlist) |
-| GET | `/dashboard/recommendations` | לא | Market Ideas (`?sector=&source=`) |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/dashboard/news` | Optional | News feed (`?offset=&limit=`) |
+| GET | `/dashboard/recommendations` | No | Market Ideas |
+| GET | `/dashboard/trending` | Yes | Trending symbols |
 
-### Stocks (`/api/stock`, `/api/stocks`)
+### Stocks
 
-| Method | Path | תיאור |
-|--------|------|--------|
-| GET | `/stock/:symbol` | Quote (דורש auth) |
-| GET | `/stock/:symbol/history?range=` | OHLCV לגרף |
-| GET | `/stocks/:symbol/search` | חיפוש + שמירת Signal |
-| GET | `/health` | בריאות שירות |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/stock/:symbol` | Live quote (auth) |
+| GET | `/stock/:symbol/history?range=` | OHLCV for chart (auth) |
+| GET | `/stocks/:symbol/search` | Search + persist Signal (auth) |
 
-### Watchlists
+### Watchlists (`/api/v1/watchlists`)
 
-| Method | Path | תיאור |
-|--------|------|--------|
-| GET/POST | `/watchlists` | רשימות |
-| POST | `/watchlists/:id/stocks` | הוספת מניה |
-| DELETE | `/watchlists/:id/stocks/:signalId` | הסרה |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | List views (paginated) |
+| POST | `/` | Create view |
+| POST | `/:id/stocks` | Add symbol |
+| DELETE | `/:id/stocks/:signalId` | Remove symbol |
 
-### Alerts
+### Price alerts (`/api/v1/price-alerts`)
 
-| Method | Path | תיאור |
-|--------|------|--------|
-| CRUD | `/alerts` | עד 3 alerts פעילים למשתמש |
-| GET | `/alerts/notifications` | היסטוריה |
-| PATCH | `/alerts/notifications/:id/read` | סימון כנקרא |
-| GET | `/alerts/stream` | SSE |
-| POST | `/alerts/run-check` | טריגר ידני (פיתוח) |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/` | List alerts (paginated) |
+| POST | `/` | Create (max 3 active per user) |
+| PATCH | `/:id` | Update threshold, enabled, email |
+| DELETE | `/:id` | Delete |
+| GET | `/notifications` | History (paginated) |
+| PATCH | `/notifications/:id/read` | Mark read |
+| GET | `/stream` | SSE alert events |
+| POST | `/run-check` | Manual trigger (dev only) |
 
-שגיאות דומיין ממופות דרך `lib/*HttpErrors.ts`; קודי סטטוס מ-`@trading-signal/contracts/httpStatus`.
+Domain errors map through `lib/*HttpErrors.ts`; status codes use `@trading-signal/contracts/httpStatus` — never raw numbers in new code.
 
 ---
 
-## ממשק משתמש (Client)
+## Client UI
 
-### נתיבים
+### Routes
 
-| Path | תיאור |
-|------|--------|
-| `/` | Landing — חדשות ציבוריות |
-| `/login` | התחברות (split screen) |
+| Path | Description |
+|------|-------------|
+| `/` | Landing — public news |
+| `/login` | Sign in |
 | `/dashboard` | Market News |
-| `/dashboard/recommendations` | Market Ideas + `?sector&source&action&sort` |
-| `/dashboard/alerts` | התראות |
-| `/watchlist`, `/watchlist/:symbol` | Watchlist + גרף |
+| `/dashboard/recommendations` | Market Ideas (`?sector&source&action&sort`) |
+| `/dashboard/alerts` | Price alerts |
+| `/watchlist`, `/watchlist/:symbol` | Watchlist + chart |
 
-### מבנה תיקיות (features)
+### Folder structure
 
 ```
 client/src/
-├── api/              # Axios + queryKeys
-├── components/       # UI משותף (Button, Panel, StockLogo, …)
+├── api/              # Axios client, fetchValidated, queryKeys
+├── components/       # Shared UI (Button, Panel, StockLogo, …)
 ├── features/
-│   ├── alerts/       # התראות
-│   ├── auth/         # התחברות
-│   ├── dashboard/    # טאבים, חדשות, המלצות
+│   ├── alerts/
+│   ├── auth/
+│   ├── dashboard/    # Tabs, news, recommendations, chart
 │   ├── landing/
-│   ├── stocks/       # hooks לquote/history/search
-│   ├── theme/        # Dark mode
+│   ├── stocks/       # Quote, history, search hooks
+│   ├── theme/
 │   └── watchlists/
-├── lib/              # helpers טהורים
+├── lib/              # Pure helpers
 ├── routes/           # AppRoutes, ProtectedRoute
-└── types/            # re-export מ-contracts
+└── types/            # Re-exports from contracts where needed
 ```
 
-### ניהול מצב
+### State and data
 
-- **React Query** — כל fetch/mutation; מפתחות ב-`api/queryKeys.ts`
-- **URL** — פילטרים ב-Market Ideas (`useRecommendationFilters`)
-- **SSE** — `useAlertStream` + invalidation של notifications
+- **React Query** — all server fetch/mutation; keys in `api/queryKeys.ts`; pass `signal` in query functions.
+- **URL state** — Market Ideas filters via `useRecommendationFilters`.
+- **SSE** — `useAlertEventStream` + notification invalidation.
 
-### עיצוב
+### UI patterns
 
-- Design tokens: `client/src/styles/tokens.css` (navy / green fintech)
-- Dark mode: `ThemeProvider` + `localStorage`
-- רכיבים: Tailwind + shadcn-style ב-`components/ui/`
+- Design tokens: `client/src/styles/tokens.css` (navy / green fintech palette).
+- Dark mode: `ThemeProvider` + `localStorage`.
+- Component file layout: imports → local types → helpers → main component → hooks → guards → render (see `.cursor/rules/client.mdc`).
+- Sticky dashboard nav and tab toolbars (watchlist views, Market Ideas filters).
 
 ---
 
-## החלטות ארכיטקטוניות
+## Architectural decisions
 
-### 1. מונורפו + Contracts
+### 1. Monorepo + contracts
 
-טיפוסים משותפים ב-`packages/contracts` מונעים drift בין client ל-server (alerts, HTTP status, המלצות).
+Shared types in `packages/contracts` prevent client/server drift (alerts, HTTP status, pagination, API paths).
 
-### 2. Worker נפרד מ-HTTP
+### 2. Separate worker and Go alert runner
 
-`server.ts` — API בלבד.  
-`worker.ts` — RabbitMQ, ingest חדשות, רענון המלצות.  
-**בדיקת התראות לא ב-Node** — רק ב-**alerts-runner** (Go), ליציבות ולתזמון.
+- `server.ts` — HTTP API only.
+- `worker.ts` — RabbitMQ, news ingest, recommendations refresh.
+- **Price alert checking runs only in alerts-runner (Go)** — stable scheduling, isolated from the Express process.
 
-### 3. שכבות בשרת
+### 3. Server layering
 
 ```
 routes → controllers → services → repositories
 ```
 
-- אין Prisma ב-controllers
-- Parsing ב-`lib/parse*.ts`
-- שגיאות דומיין ב-`lib/*Error.ts` + `*HttpErrors.ts`
-- Middleware אימות: `server/src/middleware/auth.ts`
+- No Prisma in controllers.
+- Request parsing in `lib/parse*.ts` helpers.
+- Domain errors in services; HTTP mapping in controllers via typed error helpers.
+- Auth middleware: `server/src/middleware/auth.ts`.
+- Request logging: `requestContextMiddleware` adds `requestId`, logs `userId` and `durationMs` on response finish.
 
-### 4. Cache Redis
+### 4. Redis caching
 
-- מחירים והיסטוריה: TTL + מפתח `:backup` לעמידות
-- חדשות והמלצות: TTL לפי מרווח ingest
-- עזר: `lib/redisJsonCache.ts`
+- Quotes and history: TTL + `:backup` key for resilience.
+- Dashboard news and recommendations: TTL aligned with ingest intervals.
+- Helper: `lib/redisJsonCache.ts`, `lib/redisBackupCache.ts`.
 
-### 5. ספקי Market Data
+### 5. Market data providers
 
-ממשק `MarketDataProvider` — Finnhub (quotes, news), Yahoo (history בחינם), Twelve Data (אופציונלי).
+`MarketDataProvider` interface — Finnhub (quotes, news), Yahoo (free-tier history), Twelve Data (optional).
 
-### 6. אימות ב-cookie
+### 6. Cookie-based JWT
 
-JWT ב-httpOnly cookie (לא localStorage) — מפחית חשיפת XSS.
+httpOnly cookie (not localStorage) to reduce XSS token exposure.
 
-### 7. Client — ללא `as` casts
+### 7. TypeScript discipline
 
-ולידציה ו-type guards; טיפוסים ב-`types.ts` לפי היקף (core.mdc).
+- No `as` type assertions — use narrowing, parsers, or generics (`as const` allowed).
+- Shared types promoted to dedicated `types.ts` files by scope (see `.cursor/rules/core.mdc`).
 
-### 8. הגבלות מוצר
+### 8. Product rules
 
-- מקסימום **3** price alerts פעילים למשתמש
-- Alert שמופעל → **מושבת**; איפוס מ-**Alert history** (re-arm)
+- Maximum **3** active price alerts per user.
+- Triggered alert → **disabled**; re-arm from alert history.
+
+### 9. Alert emails
+
+HTML templates live in **alerts-runner** (and a mirror in `server/src/lib/alertEmailTemplate.ts` for the Node email path). Inline “TS” monogram header — no external image URL (localhost logos break in Gmail). Sent via Resend when configured.
 
 ---
 
-## פיתוח יומיומי
+## Daily development
 
-### פקודות שימושיות
+### Useful commands
 
 ```bash
-# לוגים
+# Logs
 docker compose -f docker-compose.dev.yml logs -f server client alerts-runner
 
-# בנייה מחדש אחרי שינוי Dockerfile
+# Rebuild after Dockerfile changes
 docker compose -f docker-compose.dev.yml up -d --build
 
-# בדיקות שרת
-cd server && npm test
-
-# בדיקות Go
+# Tests
+npm run test
 cd alerts-runner && go test ./...
 
-# Lint client
-cd client && npm run lint
+# Lint (both workspaces)
+npm run lint
+npm run lint -w client -- --fix
+npm run lint -w server -- --fix
 ```
 
-### סקריפטים ידניים (worker)
+### Manual worker scripts
 
 ```bash
 cd server
@@ -480,74 +516,78 @@ npm run news:ingest
 npm run recommendations:refresh
 ```
 
-### Proxy בפיתוח
-
-Vite מפנה `/api` ל-`API_PROXY_TARGET` (ב-Docker: `http://server:3000`).
-
 ---
 
-## בדיקות ו-CI
+## Tests and CI
 
 GitHub Actions (`.github/workflows/ci.yml`):
 
 1. `npm ci`
-2. Tests — contracts + server (Vitest)
-3. `npm run build` — monorepo מלא
-4. `go test ./...` — alerts-runner
+2. **Lint** — client and server (ESLint)
+3. **Test** — `@trading-signal/contracts`, server (Vitest)
+4. **Build** — full monorepo
+5. **Go test** — `alerts-runner`
 
-**חסר כיום:** בדיקות client (מומלץ להוסיף Vitest + RTL).
+**Not in CI yet:** client unit/component tests (Vitest + RTL would be a natural addition).
+
+Before opening a PR locally:
+
+```bash
+npm run lint
+npm run test
+npm run build
+cd alerts-runner && go test ./...
+```
 
 ---
 
-## פריסה (Production)
+## Production deployment
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-לפני production:
+Checklist:
 
 - `NODE_ENV=production`
-- `JWT_SECRET` חזק
+- Strong `JWT_SECRET`
 - `AUTH_ALLOW_MOCK=false`
-- `prisma migrate deploy` (לא `db push --accept-data-loss`)
-- מפתחות Finnhub / Resend / Google מוגדרים
-- `CLIENT_URL` מצביע לדומיין האמיתי
+- `prisma migrate deploy` (never `db push --accept-data-loss` in production)
+- Finnhub / Resend / Google credentials configured
+- `CLIENT_URL` and `GOOGLE_CALLBACK_URL` point to the real domain (`…/api/v1/auth/google/callback`)
+- Docker healthcheck hits `GET /health`
 
 ---
 
-## כללי קוד ו-Cursor
+## Code conventions and Cursor rules
 
-| קובץ | מתי |
-|------|-----|
-| `.cursor/rules/core.mdc` | תמיד |
-| `.cursor/rules/client.mdc` | `client/**` |
-| `.cursor/rules/server.mdc` | `server/**` |
+| File | Scope |
+|------|--------|
+| `.cursor/rules/core.mdc` | Always — types, no magic strings, no `as` casts |
+| `.cursor/rules/client.mdc` | `client/**` — React Query, component layout, API paths |
+| `.cursor/rules/server.mdc` | `server/**` — layering, logging, pagination, HTTP status |
 | `.cursor/rules/alerts-runner.mdc` | `alerts-runner/**` |
 
-עקרונות מרכזיים:
+Principles:
 
-- **diff מינימלי** — רק מה שנדרש למשימה
-- **ללא magic strings** חוזרים — constants / env
-- **ללא `as` casts** ב-TypeScript (מלבד `as const`)
-- **הערות באנגלית** על פונקציות (server + client)
-- **React Query** — `signal` ב-queryFn; בלי `onSuccess` ב-mutations
-
----
-
-## רישיון
-
-פרויקט פרטי (`private: true`).
+- **Minimal diffs** — change only what the task requires.
+- **No magic strings** — constants, env, or contracts.
+- **English comments** on functions (client + server).
+- **React Query** — `signal` in queryFn; avoid `onSuccess` on mutations.
+- **Logging** — use `log.info` / `log.error` from `lib/logger`; never `console.log` in app code.
 
 ---
 
-## תרומה
+## License
 
-1. ענף מ-`main`
-2. שמור על שכבות ו-conventions למעלה
-3. הרץ `npm test` ו-`npm run build` לפני PR
-4. עדכן `server/.env.example` אם נוספו משתני סביבה
+Private project (`private: true` in `package.json`).
 
 ---
 
-*עודכן לאחר שדרוגי UX (dark mode, פילטרים ב-URL, ארכיטקטורת שרת — error handler, env validation, פיצול stock services).*
+## Contributing
+
+1. Branch from `main`.
+2. Follow layering and conventions above.
+3. Run `npm run lint`, `npm run test`, and `npm run build` before opening a PR.
+4. Update `server/.env.example` when adding environment variables.
+5. Keep `@trading-signal/contracts/apiPath` as the single source for API version paths.

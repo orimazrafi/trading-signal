@@ -1,4 +1,5 @@
 import { LogOutIcon } from 'lucide-react'
+import { useRef } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,12 +13,26 @@ import UserAvatar from './UserAvatar'
 
 /** Account menu with profile photo, email, and sign-out action. */
 function UserMenu({ email, pictureUrl, onLogout }: UserMenuProps) {
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
+  /** Clears focus after close so the avatar does not keep a visible focus ring. */
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      return
+    }
+
+    requestAnimationFrame(() => {
+      triggerRef.current?.blur()
+    })
+  }
+
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <button
+          ref={triggerRef}
           type="button"
-          className="rounded-full outline-hidden transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="cursor-pointer rounded-full outline-hidden transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           aria-label="Account menu"
         >
           <UserAvatar email={email} pictureUrl={pictureUrl} />

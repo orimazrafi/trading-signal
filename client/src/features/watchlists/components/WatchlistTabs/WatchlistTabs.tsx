@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { DASHBOARD_STICKY_SUBBAR_SHELL_CLASS } from '@/lib/surfaceClasses'
 import type { WatchlistTabsProps } from './types'
 
 /** Horizontal tabs for switching custom dashboard views with a create-view dialog. */
@@ -70,7 +71,8 @@ function WatchlistTabs({
 
   return (
     <>
-      <div className="flex items-center gap-2 overflow-x-auto border-b border-border pb-2">
+      <div className={DASHBOARD_STICKY_SUBBAR_SHELL_CLASS}>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {watchlists.length === 0 ? (
             <p className="px-3 py-2 text-sm text-muted-foreground">
@@ -98,6 +100,7 @@ function WatchlistTabs({
         <Button type="button" variant="primary" onClick={openModal}>
           +
         </Button>
+        </div>
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={handleOpenChange}>
