@@ -1,3 +1,4 @@
+import { buildPaginationMeta } from "@trading-signal/contracts/pagination";
 import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import {
   assertNoActiveAlertForSymbol,
@@ -15,19 +16,35 @@ import {
   deleteUserPriceAlert,
   findUserPriceAlertById,
   findUserPriceAlertBySymbol,
-  listUserAlertNotifications,
-  listUserPriceAlerts,
+  listUserAlertNotificationsPaginated,
+  listUserPriceAlertsPaginated,
   markAlertNotificationRead,
   updateUserPriceAlert,
 } from "../repositories/alert.repository.js";
 import type { PriceAlertRecord } from "../types/alertDb.js";
 import type { PriceAlert } from "../types/alert.js";
+import type { PaginationQuery } from "../lib/parsePaginationQuery.js";
 
 export { AlertError } from "../lib/alertError.js";
 
+/** Returns paginated price alerts for a user. */
+export async function getAlertsPageForUser(userId: string, pagination: PaginationQuery) {
+  const { alerts, total } = await listUserPriceAlertsPaginated(
+    userId,
+    pagination.skip,
+    pagination.take,
+  );
+
+  return {
+    alerts,
+    ...buildPaginationMeta(pagination.page, pagination.limit, total),
+  };
+}
+
 /** Returns all configured price alerts for a user. */
 export async function getAlertsForUser(userId: string) {
-  return listUserPriceAlerts(userId);
+  const { alerts } = await listUserPriceAlertsPaginated(userId, 0, Number.MAX_SAFE_INTEGER);
+  return alerts;
 }
 
 /** Creates a new price alert for a user, or re-arms a previously triggered one for the same symbol. */
@@ -120,9 +137,27 @@ export async function deleteAlertForUser(userId: string, alertId: string): Promi
   await deleteUserPriceAlert(alert.id);
 }
 
+/** Returns paginated alert notification history for a user. */
+export async function getAlertNotificationsPageForUser(
+  userId: string,
+  pagination: PaginationQuery,
+) {
+  const { notifications, total } = await listUserAlertNotificationsPaginated(
+    userId,
+    pagination.skip,
+    pagination.take,
+  );
+
+  return {
+    notifications,
+    ...buildPaginationMeta(pagination.page, pagination.limit, total),
+  };
+}
+
 /** Returns alert notification history for a user. */
 export async function getAlertNotificationsForUser(userId: string) {
-  return listUserAlertNotifications(userId);
+  const { notifications } = await listUserAlertNotificationsPaginated(userId, 0, 50);
+  return notifications;
 }
 
 /** Marks one alert notification as read. */

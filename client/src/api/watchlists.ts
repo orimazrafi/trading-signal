@@ -8,13 +8,23 @@ import type { ApiRequestOptions } from './types'
 import { api } from './client'
 import { fetchValidated, postValidated } from './fetchValidated'
 
-/** Fetches all custom views for the authenticated user. */
-export async function fetchWatchlists(options: ApiRequestOptions = {}): Promise<ApiWatchlist[]> {
+const DEFAULT_LIST_PAGE = 1
+const DEFAULT_LIST_LIMIT = 20
+
+/** Fetches custom views for the authenticated user. */
+export async function fetchWatchlists(
+  options: ApiRequestOptions & { page?: number; limit?: number } = {},
+): Promise<ApiWatchlist[]> {
+  const { page = DEFAULT_LIST_PAGE, limit = DEFAULT_LIST_LIMIT, signal } = options
+
   const data = await fetchValidated(
     '/watchlists',
     watchlistsResponseSchema,
     'watchlists',
-    { signal: options.signal },
+    {
+      signal,
+      params: { page, limit },
+    },
   )
 
   return data.watchlists

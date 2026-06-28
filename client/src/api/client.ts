@@ -1,4 +1,5 @@
 import axios, { CanceledError, isAxiosError } from 'axios'
+import { API_BASE_PATH } from '@trading-signal/contracts/apiPath'
 import type { ApiErrorBody } from '@/types/api'
 
 /** API error with optional HTTP status for query and mutation handling. */
@@ -16,7 +17,7 @@ const API_TIMEOUT_MS = 8000
 
 /** Shared axios client for API requests with httpOnly auth cookies. */
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_PATH,
   timeout: API_TIMEOUT_MS,
   withCredentials: true,
   headers: {

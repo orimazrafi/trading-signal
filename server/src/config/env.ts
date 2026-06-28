@@ -1,3 +1,4 @@
+import { buildDefaultGoogleCallbackUrl } from "@trading-signal/contracts/apiPath";
 import type { AuthenticatedUser } from "../types/auth.js";
 import { resolveMarketDataProviderId } from "../providers/marketData/resolveMarketDataProviderId.js";
 import { DEV_JWT_SECRET } from "./validateProductionEnv.js";
@@ -42,8 +43,12 @@ export const env = {
   googleClientId: (process.env.GOOGLE_CLIENT_ID ?? "").trim(),
   googleClientSecret: (process.env.GOOGLE_CLIENT_SECRET ?? "").trim(),
   googleCallbackUrl: (
-    process.env.GOOGLE_CALLBACK_URL ?? "http://localhost:3000/api/auth/google/callback"
+    process.env.GOOGLE_CALLBACK_URL ??
+    buildDefaultGoogleCallbackUrl("http://localhost:3000")
   ).trim(),
+  defaultListPage: 1,
+  defaultListPageSize: Number(process.env.DEFAULT_LIST_PAGE_SIZE) || 20,
+  maxListPageSize: Number(process.env.MAX_LIST_PAGE_SIZE) || 100,
   stockCacheTtlSeconds: Number(process.env.STOCK_CACHE_TTL_SECONDS) || 300,
   stockHistoryCacheTtlSeconds: Number(process.env.STOCK_HISTORY_CACHE_TTL_SECONDS) || 3600,
   marketDataProvider: resolveMarketDataProviderId(process.env.MARKET_DATA_PROVIDER),

@@ -2,10 +2,13 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import { API_BASE_PATH } from "@trading-signal/contracts/apiPath";
+import { getHealth } from "./controllers/health.controller.js";
 import { env } from "./config/env.js";
 import { validateProductionEnv } from "./config/validateProductionEnv.js";
 import { getCorsOptions } from "./lib/corsOptions.js";
 import { errorHandler, notFoundHandler } from "./lib/errorHandler.js";
+import { requestContextMiddleware } from "./middleware/requestContext.js";
 import { apiRoutes } from "./routes/index.js";
 
 const JSON_BODY_LIMIT = "1mb";
@@ -33,7 +36,9 @@ export function createApp(): express.Application {
   app.use(cors(getCorsOptions()));
   app.use(cookieParser());
   app.use(express.json({ limit: JSON_BODY_LIMIT }));
-  app.use("/api", apiRoutes);
+  app.use(requestContextMiddleware);
+  app.get("/health", getHealth);
+  app.use(API_BASE_PATH, apiRoutes);
   app.use(notFoundHandler);
   app.use(errorHandler);
 

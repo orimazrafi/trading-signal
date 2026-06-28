@@ -24,7 +24,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/health$/],
       },
       devOptions: {
         enabled: true,
@@ -44,6 +44,7 @@ export default defineConfig({
       '@trading-signal/contracts/watchlist': path.join(contractsSrc, 'watchlist.ts'),
       '@trading-signal/contracts/zodApi': path.join(contractsSrc, 'lib/zodApi.ts'),
       '@trading-signal/contracts/httpStatus': path.join(contractsSrc, 'httpStatus.ts'),
+      '@trading-signal/contracts/apiPath': path.join(contractsSrc, 'apiPath.ts'),
     },
   },
   server: {
@@ -53,6 +54,10 @@ export default defineConfig({
       interval: pollingInterval,
     },
     proxy: {
+      '/health': {
+        target: process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
+        changeOrigin: true,
+      },
       '/api': {
         target: process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
         changeOrigin: true,

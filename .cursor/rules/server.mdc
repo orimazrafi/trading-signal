@@ -21,6 +21,14 @@ queue/         → RabbitMQ publishers, consumers, parsers
 
 **Must:** controllers stay thin; no raw SQL/Prisma in controllers; no HTTP concerns in repositories.
 
+- **API versioning:** all endpoints must be prefixed with `/api/v1/`. Use consistent plural nouns and kebab-case for resource naming (e.g. `/api/v1/price-alerts`, never `/api/v1/getAlerts`).
+- **Health check:** expose a lightweight `/health` endpoint directly in `server.ts` (outside feature routes) that returns `HTTP_STATUS.OK` (200) and service status (DB connected, Redis status). Mandatory for Docker Compose orchestration.
+
+## Data & responses
+
+- **Mandatory pagination:** every list endpoint (alerts, logs, signals, etc.) must implement pagination from day one via query parameters (`?page=1&limit=20` or cursor-based). Map these directly to Prisma `skip` and `take` in the repository layer.
+- **Structured logging meta:** when using `log.info(msg, meta)`, always include a correlation `requestId`, `userId` (if authenticated), and operation `duration` for log aggregators.
+
 ## HTTP
 
 - Use **axios** for outbound HTTP. Do not use `fetch`.

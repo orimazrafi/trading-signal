@@ -1,13 +1,16 @@
+import { buildPaginationMeta } from "@trading-signal/contracts/pagination";
 import { HTTP_STATUS, type HttpStatusCode } from "@trading-signal/contracts/httpStatus";
 import type { Signal, Watchlist, WatchlistItem } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { DEFAULT_WATCHLIST_NAME } from "../lib/watchlistConstants.js";
+import type { PaginationQuery } from "../lib/parsePaginationQuery.js";
 import {
   addStockToWatchlist,
   createWatchlist,
   findWatchlistByIdAndUser,
   getDistinctWatchlistSymbols,
   getUserWatchlists,
+  getUserWatchlistsPaginated,
   isSignalInWatchlist,
   removeStockFromWatchlist,
 } from "../repositories/watchlist.repository.js";
@@ -156,6 +159,20 @@ export async function createWatchlistView(userId: string, name: string): Promise
 
     throw error;
   }
+}
+
+/** Returns paginated custom views for the authenticated user. */
+export async function getWatchlistsPageForUser(userId: string, pagination: PaginationQuery) {
+  const { watchlists, total } = await getUserWatchlistsPaginated(
+    userId,
+    pagination.skip,
+    pagination.take,
+  );
+
+  return {
+    watchlists: watchlists.map(mapWatchlistView),
+    ...buildPaginationMeta(pagination.page, pagination.limit, total),
+  };
 }
 
 /** Returns all custom views for the authenticated user. */

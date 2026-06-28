@@ -56,6 +56,22 @@
       "types": "./dist/watchlist.d.ts",
       "import": "./dist/watchlist.js"
     },
+    "./pagination": {
+      "types": "./dist/pagination.d.ts",
+      "import": "./dist/pagination.js"
+    },
+    "./pagination.js": {
+      "types": "./dist/pagination.d.ts",
+      "import": "./dist/pagination.js"
+    },
+    "./apiPath": {
+      "types": "./dist/apiPath.d.ts",
+      "import": "./dist/apiPath.js"
+    },
+    "./apiPath.js": {
+      "types": "./dist/apiPath.d.ts",
+      "import": "./dist/apiPath.js"
+    },
     "./zodApi": {
       "types": "./dist/lib/zodApi.d.ts",
       "import": "./dist/lib/zodApi.js"

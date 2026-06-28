@@ -2,7 +2,6 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { stockQuoteRateLimiter } from "../lib/rateLimiters.js";
 import {
-  getHealth,
   getStockBySymbol,
   getStockHistoryBySymbol,
   getTrending,
@@ -12,7 +11,6 @@ import {
 /** Maps stock and dashboard HTTP paths to controller handlers. */
 export const stockRoutes = Router();
 
-stockRoutes.get("/health", getHealth);
 stockRoutes.get(
   "/stock/:symbol/history",
   stockQuoteRateLimiter,

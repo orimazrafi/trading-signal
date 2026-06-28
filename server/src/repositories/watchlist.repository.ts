@@ -19,13 +19,26 @@ export async function createWatchlist(userId: string, name: string) {
   });
 }
 
+/** Fetches paginated custom views for a user with linked signals. */
+export async function getUserWatchlistsPaginated(userId: string, skip: number, take: number) {
+  const [watchlists, total] = await Promise.all([
+    prisma.watchlist.findMany({
+      where: { userId },
+      include: watchlistWithItems,
+      orderBy: { createdAt: "asc" },
+      skip,
+      take,
+    }),
+    prisma.watchlist.count({ where: { userId } }),
+  ]);
+
+  return { watchlists, total };
+}
+
 /** Fetches all custom views for a user with linked signals. */
 export async function getUserWatchlists(userId: string) {
-  return prisma.watchlist.findMany({
-    where: { userId },
-    include: watchlistWithItems,
-    orderBy: { createdAt: "asc" },
-  });
+  const { watchlists } = await getUserWatchlistsPaginated(userId, 0, Number.MAX_SAFE_INTEGER);
+  return watchlists;
 }
 
 /** Finds a watchlist owned by the given user. */

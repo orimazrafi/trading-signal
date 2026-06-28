@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationMetaSchema } from "./pagination.js";
 import { safeParseApiResponse } from "./lib/zodApi.js";
 
 /** Maximum active price alerts per user. */
@@ -48,7 +49,7 @@ export const alertNotificationPubSubPayloadSchema = alertNotificationEventSchema
   userId: z.string(),
 });
 
-export const priceAlertsResponseSchema = z.object({
+export const priceAlertsResponseSchema = paginationMetaSchema.extend({
   alerts: z.array(priceAlertSchema),
 });
 
@@ -56,7 +57,7 @@ export const priceAlertResponseSchema = z.object({
   alert: priceAlertSchema,
 });
 
-export const alertNotificationsResponseSchema = z.object({
+export const alertNotificationsResponseSchema = paginationMetaSchema.extend({
   notifications: z.array(alertNotificationSchema),
 });
 

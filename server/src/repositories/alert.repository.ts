@@ -44,14 +44,32 @@ export async function countUserPriceAlerts(userId: string): Promise<number> {
   return prisma.priceAlert.count({ where: { userId, enabled: true } });
 }
 
+/** Lists price alerts for a user with pagination. */
+export async function listUserPriceAlertsPaginated(
+  userId: string,
+  skip: number,
+  take: number,
+): Promise<{ alerts: PriceAlert[]; total: number }> {
+  const [rows, total] = await Promise.all([
+    prisma.priceAlert.findMany({
+      where: { userId },
+      orderBy: { createdAt: "asc" },
+      skip,
+      take,
+    }),
+    prisma.priceAlert.count({ where: { userId } }),
+  ]);
+
+  return {
+    alerts: rows.map(mapPriceAlert),
+    total,
+  };
+}
+
 /** Lists all price alerts for a user ordered by creation time. */
 export async function listUserPriceAlerts(userId: string): Promise<PriceAlert[]> {
-  const alerts = await prisma.priceAlert.findMany({
-    where: { userId },
-    orderBy: { createdAt: "asc" },
-  });
-
-  return alerts.map(mapPriceAlert);
+  const { alerts } = await listUserPriceAlertsPaginated(userId, 0, Number.MAX_SAFE_INTEGER);
+  return alerts;
 }
 
 /** Finds a price alert owned by the given user. */
@@ -110,17 +128,34 @@ export async function deleteUserPriceAlert(alertId: string): Promise<void> {
 }
 
 /** Lists alert notifications for a user, newest first. */
+export async function listUserAlertNotificationsPaginated(
+  userId: string,
+  skip: number,
+  take: number,
+): Promise<{ notifications: AlertNotification[]; total: number }> {
+  const [rows, total] = await Promise.all([
+    prisma.alertNotification.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take,
+    }),
+    prisma.alertNotification.count({ where: { userId } }),
+  ]);
+
+  return {
+    notifications: rows.map(mapAlertNotification),
+    total,
+  };
+}
+
+/** Lists alert notifications for a user, newest first. */
 export async function listUserAlertNotifications(
   userId: string,
   limit = 50,
 ): Promise<AlertNotification[]> {
-  const notifications = await prisma.alertNotification.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: limit,
-  });
-
-  return notifications.map(mapAlertNotification);
+  const { notifications } = await listUserAlertNotificationsPaginated(userId, 0, limit);
+  return notifications;
 }
 
 /** Marks a notification as read for the owning user. */

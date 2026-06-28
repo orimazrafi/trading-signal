@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { buildApiPath } from '@trading-signal/contracts/apiPath'
 import { queryKeys } from '@/api/queryKeys'
 import type { AuthUser } from '@/types/auth'
 import { queryErrorHandledMeta } from '@/lib/queryMeta'
@@ -56,7 +57,7 @@ export function useAuth() {
       queryClient.removeQueries({ queryKey: queryKeys.health })
     },
     startGoogleSignIn: () => {
-      window.location.href = '/api/auth/google'
+      window.location.href = buildApiPath('/auth/google')
     },
     reload: () => meQuery.refetch(),
   }

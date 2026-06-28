@@ -2,10 +2,11 @@ import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import type { Request, Response } from "express";
 import { getAuthenticatedUserId } from "../lib/controllerAuth.js";
 import { parseCreateWatchlistBody, parseWatchlistStockBody } from "../lib/parseWatchlistBody.js";
+import { parsePaginationQuery } from "../lib/parsePaginationQuery.js";
 import { sendWatchlistErrorResponse } from "../lib/watchlistHttpErrors.js";
 import {
   createWatchlistView,
-  getWatchlistsForUser,
+  getWatchlistsPageForUser,
   removeStockFromView,
   saveStockToView,
 } from "../services/watchlist.service.js";
@@ -27,7 +28,7 @@ export async function postWatchlist(req: Request, res: Response): Promise<void> 
   }
 }
 
-/** Returns all custom views for the authenticated user. */
+/** Returns paginated custom views for the authenticated user. */
 export async function getWatchlists(req: Request, res: Response): Promise<void> {
   const userId = getAuthenticatedUserId(req, res);
   if (!userId) {
@@ -35,8 +36,8 @@ export async function getWatchlists(req: Request, res: Response): Promise<void> 
   }
 
   try {
-    const watchlists = await getWatchlistsForUser(userId);
-    res.json({ watchlists });
+    const page = await getWatchlistsPageForUser(userId, parsePaginationQuery(req));
+    res.json(page);
   } catch (error) {
     sendWatchlistErrorResponse(res, error, req.path);
   }

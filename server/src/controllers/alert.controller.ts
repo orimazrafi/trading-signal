@@ -10,17 +10,18 @@ import {
   registerAlertStreamClient,
   startAlertStream,
 } from "../lib/alertStreamRegistry/index.js";
+import { parsePaginationQuery } from "../lib/parsePaginationQuery.js";
 import { isAlertRunnerDevTriggerEnabled, triggerAlertsRunnerCheck } from "../lib/alertsRunnerClient.js";
 import {
   createAlertForUser,
   deleteAlertForUser,
-  getAlertNotificationsForUser,
-  getAlertsForUser,
+  getAlertNotificationsPageForUser,
+  getAlertsPageForUser,
   markNotificationReadForUser,
   updateAlertForUser,
 } from "../services/alert.service.js";
 
-/** Returns all configured price alerts for the authenticated user. */
+/** Returns paginated price alerts for the authenticated user. */
 export async function getPriceAlerts(req: Request, res: Response): Promise<void> {
   const userId = getAuthenticatedUserId(req, res);
   if (!userId) {
@@ -28,8 +29,8 @@ export async function getPriceAlerts(req: Request, res: Response): Promise<void>
   }
 
   try {
-    const alerts = await getAlertsForUser(userId);
-    res.json({ alerts });
+    const page = await getAlertsPageForUser(userId, parsePaginationQuery(req));
+    res.json(page);
   } catch (error) {
     sendAlertErrorResponse(res, error, req.path);
   }
@@ -108,7 +109,7 @@ export async function deletePriceAlert(req: Request, res: Response): Promise<voi
   }
 }
 
-/** Returns alert notification history for the authenticated user. */
+/** Returns paginated alert notification history for the authenticated user. */
 export async function getAlertNotifications(req: Request, res: Response): Promise<void> {
   const userId = getAuthenticatedUserId(req, res);
   if (!userId) {
@@ -116,8 +117,8 @@ export async function getAlertNotifications(req: Request, res: Response): Promis
   }
 
   try {
-    const notifications = await getAlertNotificationsForUser(userId);
-    res.json({ notifications });
+    const page = await getAlertNotificationsPageForUser(userId, parsePaginationQuery(req));
+    res.json(page);
   } catch (error) {
     sendAlertErrorResponse(res, error, req.path);
   }

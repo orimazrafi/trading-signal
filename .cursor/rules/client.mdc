@@ -47,6 +47,8 @@ Semantic colors and radii live in `src/styles/tokens.css` and are exposed to Tai
 
 - **SoC:** components render UI only; hooks own state, effects, and data lifecycle; `api/` owns HTTP calls.
 - **HTTP:** use the shared axios client (`@/api/client.ts`). No raw `fetch` in features, hooks, or components. (SSE via `EventSource` is the exception.)
+- **API paths:** all API endpoints targeted by Axios must explicitly include the `/api/v1/` prefix (configured in the shared axios client base URL).
+- **Paginated feeds:** when fetching lists from the server, always leverage `AsyncListPanel` or pass pagination parameters (`page`, `limit`). Do not request unbounded datasets from the API.
 - **HTTP status checks** — compare against `HTTP_STATUS` from `@trading-signal/contracts/httpStatus`, not numeric literals.
 - **Imports:** use `@/` path aliases (e.g. `@/components/Button`). No `../` chains across modules.
 - **React Query:** cache keys in `@/api/queryKeys.ts` only.
@@ -76,6 +78,77 @@ export { default } from './Component'
 export { default as Component } from './Component'
 export type { ComponentProps } from './types'
 ```
+
+## Component file layout (`.tsx`)
+
+Follow this **top-to-bottom order** in every component module. Shared/exported types belong in sibling `types.ts` (layer 2 applies to **file-local** types only).
+
+| # | Section | What goes here |
+|---|---------|----------------|
+| 1 | **Imports** | External packages, then `@/` aliases, then relative imports. Type-only imports use `import type`. |
+| 2 | **Types & interfaces** | File-local types only. Promote to `types.ts` when exported or reused. |
+| 3 | **Small helper components** | Private sub-components used only in this file (e.g. row, header). |
+| 4 | **Main component** | The exported (default) component function. |
+| 5 | **Hooks** | First statements inside the main component — `useState`, `useEffect`, custom hooks, React Query. |
+| 6 | **Guard clauses** | Early returns: loading, error, empty, missing props. |
+| 7 | **Render** | Final `return (...)` with JSX. |
+
+**Inside the main component:** hooks → derived values/handlers → guard clauses → render. Do not interleave hooks with conditional logic (`react-hooks/rules-of-hooks`).
+
+```tsx
+// 1. Imports
+import { useState } from 'react'
+import { EmptyState } from '@/components/EmptyState'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
+import type { WidgetProps } from './types'
+
+// 2. Types (file-local)
+type WidgetView = 'loading' | 'ready'
+
+// 3. Helper components
+function WidgetHeader({ title }: { title: string }) {
+  return <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+}
+
+// 4–7. Main component
+function Widget({ title, items, isLoading }: WidgetProps) {
+  // 5. Hooks
+  const [view, setView] = useState<WidgetView>('loading')
+
+  // 5b. Handlers / derived state (after hooks, before guards)
+  const hasItems = items.length > 0
+
+  // 6. Guard clauses
+  if (isLoading) {
+    return <LoadingSpinner label="Loading widget…" />
+  }
+
+  if (!hasItems) {
+    return <EmptyState message="No items yet." />
+  }
+
+  // 7. Render
+  return (
+    <section>
+      <WidgetHeader title={title} />
+      <ul>{items.map((item) => <li key={item.id}>{item.label}</li>)}</ul>
+    </section>
+  )
+}
+
+export default Widget
+```
+
+### ESLint
+
+| Layer | Enforced today | Notes |
+|-------|----------------|-------|
+| Hooks before guards/render | Yes | `eslint-plugin-react-hooks` (`rules-of-hooks`, `exhaustive-deps`) |
+| Import order | No | Optional: `eslint-plugin-perfectionist` for sorted imports (layer 1 only) |
+| Types in `types.ts` | Review / rules | Promote shared types; do not rely on ESLint alone |
+| Helpers → main → guards → render | No | Convention for readability; no standard ESLint rule covers full file layout |
+
+Pure helpers (no JSX) belong in feature `lib/*Utils.ts`, not in the component file.
 
 ## Shadcn primitives (`@/components/ui/`)
 
@@ -123,7 +196,7 @@ Map domain values to `BadgeVariant` in feature utils; render with `<Badge varian
 
 ```tsx
 // ❌ fetch in component
-useEffect(() => { fetch('/api/alerts').then(...) }, [])
+useEffect(() => { fetch('/api/v1/price-alerts').then(...) }, [])
 
 // ✅ api module + hook
 import { api } from '@/api/client'

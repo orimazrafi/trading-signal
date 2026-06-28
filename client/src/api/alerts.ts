@@ -3,6 +3,7 @@ import {
   priceAlertResponseSchema,
   priceAlertsResponseSchema,
 } from '@trading-signal/contracts/alert'
+import { buildApiPath } from '@trading-signal/contracts/apiPath'
 import type {
   CreatePriceAlertInput,
   PriceAlert,
@@ -12,13 +13,23 @@ import type { ApiRequestOptions } from './types'
 import { api } from './client'
 import { fetchValidated, patchValidated, postValidated } from './fetchValidated'
 
+const DEFAULT_LIST_PAGE = 1
+const DEFAULT_LIST_LIMIT = 20
+
 /** Fetches configured price alerts for the authenticated user. */
-export async function fetchPriceAlerts(options: ApiRequestOptions = {}): Promise<PriceAlert[]> {
+export async function fetchPriceAlerts(
+  options: ApiRequestOptions & { page?: number; limit?: number } = {},
+): Promise<PriceAlert[]> {
+  const { page = DEFAULT_LIST_PAGE, limit = DEFAULT_LIST_LIMIT, signal } = options
+
   const data = await fetchValidated(
-    '/alerts',
+    '/price-alerts',
     priceAlertsResponseSchema,
     'price alerts',
-    { signal: options.signal },
+    {
+      signal,
+      params: { page, limit },
+    },
   )
 
   return data.alerts
@@ -27,7 +38,7 @@ export async function fetchPriceAlerts(options: ApiRequestOptions = {}): Promise
 /** Creates a new price alert. */
 export async function createPriceAlert(input: CreatePriceAlertInput): Promise<PriceAlert> {
   const data = await postValidated(
-    '/alerts',
+    '/price-alerts',
     priceAlertResponseSchema,
     'price alert',
     input,
@@ -42,7 +53,7 @@ export async function updatePriceAlert(
   input: UpdatePriceAlertInput,
 ): Promise<PriceAlert> {
   const data = await patchValidated(
-    `/alerts/${alertId}`,
+    `/price-alerts/${alertId}`,
     priceAlertResponseSchema,
     'price alert',
     input,
@@ -53,16 +64,23 @@ export async function updatePriceAlert(
 
 /** Deletes a price alert. */
 export async function deletePriceAlert(alertId: string): Promise<void> {
-  await api.delete(`/alerts/${alertId}`)
+  await api.delete(`/price-alerts/${alertId}`)
 }
 
 /** Fetches alert notification history. */
-export async function fetchAlertNotifications(options: ApiRequestOptions = {}) {
+export async function fetchAlertNotifications(
+  options: ApiRequestOptions & { page?: number; limit?: number } = {},
+) {
+  const { page = DEFAULT_LIST_PAGE, limit = DEFAULT_LIST_LIMIT, signal } = options
+
   const data = await fetchValidated(
-    '/alerts/notifications',
+    '/price-alerts/notifications',
     alertNotificationsResponseSchema,
     'alert notifications',
-    { signal: options.signal },
+    {
+      signal,
+      params: { page, limit },
+    },
   )
 
   return data.notifications
@@ -70,15 +88,15 @@ export async function fetchAlertNotifications(options: ApiRequestOptions = {}) {
 
 /** Marks one alert notification as read. */
 export async function markAlertNotificationRead(notificationId: string): Promise<void> {
-  await api.patch(`/alerts/notifications/${notificationId}/read`)
+  await api.patch(`/price-alerts/notifications/${notificationId}/read`)
 }
 
 /** Triggers an immediate check of all enabled alerts (development only). */
 export async function triggerAlertCheck(): Promise<void> {
-  await api.post('/alerts/run-check', {}, { timeout: 60_000 })
+  await api.post('/price-alerts/run-check', {}, { timeout: 60_000 })
 }
 
 /** Opens an SSE stream URL for real-time alert notifications. */
 export function getAlertStreamUrl(): string {
-  return '/api/alerts/stream'
+  return buildApiPath('/price-alerts/stream')
 }

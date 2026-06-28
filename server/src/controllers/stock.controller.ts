@@ -10,11 +10,6 @@ import {
   searchStock,
 } from "../services/stock.service.js";
 
-/** Returns API health status. */
-export function getHealth(_req: Request, res: Response): void {
-  res.json({ status: "ok", service: "trading-signal-server" });
-}
-
 /** Returns historical OHLCV bars for the requested symbol. */
 export async function getStockHistoryBySymbol(req: Request, res: Response): Promise<void> {
   const symbol = req.params.symbol?.trim();

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { paginationMetaSchema } from "./pagination.js";
 import { safeParseApiResponse } from "./lib/zodApi.js";
 
 export const apiWatchlistStockSchema = z.object({
@@ -18,7 +19,7 @@ export const apiWatchlistSchema = z.object({
   stocks: z.array(apiWatchlistStockSchema),
 });
 
-export const watchlistsResponseSchema = z.object({
+export const watchlistsResponseSchema = paginationMetaSchema.extend({
   watchlists: z.array(apiWatchlistSchema),
 });
 
