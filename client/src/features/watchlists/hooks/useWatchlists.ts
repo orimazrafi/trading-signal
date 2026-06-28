@@ -12,8 +12,8 @@ import {
   mapApiWatchlist,
   mapApiWatchlists,
 } from '@/features/watchlists/lib/watchlistMappers'
-import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import type { UseWatchlistsOptions } from '@/features/watchlists/types'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
 
 /** Manages watchlist fetch, active view selection, and create/save mutations. */
 export function useWatchlists({ userId = '', enabled = true }: UseWatchlistsOptions = {}) {

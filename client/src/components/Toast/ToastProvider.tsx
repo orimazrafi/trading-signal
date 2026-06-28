@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
+import type { ToastProviderProps } from './types'
 import ToastContainer from './ToastContainer'
 import { dismissToast, getToasts, subscribeToToasts } from './toastStore'
-import type { ToastProviderProps } from './types'
 
 /** Mounts the global toast stack and exposes the imperative toast API. */
 function ToastProvider({ children }: ToastProviderProps) {

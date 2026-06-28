@@ -4,9 +4,6 @@ import { ErrorMessage } from '@/components/ErrorMessage'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Panel } from '@/components/Panel'
 import { SimulatedLivePrice } from '@/components/SimulatedLivePrice'
-import { ChartPriceAlertDialog } from '@/features/alerts/components/ChartPriceAlertDialog'
-import { usePriceAlerts } from '@/features/alerts/hooks/usePriceAlerts'
-import { useAuthContext } from '@/features/auth/AuthProvider'
 import {
   Select,
   SelectContent,
@@ -14,7 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useTheme } from '@/features/theme/ThemeProvider'
+import { ChartPriceAlertDialog } from '@/features/alerts/components/ChartPriceAlertDialog'
+import { usePriceAlerts } from '@/features/alerts/hooks/usePriceAlerts'
+import { useAuthContext } from '@/features/auth/AuthProvider'
 import { useStockHistory } from '@/features/stocks/hooks/useStockHistory'
 import { useStockQuote } from '@/features/stocks/hooks/useStockQuote'
 import { useWorkerCalculation } from '@/features/stocks/hooks/useWorkerCalculation'
@@ -26,15 +25,16 @@ import {
   type ChartOverlayVisibility,
 } from '@/features/stocks/lib/chartOverlayVisibility'
 import { mergeLivePriceIntoHistory, sortHistoryPointsByTime, toAreaSeriesData } from '@/features/stocks/lib/chartSeries'
+import { useTheme } from '@/features/theme/ThemeProvider'
 import { StockChart } from '@/features/watchlists/components/StockChart'
 import type { ChartPriceClickPayload } from '@/features/watchlists/components/StockChart/types'
-import { cn } from '@/lib/utils'
 import { STOCK_HISTORY_RANGES } from '@/lib/stockHistoryConstants'
 import { isStockHistoryRange } from '@/lib/stockHistoryUtils'
+import { cn } from '@/lib/utils'
 import type { StockHistoryRange } from '@/types/stock'
+import type { StockChartPanelProps } from './types'
 import ChartIndicatorStrip from './ChartIndicatorStrip'
 import ChartOverlayToggles from './ChartOverlayToggles'
-import type { StockChartPanelProps } from './types'
 
 /** Shows live quote details and a historical price chart for the selected symbol. */
 function StockChartPanel({ symbol }: StockChartPanelProps) {
@@ -66,7 +66,7 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
     return sortHistoryPointsByTime(
       mergeLivePriceIntoHistory(history.points, quote.price, range),
     )
-  }, [history?.points, quote?.price, range])
+  }, [history, quote, range])
 
   const chartSeries = useMemo(() => toAreaSeriesData(chartPoints), [chartPoints])
 

@@ -1,6 +1,6 @@
+import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorMessage } from '@/components/ErrorMessage'
-import { Button } from '@/components/Button'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { Panel } from '@/components/Panel'
 import type { AsyncListPanelProps } from './types'

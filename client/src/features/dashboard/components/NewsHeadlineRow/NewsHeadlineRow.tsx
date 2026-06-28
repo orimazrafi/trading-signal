@@ -1,6 +1,6 @@
-import { formatTimeAgo } from '@/lib/formatDate'
 import { Badge } from '@/components/Badge'
 import { sentimentBadgeVariant } from '@/features/dashboard/components/NewsFeed/newsFeedUtils'
+import { formatTimeAgo } from '@/lib/formatDate'
 import type { NewsHeadlineRowProps } from './types'
 
 /** Compact headline row with source, relative time, and external article link. */

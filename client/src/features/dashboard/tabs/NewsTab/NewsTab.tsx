@@ -1,5 +1,5 @@
-import { useNewsFeed } from '@/features/dashboard/hooks/useNewsFeed'
 import { NewsFeed } from '@/features/dashboard/components/NewsFeed'
+import { useNewsFeed } from '@/features/dashboard/hooks/useNewsFeed'
 
 /** Dashboard market news tab with live headlines. */
 function NewsTab() {

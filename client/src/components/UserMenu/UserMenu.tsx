@@ -7,8 +7,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import UserAvatar from './UserAvatar'
 import type { UserMenuProps } from './types'
+import UserAvatar from './UserAvatar'
 
 /** Account menu with profile photo, email, and sign-out action. */
 function UserMenu({ email, pictureUrl, onLogout }: UserMenuProps) {

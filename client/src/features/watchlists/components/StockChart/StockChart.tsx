@@ -1,4 +1,3 @@
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   AreaSeries,
   ColorType,
@@ -8,6 +7,8 @@ import {
   type ISeriesApi,
   type MouseEventParams,
 } from 'lightweight-charts'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { LoadingSpinner } from '@/components/LoadingSpinner'
 import {
   CHART_OVERLAY_KEYS,
   type ChartOverlayKey,
@@ -21,11 +22,10 @@ import {
 } from '@/features/stocks/lib/chartOverlayVisibility'
 import { resolveChartThemeColors } from '@/lib/chartTheme'
 import { cn } from '@/lib/utils'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { applyStockChartTheme } from './applyStockChartTheme'
-import StockChartTooltip from './StockChartTooltip'
-import { stockChartPropsAreEqual } from './stockChartPropsAreEqual'
 import type { StockChartProps } from './types'
+import { applyStockChartTheme } from './applyStockChartTheme'
+import { stockChartPropsAreEqual } from './stockChartPropsAreEqual'
+import StockChartTooltip from './StockChartTooltip'
 
 /** Applies the latest series snapshot to the active area series. */
 function applySeriesData(
@@ -111,9 +111,11 @@ function StockChartComponent({
   const [tooltip, setTooltip] = useState<ChartTooltipState | null>(null)
   const showSkeleton = isLoading && series.length === 0
 
-  overlaysRef.current = overlays
-  visibilityRef.current = overlayVisibility
-  onPriceClickRef.current = onPriceClick
+  useEffect(() => {
+    overlaysRef.current = overlays
+    visibilityRef.current = overlayVisibility
+    onPriceClickRef.current = onPriceClick
+  }, [overlays, overlayVisibility, onPriceClick])
 
   useEffect(() => {
     const container = containerRef.current

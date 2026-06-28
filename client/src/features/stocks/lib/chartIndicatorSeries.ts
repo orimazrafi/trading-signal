@@ -1,7 +1,7 @@
 import type { LineData, Time } from 'lightweight-charts'
+import type { ChartAreaPoint } from '@/features/stocks/lib/chartSeries'
 import { MOVING_AVERAGE_PERIODS } from '@/features/stocks/lib/marketDataCalculations'
 import type { MarketDataAnalysis } from '@/features/stocks/lib/marketDataCalculations'
-import type { ChartAreaPoint } from '@/features/stocks/lib/chartSeries'
 
 /** Supported moving-average overlay keys rendered on the stock chart. */
 export const CHART_OVERLAY_KEYS = {

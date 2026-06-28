@@ -1,7 +1,7 @@
 import { SignalCard } from '@/features/dashboard/components/SignalCard'
+import { useStockQuote } from '@/features/stocks/hooks/useStockQuote'
 import { computeLiveChangePercent } from '@/features/watchlists/lib/liveQuoteChange'
 import type { WatchlistSignalCardProps } from './types'
-import { useStockQuote } from '@/features/stocks/hooks/useStockQuote'
 
 /** Watchlist row that syncs price with the live quote cache and smart polling. */
 function WatchlistSignalCard({

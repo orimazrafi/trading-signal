@@ -1,5 +1,5 @@
-import styles from './StatusCard.module.css'
 import type { StatusCardProps } from './types'
+import styles from './StatusCard.module.css'
 
 /** Displays backend health status for the signed-in dashboard. */
 function StatusCard({ health, error, loading }: StatusCardProps) {

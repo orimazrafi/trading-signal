@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ROUTES } from '@/routes/paths'
 import type { UseWatchlistInitialSelectionOptions } from '@/features/watchlists/types'
+import { ROUTES } from '@/routes/paths'
 
 /** Returns true when the user switched to a different watchlist tab. */
 function didWatchlistChange(

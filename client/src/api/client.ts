@@ -1,5 +1,5 @@
-import axios, { CanceledError, isAxiosError } from 'axios'
 import { API_BASE_PATH } from '@trading-signal/contracts/apiPath'
+import axios, { CanceledError, isAxiosError } from 'axios'
 import type { ApiErrorBody } from '@/types/api'
 
 /** API error with optional HTTP status for query and mutation handling. */

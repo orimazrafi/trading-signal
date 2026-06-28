@@ -1,11 +1,11 @@
-import { type FormEvent, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import { type FormEvent, useState } from 'react'
 import { getApiErrorMessage } from '@/api/client'
 import { searchStock } from '@/api/stocks'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
+import { buildSignalReason, toSignalAction } from '@/lib/signalUtils'
 import type { SearchStockResult } from '@/types/stock'
 import type { SignalAction } from '@/types/watchlist'
-import { buildSignalReason, toSignalAction } from '@/lib/signalUtils'
-import { queryErrorHandledMeta } from '@/lib/queryMeta'
 
 const EMPTY_SYMBOL_MESSAGE = 'Enter a ticker symbol to search.'
 

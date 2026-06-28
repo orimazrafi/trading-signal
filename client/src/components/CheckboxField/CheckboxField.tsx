@@ -1,5 +1,5 @@
-import styles from './CheckboxField.module.css'
 import type { CheckboxFieldProps } from './types'
+import styles from './CheckboxField.module.css'
 
 /** Labeled checkbox used in forms and settings panels. */
 function CheckboxField({ label, checked, disabled = false, onChange }: CheckboxFieldProps) {

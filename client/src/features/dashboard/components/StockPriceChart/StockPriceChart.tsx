@@ -1,6 +1,6 @@
 import { memo } from 'react'
-import { StockChart } from '@/features/watchlists/components/StockChart'
 import { toAreaSeriesData } from '@/features/stocks/lib/chartSeries'
+import { StockChart } from '@/features/watchlists/components/StockChart'
 import type { StockPriceChartProps } from './types'
 
 /** Backward-compatible wrapper around the isolated watchlist StockChart component. */

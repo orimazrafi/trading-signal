@@ -9,8 +9,8 @@ import {
 import LandingPage from '@/routes/LandingPage'
 import LoginPage from '@/routes/LoginPage'
 import NotFoundPage from '@/routes/NotFoundPage'
-import ProtectedRoute from '@/routes/ProtectedRoute'
 import { ROUTES } from '@/routes/paths'
+import ProtectedRoute from '@/routes/ProtectedRoute'
 
 /** Application route tree with protected dashboard layout and nested tabs. */
 function AppRoutes() {

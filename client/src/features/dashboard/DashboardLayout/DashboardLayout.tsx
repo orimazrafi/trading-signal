@@ -1,15 +1,15 @@
 import { Suspense, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { AppHeader } from '@/components/AppHeader'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { AppHeader } from '@/components/AppHeader'
 import { AlertNotificationCenterProvider } from '@/features/alerts/context'
-import { DashboardNav } from '@/features/dashboard/components/DashboardNav'
 import { useAuthContext } from '@/features/auth/AuthProvider'
+import { DashboardNav } from '@/features/dashboard/components/DashboardNav'
 import { consumeStoredAuthReturnTo } from '@/lib/authRedirect'
-import { TAB_ERROR_TITLE, TAB_LOADING_LABEL } from './types'
-import { resolveDashboardTab } from '@/routes/resolveDashboardTab'
 import { ROUTES } from '@/routes/paths'
+import { resolveDashboardTab } from '@/routes/resolveDashboardTab'
+import { TAB_ERROR_TITLE, TAB_LOADING_LABEL } from './types'
 
 /** Signed-in dashboard shell with primary section tabs and nested route outlet. */
 function DashboardLayout() {

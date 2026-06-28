@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils'
 import { getInitialsFromEmail } from '@/lib/userInitials'
+import { cn } from '@/lib/utils'
 import type { UserAvatarProps } from './types'
 
 /** Renders the user's Google profile photo or email initials. */

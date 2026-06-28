@@ -1,5 +1,5 @@
-import ToastItem from './ToastItem'
 import type { ToastContainerProps } from './types'
+import ToastItem from './ToastItem'
 
 /** Fixed stack of toast notifications in the bottom-right corner. */
 function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {

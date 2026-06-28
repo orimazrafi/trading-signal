@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/api/queryKeys'
-import type { StockHistoryRange } from '@/types/stock'
+import { fetchStockHistory } from '@/api/stocks'
+import { resolveStockHistoryPlaceholder } from '@/features/stocks/lib/stockHistoryPlaceholder'
 import {
   marketDataQueryOptions,
   STOCK_HISTORY_GC_TIME_MS,
   STOCK_HISTORY_STALE_TIME_MS,
 } from '@/lib/marketDataQueryOptions'
 import { queryErrorHandledMeta } from '@/lib/queryMeta'
-import { fetchStockHistory } from '@/api/stocks'
-import { resolveStockHistoryPlaceholder } from '@/features/stocks/lib/stockHistoryPlaceholder'
+import type { StockHistoryRange } from '@/types/stock'
 
 /** Loads daily OHLCV history for charting via React Query. */
 export function useStockHistory(symbol: string | null, range: StockHistoryRange) {

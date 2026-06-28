@@ -1,7 +1,7 @@
 import { AsyncListPanel } from '@/components/AsyncListPanel'
 import { LazyStockCard } from '@/features/dashboard/components/LazyStockCard'
-import RecommendationCard from './RecommendationCard'
 import type { RecommendationsFeedProps } from './types'
+import RecommendationCard from './RecommendationCard'
 
 const DEFAULT_EMPTY_MESSAGE =
   'No market ideas are available right now. Please check back in a few minutes.'

@@ -1,8 +1,8 @@
 import { authResponseSchema, logoutResponseSchema } from '@trading-signal/contracts/auth'
 import { HTTP_STATUS } from '@trading-signal/contracts/httpStatus'
 import type { AuthUser } from '@/types/auth'
-import { ApiError } from './client'
 import type { ApiRequestOptions } from './types'
+import { ApiError } from './client'
 import { fetchValidated, postValidated } from './fetchValidated'
 
 /** Returns the current session user, or null when unauthenticated. */

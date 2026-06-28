@@ -3,8 +3,8 @@ import { PriceAlertCard } from '@/features/alerts/components/PriceAlertCard'
 import { PriceAlertCreateForm } from '@/features/alerts/components/PriceAlertCreateForm'
 import { isActivePriceAlert } from '@/features/alerts/lib/priceAlertStatus'
 import { MAX_PRICE_ALERTS } from '@/types/alert'
-import type { PriceAlertsPanelProps } from './types'
 import type { PriceAlert } from '@/types/alert'
+import type { PriceAlertsPanelProps } from './types'
 
 /** Returns alerts that are still armed and eligible to fire. */
 function listActiveAlerts(alerts: PriceAlert[]): PriceAlert[] {

@@ -1,9 +1,9 @@
-import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/Button'
 import { FormField } from '@/components/FormField'
-import styles from './LoginForm.module.css'
 import type { LoginFormProps } from './types'
+import styles from './LoginForm.module.css'
 
 /** Email and password login form. */
 function LoginForm({ onSubmit }: LoginFormProps) {

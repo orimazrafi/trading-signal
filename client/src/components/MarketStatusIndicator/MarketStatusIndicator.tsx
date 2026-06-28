@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils'
-import { US_MARKET_HOURS_TOOLTIP } from '@/lib/usMarketHours'
 import { useUSMarketOpen } from '@/hooks/useUSMarketOpen'
+import { US_MARKET_HOURS_TOOLTIP } from '@/lib/usMarketHours'
+import { cn } from '@/lib/utils'
 import type { MarketStatusIndicatorProps } from './types'
 
 /** Shows whether US equities are in regular trading hours. */

@@ -5,7 +5,10 @@ import { isBeforeInstallPromptEvent } from '@/lib/pwa/isBeforeInstallPromptEvent
 /** Wires beforeinstallprompt and appinstalled window listeners for PWA install. */
 export function usePwaInstallBrowserEvents(handlers: PwaInstallBrowserEventHandlers): void {
   const handlersRef = useRef(handlers)
-  handlersRef.current = handlers
+
+  useEffect(() => {
+    handlersRef.current = handlers
+  }, [handlers])
 
   useEffect(() => {
     /** Captures the deferred install prompt so we can show a custom button. */

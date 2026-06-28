@@ -1,5 +1,5 @@
-import { Badge } from '@/components/Badge'
 import { AsyncListPanel } from '@/components/AsyncListPanel'
+import { Badge } from '@/components/Badge'
 import { AlertHistoryCard } from '@/features/alerts/components/AlertHistoryCard'
 import { countUnreadAlertNotifications } from '@/features/alerts/lib/alertNotificationUtils'
 import type { AlertHistoryPanelProps } from './types'

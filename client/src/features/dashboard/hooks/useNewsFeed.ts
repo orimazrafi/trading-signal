@@ -1,14 +1,14 @@
-import { useState } from 'react'
-import { useInfiniteQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import type { MarketNewsResponse } from '@trading-signal/contracts/news'
-import { queryErrorHandledMeta } from '@/lib/queryMeta'
+import { useInfiniteQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { fetchMarketNews } from '@/api/dashboard'
+import { queryKeys } from '@/api/queryKeys'
 import {
   marketDataQueryOptions,
   MARKET_NEWS_GC_TIME_MS,
   MARKET_NEWS_STALE_TIME_MS,
 } from '@/lib/marketDataQueryOptions'
-import { fetchMarketNews } from '@/api/dashboard'
-import { queryKeys } from '@/api/queryKeys'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
 
 const NEWS_PAGE_SIZE = 15
 const NEWS_FEED_FIRST_PAGE_OFFSET = 0

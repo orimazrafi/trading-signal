@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
-import { useBeforeInstallPrompt } from '@/hooks/useBeforeInstallPrompt'
 import type { UsePwaInstallPromptResult } from '@/hooks/types'
+import { useBeforeInstallPrompt } from '@/hooks/useBeforeInstallPrompt'
 import type { PwaInstallOutcome } from '@/lib/pwa/types'
 
 /** Listens for beforeinstallprompt and exposes a native install trigger. */

@@ -5,13 +5,13 @@ import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { SimulatedLivePrice } from '@/components/SimulatedLivePrice'
 import { StockLogo } from '@/components/StockLogo'
 import { AddToWatchlistButton } from '@/features/watchlists/components/AddToWatchlistButton'
+import type { RecommendationCardProps } from './types'
 import RecommendationFactors from '../RecommendationFactors'
 import {
   formatRecommendationAction,
   formatRecommendationSource,
   recommendationBadgeVariant,
 } from '../recommendationUtils'
-import type { RecommendationCardProps } from './types'
 
 /** Renders a single market idea card with factor breakdown. */
 function RecommendationCard({

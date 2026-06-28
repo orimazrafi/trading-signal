@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { toast } from '@/components/Toast'
-import type { AlertNotification } from '@/types/alert'
 import { AlertHistoryPanel } from '@/features/alerts/components/AlertHistoryPanel'
 import { AlertRunCheckToolbar } from '@/features/alerts/components/AlertRunCheckToolbar'
 import { PriceAlertsPanel } from '@/features/alerts/components/PriceAlertsPanel'
 import { useAlertNotifications } from '@/features/alerts/hooks/useAlertNotifications'
 import { usePriceAlerts } from '@/features/alerts/hooks/usePriceAlerts'
+import type { AlertNotification } from '@/types/alert'
 import type { AlertsTabProps } from './types'
 
 /** Alerts tab for configuring price alerts and reviewing history. */

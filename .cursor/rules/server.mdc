@@ -46,7 +46,7 @@ Price-alert **checking** runs in **alerts-runner** (Go), not in Node — do not 
 
 ## Logging
 
-- **Must not** use `console.log` / `console.error` in app code.
+- **Must not** use `console.log` / `console.error` in app code (enforced by ESLint `no-console`; exception in `lib/logger/`).
 - Use `import { log } from "../lib/logger.js"` (path relative to caller).
 - Shape: `log.info(message, meta)`, `log.error(message, error, meta)`.
 - Exception: `lib/logger.ts` itself may write to console.

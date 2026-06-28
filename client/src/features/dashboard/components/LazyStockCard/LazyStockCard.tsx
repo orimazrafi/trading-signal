@@ -1,5 +1,5 @@
-import { useIntersectionObserver } from '@/hooks/useIntersectionObserver'
 import { useStockQuote } from '@/features/stocks/hooks/useStockQuote'
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver'
 import type { LazyStockCardProps, LazyStockCardRenderProps } from './types'
 
 /** Delays per-symbol quote fetching until the card scrolls into the viewport. */

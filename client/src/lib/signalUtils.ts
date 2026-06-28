@@ -1,5 +1,5 @@
-import type { BadgeVariant } from '@/lib/badgeVariants'
 import { isSignalAction, SIGNAL_ACTIONS, type SignalAction } from '@trading-signal/contracts/signal'
+import type { BadgeVariant } from '@/lib/badgeVariants'
 
 const SIGNAL_REASONS: Record<SignalAction, string> = {
   BUY: 'PE ratio is within the buy threshold (0–25).',

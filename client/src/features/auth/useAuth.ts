@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
 import { buildApiPath } from '@trading-signal/contracts/apiPath'
-import { queryKeys } from '@/api/queryKeys'
-import type { AuthUser } from '@/types/auth'
-import { queryErrorHandledMeta } from '@/lib/queryMeta'
+import { useState } from 'react'
 import { fetchMe, login, logout, signup } from '@/api/auth'
+import { queryKeys } from '@/api/queryKeys'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
+import type { AuthUser } from '@/types/auth'
 
 /** Manages login, signup, logout, and session state via React Query. */
 export function useAuth() {

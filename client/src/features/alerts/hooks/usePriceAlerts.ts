@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { queryKeys } from '@/api/queryKeys'
 import {
   createPriceAlert,
   deletePriceAlert,
@@ -8,13 +7,14 @@ import {
   updatePriceAlert,
 } from '@/api/alerts'
 import { getApiErrorMessage } from '@/api/client'
+import { queryKeys } from '@/api/queryKeys'
 import {
   getFirstApiErrorMessage,
   invalidateQueryKey,
   runMutationAndInvalidate,
 } from '@/features/alerts/lib/alertQueryUtils'
-import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import type { UsePriceAlertsOptions } from '@/features/alerts/types'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import type { CreatePriceAlertInput, PriceAlert, UpdatePriceAlertInput } from '@/types/alert'
 
 /** Manages price alert CRUD for the authenticated user. */

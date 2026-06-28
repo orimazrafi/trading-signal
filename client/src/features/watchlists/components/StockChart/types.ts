@@ -1,6 +1,6 @@
-import type { ChartAreaPoint } from '@/features/stocks/lib/chartSeries'
 import type { ChartLineOverlay } from '@/features/stocks/lib/chartIndicatorSeries'
 import type { ChartOverlayVisibility } from '@/features/stocks/lib/chartOverlayVisibility'
+import type { ChartAreaPoint } from '@/features/stocks/lib/chartSeries'
 
 export type ChartPriceClickPayload = {
   price: number

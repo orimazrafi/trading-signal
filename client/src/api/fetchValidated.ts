@@ -1,5 +1,5 @@
-import type { AxiosRequestConfig } from 'axios'
 import type { ApiSchema } from '@trading-signal/contracts/zodApi'
+import type { AxiosRequestConfig } from 'axios'
 import { parseApiResponse } from '@trading-signal/contracts/zodApi'
 import { api } from './client'
 

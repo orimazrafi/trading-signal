@@ -1,5 +1,5 @@
-import type { RecommendationFactor } from '@/types/recommendation'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import type { RecommendationFactor } from '@/types/recommendation'
 import { formatRecommendationSource } from './recommendationUtils'
 
 export type RecommendationFactorsProps = {

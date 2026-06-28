@@ -1,11 +1,11 @@
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react'
+import type { AlertNotificationEvent } from '@trading-signal/contracts/alert'
 import { useQueryClient } from '@tanstack/react-query'
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAlertEventStream } from '@/features/alerts/hooks/useAlertEventStream'
 import { invalidateAlertQueries } from '@/features/alerts/lib/alertQueryUtils'
 import { showAlertTriggeredToast } from '@/features/alerts/lib/showAlertTriggeredToast'
 import { ROUTES } from '@/routes/paths'
-import type { AlertNotificationEvent } from '@trading-signal/contracts/alert'
 import type { AlertNotificationCenterContextValue } from './types'
 
 const AlertNotificationCenterContext = createContext<AlertNotificationCenterContextValue | null>(

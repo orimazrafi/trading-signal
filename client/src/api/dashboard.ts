@@ -1,5 +1,5 @@
-import { marketNewsResponseSchema } from '@trading-signal/contracts/news'
 import type { MarketNewsResponse } from '@trading-signal/contracts/news'
+import { marketNewsResponseSchema } from '@trading-signal/contracts/news'
 import { recommendationsResponseSchema } from '@trading-signal/contracts/recommendation'
 import type { RecommendationsResponse } from '@/types/recommendation'
 import type { ApiRequestOptions } from './types'

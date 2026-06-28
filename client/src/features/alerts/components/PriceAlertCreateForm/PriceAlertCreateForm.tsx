@@ -3,8 +3,8 @@ import { Button } from '@/components/Button'
 import { CheckboxField } from '@/components/CheckboxField'
 import { FormField } from '@/components/FormField'
 import { toast } from '@/components/Toast'
-import { ALERT_MAX_THRESHOLD_PERCENT, ALERT_MIN_THRESHOLD_PERCENT } from '@/types/alert'
 import { parsePriceAlertForm } from '@/features/alerts/lib/priceAlertFormUtils'
+import { ALERT_MAX_THRESHOLD_PERCENT, ALERT_MIN_THRESHOLD_PERCENT } from '@/types/alert'
 import type { PriceAlertCreateFormProps } from './types'
 
 /** Form for adding a new price alert with symbol, threshold, and email options. */

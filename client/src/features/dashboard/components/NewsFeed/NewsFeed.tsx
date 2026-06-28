@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { FeedRefreshButton } from '@/components/FeedRefreshButton'
 import { AsyncListPanel } from '@/components/AsyncListPanel'
+import { FeedRefreshButton } from '@/components/FeedRefreshButton'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { NewsHeadlineRow } from '@/features/dashboard/components/NewsHeadlineRow'
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver'

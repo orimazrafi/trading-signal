@@ -5,8 +5,8 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { applyThemeMode, readStoredThemeMode, writeStoredThemeMode } from './themeStorage'
 import type { ThemeMode } from './types'
+import { applyThemeMode, readStoredThemeMode, writeStoredThemeMode } from './themeStorage'
 
 type ThemeContextValue = {
   mode: ThemeMode

@@ -1,9 +1,9 @@
 import { Navigate, useNavigate } from 'react-router-dom'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { useAuthContext } from '@/features/auth/AuthProvider'
 import { NewsFeed } from '@/features/dashboard/components/NewsFeed'
 import { useNewsFeed } from '@/features/dashboard/hooks/useNewsFeed'
 import { LandingHeader } from '@/features/landing/components/LandingHeader'
-import { useAuthContext } from '@/features/auth/AuthProvider'
 import { ROUTES } from '@/routes/paths'
 
 /** Public landing page with live market headlines. */

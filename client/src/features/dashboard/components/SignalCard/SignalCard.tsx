@@ -2,12 +2,12 @@ import { Badge } from '@/components/Badge'
 import { Button } from '@/components/Button'
 import { Card } from '@/components/Card'
 import { StockLogo } from '@/components/StockLogo'
-import { formatMinutesSinceSync } from '@/lib/simulatedLivePrice'
 import {
   changePercentClass,
   formatChangePercent,
   signalActionBadgeVariant,
 } from '@/lib/signalUtils'
+import { formatMinutesSinceSync } from '@/lib/simulatedLivePrice'
 import type { SignalCardProps } from './types'
 
 /** Renders a saved watchlist stock row, optionally selectable. */

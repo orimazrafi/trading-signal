@@ -1,8 +1,8 @@
 import { Download } from 'lucide-react'
 import { Button } from '@/components/Button'
 import { usePwaInstallPrompt } from '@/hooks/usePwaInstallPrompt'
-import { cn } from '@/lib/utils'
 import { PWA_ACCENT_COLOR } from '@/lib/pwa/constants'
+import { cn } from '@/lib/utils'
 import type { InstallAppButtonProps } from './types'
 
 /** Premium install CTA that defers to the browser's native PWA install prompt. */

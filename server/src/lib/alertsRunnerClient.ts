@@ -21,12 +21,14 @@ export async function triggerAlertsRunnerCheck(): Promise<void> {
     if (isAxiosError(error) && error.code === "ECONNREFUSED") {
       throw new Error(
         `Cannot reach alerts-runner at ${env.alertsRunnerUrl}. Start the alerts-runner service.`,
+        { cause: error },
       );
     }
 
     if (isAxiosError(error) && error.response?.status === HTTP_STATUS.NOT_FOUND) {
       throw new Error(
         "alerts-runner dev endpoint not found. Rebuild alerts-runner with ALERT_RUNNER_DEV_HTTP=true.",
+        { cause: error },
       );
     }
 

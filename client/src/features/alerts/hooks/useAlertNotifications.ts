@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { queryKeys } from '@/api/queryKeys'
 import { fetchAlertNotifications, markAlertNotificationRead } from '@/api/alerts'
+import { queryKeys } from '@/api/queryKeys'
 import {
   getFirstApiErrorMessage,
   runMutationAndInvalidate,
 } from '@/features/alerts/lib/alertQueryUtils'
-import { queryErrorHandledMeta } from '@/lib/queryMeta'
 import type { UseAlertNotificationsOptions } from '@/features/alerts/types'
+import { queryErrorHandledMeta } from '@/lib/queryMeta'
 
 /** Loads alert notification history for the authenticated user. */
 export function useAlertNotifications({ enabled = true }: UseAlertNotificationsOptions = {}) {

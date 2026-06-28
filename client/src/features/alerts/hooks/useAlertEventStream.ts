@@ -1,9 +1,9 @@
+import type { AlertNotificationEvent } from '@trading-signal/contracts/alert'
 import { useEffect, useRef, useState } from 'react'
-import { toast } from '@/components/Toast'
 import { getAlertStreamUrl } from '@/api/alerts'
+import { toast } from '@/components/Toast'
 import { parseAlertSseEvent } from '@/features/alerts/lib/parseAlertSseEvent'
 import { SSE_INITIAL_RETRY_MS, SSE_MAX_RETRY_MS } from '@/lib/sseConstants'
-import type { AlertNotificationEvent } from '@trading-signal/contracts/alert'
 
 type UseAlertEventStreamOptions = {
   enabled?: boolean
@@ -17,11 +17,13 @@ export function useAlertEventStream({
 }: UseAlertEventStreamOptions) {
   const [isConnected, setIsConnected] = useState(false)
   const onNotificationRef = useRef(onNotification)
-  onNotificationRef.current = onNotification
+
+  useEffect(() => {
+    onNotificationRef.current = onNotification
+  }, [onNotification])
 
   useEffect(() => {
     if (!enabled) {
-      setIsConnected(false)
       return
     }
 
@@ -100,5 +102,5 @@ export function useAlertEventStream({
     }
   }, [enabled])
 
-  return { isConnected }
+  return { isConnected: enabled && isConnected }
 }

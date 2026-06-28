@@ -14,6 +14,7 @@
     "build:server": "npm run build -w server",
     "build:client": "npm run build -w client",
     "build": "npm run build:contracts && npm run build:server && npm run build:client",
+    "lint": "npm run lint -w client && npm run lint -w server",
     "test": "npm run test -w @trading-signal/contracts && npm run test -w server",
     "postinstall": "npm run build:contracts && npm run db:generate -w server"
   }

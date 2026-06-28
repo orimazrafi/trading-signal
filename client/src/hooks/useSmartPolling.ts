@@ -8,7 +8,10 @@ export function useSmartPolling(
   enabled = true,
 ): void {
   const queryFnRef = useRef(queryFn)
-  queryFnRef.current = queryFn
+
+  useEffect(() => {
+    queryFnRef.current = queryFn
+  }, [queryFn])
 
   useEffect(() => {
     if (!enabled || intervalMs <= 0) {

@@ -1,13 +1,13 @@
 import { Button } from '@/components/Button'
 import {
-  CHART_OVERLAY_COLOR_VARS,
-  type ChartOverlayVisibility,
-} from '@/features/stocks/lib/chartOverlayVisibility'
-import {
   CHART_OVERLAY_KEYS,
   CHART_OVERLAY_LABELS,
   type ChartOverlayKey,
 } from '@/features/stocks/lib/chartIndicatorSeries'
+import {
+  CHART_OVERLAY_COLOR_VARS,
+  type ChartOverlayVisibility,
+} from '@/features/stocks/lib/chartOverlayVisibility'
 import { cn } from '@/lib/utils'
 
 const OVERLAY_TOGGLE_ORDER: ChartOverlayKey[] = [

@@ -144,7 +144,7 @@ export default Widget
 | Layer | Enforced today | Notes |
 |-------|----------------|-------|
 | Hooks before guards/render | Yes | `eslint-plugin-react-hooks` (`rules-of-hooks`, `exhaustive-deps`) |
-| Import order | No | Optional: `eslint-plugin-perfectionist` for sorted imports (layer 1 only) |
+| Import order | Yes | `eslint-plugin-perfectionist` — external → `@/` → relative; `@typescript-eslint/consistent-type-imports` |
 | Types in `types.ts` | Review / rules | Promote shared types; do not rely on ESLint alone |
 | Helpers → main → guards → render | No | Convention for readability; no standard ESLint rule covers full file layout |
 

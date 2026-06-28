@@ -1,5 +1,5 @@
-import type { StockHistoryPoint } from '@/types/stock'
 import type { MarketDataAnalysis } from '@/features/stocks/lib/marketDataCalculations'
+import type { StockHistoryPoint } from '@/types/stock'
 
 /** Worker request payload for one market-data calculation run. */
 export type WorkerCalculateRequest = {

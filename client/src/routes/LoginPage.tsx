@@ -1,7 +1,7 @@
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AuthPage } from '@/features/auth'
-import { AuthHero } from '@/features/auth/components/AuthHero'
 import { useAuthContext } from '@/features/auth/AuthProvider'
+import { AuthHero } from '@/features/auth/components/AuthHero'
 import { useOAuthRedirectError } from '@/hooks/useOAuthRedirectError'
 import { resolvePostAuthPath, storeAuthReturnTo } from '@/lib/authRedirect'
 import { readLoginRedirectFrom } from '@/lib/locationState'

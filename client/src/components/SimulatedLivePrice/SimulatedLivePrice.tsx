@@ -1,6 +1,6 @@
-import { cn } from '@/lib/utils'
 import { useSimulatedLivePrice } from '@/hooks/useSimulatedLivePrice'
 import type { SimulatedPriceFlashDirection } from '@/lib/simulatedLivePrice'
+import { cn } from '@/lib/utils'
 import type { SimulatedLivePriceProps } from './types'
 
 /** Maps a simulated tick direction to Tailwind flash colors. */
