@@ -1,5 +1,6 @@
 import { useSimulatedLivePrice } from '@/hooks/useSimulatedLivePrice'
 import type { SimulatedPriceFlashDirection } from '@/lib/simulatedLivePrice'
+import { LiveStreamIndicator } from '@/components/LiveStreamIndicator'
 import { cn } from '@/lib/utils'
 import type { SimulatedLivePriceProps } from './types'
 
@@ -15,17 +16,20 @@ function classNameForFlashDirection(direction: SimulatedPriceFlashDirection): st
   }
 }
 
-/** Renders a price with client-side micro-fluctuations and a sync transparency label. */
+/** Renders a price with client-side micro-fluctuations and a live-stream label. */
 function SimulatedLivePrice({
   price,
   lastSyncedAtMs,
+  liveState,
+  streamLabel = 'Live price updates',
   className,
   labelClassName,
 }: SimulatedLivePriceProps) {
-  const { displayPrice, flashDirection, minutesSinceSync } = useSimulatedLivePrice(
-    price,
-    lastSyncedAtMs,
+  const internalLiveState = useSimulatedLivePrice(
+    liveState ? null : price,
+    liveState ? null : lastSyncedAtMs,
   )
+  const { displayPrice, flashDirection } = liveState ?? internalLiveState
 
   if (displayPrice === null) {
     return null
@@ -44,14 +48,11 @@ function SimulatedLivePrice({
       >
         ${displayPrice.toFixed(2)}
       </p>
-      <p className={cn('flex items-center gap-1.5 text-xs text-muted-foreground', labelClassName)}>
-        <span
-          aria-hidden="true"
-          className="inline-block h-1.5 w-1.5 rounded-full bg-warning motion-safe:animate-pulse"
-        />
-        Simulated live stream (Last sync: {minutesSinceSync}{' '}
-        {minutesSinceSync === 1 ? 'min' : 'mins'} ago)
-      </p>
+      <LiveStreamIndicator
+        lastSyncedAtMs={lastSyncedAtMs}
+        label={streamLabel}
+        className={labelClassName}
+      />
     </div>
   )
 }

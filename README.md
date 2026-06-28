@@ -58,7 +58,8 @@ trading-signal/
 ```bash
 npm install          # From repo root — also builds contracts (postinstall)
 npm run build        # contracts → server → client
-npm run test         # contracts + server (Vitest)
+npm run test         # contracts + server + client + integration (Vitest)
+npm run test:e2e     # Playwright E2E (requires Docker dev stack)
 npm run lint         # client + server (ESLint)
 ```
 
@@ -424,6 +425,26 @@ client/src/
 - **URL state** — Market Ideas filters via `useRecommendationFilters`.
 - **SSE** — `useAlertEventStream` + notification invalidation.
 
+### Live quotes and charts (reducing API calls)
+
+Market data is expensive (Finnhub rate limits, server Redis TTL). The client uses **three complementary techniques** — not one silver bullet:
+
+| Technique | Where | What it does |
+|-----------|--------|----------------|
+| **Intersection Observer** | `LazyStockCard` (Market Ideas), `NewsFeed` (infinite scroll) | Fetches a stock quote **only when the card enters the viewport** (`freezeOnceVisible`). Off-screen cards make **zero** quote API calls. News loads the next page when a sentinel scrolls into view. |
+| **Smart polling** | `useStockQuote` + `useSmartPollingInterval` | Refetches the open chart quote every **5 minutes**, but **only while the tab is visible and focused** (`pageActivity.ts`). Background tabs pause polling — no wasted requests. |
+| **Simulated live ticks** | `useSimulatedLivePrice` + `mergeLivePriceIntoHistory` | Between API syncs, the UI applies tiny random micro-moves (~0.01–0.05% every 3s) so price text and the **chart’s last bar** feel live. Pauses when the tab is hidden. |
+
+**Watchlist chart flow:**
+
+1. `useStockHistory` loads OHLCV once per symbol/range (15 min stale time).
+2. `useStockQuote` polls the real price on the smart interval above.
+3. `useSimulatedLivePrice` drives display ticks from the last API price.
+4. `mergeLivePriceIntoHistory` writes the live/simulated price into today’s (or 1D last) bar so the area chart endpoint moves.
+5. `LiveStreamIndicator` shows a pulsing **“Live chart updates”** badge with **last API sync** time for transparency.
+
+This is **not** a WebSocket tick stream — it is **polling + client-side simulation** with honest sync labels. True exchange-grade realtime would need a streaming vendor or websocket feed (future option).
+
 ### UI patterns
 
 - Design tokens: `client/src/styles/tokens.css` (navy / green fintech palette).
@@ -520,15 +541,37 @@ npm run recommendations:refresh
 
 ## Tests and CI
 
-GitHub Actions (`.github/workflows/ci.yml`):
+Testing conventions (behavior over mock wiring): see [`.cursor/rules/testing.mdc`](.cursor/rules/testing.mdc).
 
-1. `npm ci`
-2. **Lint** — client and server (ESLint)
-3. **Test** — `@trading-signal/contracts`, server (Vitest)
-4. **Build** — full monorepo
-5. **Go test** — `alerts-runner`
+### Local scripts
 
-**Not in CI yet:** client unit/component tests (Vitest + RTL would be a natural addition).
+| Script | What runs |
+|--------|-----------|
+| `npm run test:unit` | contracts, server unit, client — **in parallel** |
+| `npm run test:go` | alerts-runner (requires Go locally; always runs in CI) |
+| `npm run test:integration` | server HTTP integration (Testcontainers; needs Docker) |
+| `npm run test` | unit (parallel) then integration (serial) |
+| `npm run test:e2e` | Playwright (Docker dev stack on `:5173`) |
+
+### GitHub Actions
+
+**CI** (`.github/workflows/ci.yml`) — parallel jobs on every push/PR:
+
+- `lint`, `test-contracts`, `test-server-unit`, `test-client`, `test-integration`, `test-go` run concurrently
+- `build` runs after all jobs pass
+
+**E2E** (`.github/workflows/e2e.yml`) — separate workflow:
+
+- Runs on push to `main`/`master`, PRs that touch app/e2e paths, or manual dispatch
+- Docker dev stack + Playwright
+
+**Phase 1 unit coverage** targets pure helpers: chart series, simulated live price, recommendation filters (client); request parsers and pagination (server/contracts); alert email template (alerts-runner).
+
+**Phase 2 integration coverage** (Testcontainers Postgres + Redis): auth signup/login/me, price alert CRUD limits, watchlist create + add stock. Requires Docker locally for `npm run test:integration`.
+
+**Phase 3 client coverage** (Vitest + React Testing Library): smart polling, intersection observer, validated API fetch, `usePriceAlerts`, and lazy quote loading in `LazyStockCard`.
+
+**Phase 4 E2E coverage** (Playwright against Docker dev stack): landing news, signup UI, watchlist chart, Market Ideas URL filters, price alerts. Market-data-dependent tests skip automatically when the server has no vendor API key.
 
 Before opening a PR locally:
 
@@ -536,7 +579,7 @@ Before opening a PR locally:
 npm run lint
 npm run test
 npm run build
-cd alerts-runner && go test ./...
+cd alerts-runner && go test ./...   # or: npm run test:go from repo root (requires Go)
 ```
 
 ---

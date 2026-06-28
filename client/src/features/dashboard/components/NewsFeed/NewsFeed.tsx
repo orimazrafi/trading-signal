@@ -54,7 +54,7 @@ function NewsFeed({
     ) : null
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="news-feed">
       {onRefresh ? (
         <div className="flex justify-end">
           <FeedRefreshButton onRefresh={onRefresh} isRefreshing={isRefreshing} />

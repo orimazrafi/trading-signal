@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorMessage } from '@/components/ErrorMessage'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { LiveStreamIndicator } from '@/components/LiveStreamIndicator'
 import { Panel } from '@/components/Panel'
 import { SimulatedLivePrice } from '@/components/SimulatedLivePrice'
 import {
@@ -26,6 +27,7 @@ import {
 } from '@/features/stocks/lib/chartOverlayVisibility'
 import { mergeLivePriceIntoHistory, sortHistoryPointsByTime, toAreaSeriesData } from '@/features/stocks/lib/chartSeries'
 import { useTheme } from '@/features/theme/ThemeProvider'
+import { useSimulatedLivePrice } from '@/hooks/useSimulatedLivePrice'
 import { StockChart } from '@/features/watchlists/components/StockChart'
 import type { ChartPriceClickPayload } from '@/features/watchlists/components/StockChart/types'
 import { STOCK_HISTORY_RANGES } from '@/lib/stockHistoryConstants'
@@ -54,19 +56,22 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
     error: historyError,
   } = useStockHistory(symbol, range)
 
+  const livePriceState = useSimulatedLivePrice(quote?.price ?? null, dataUpdatedAt ?? null)
+  const chartLivePrice = livePriceState.displayPrice ?? quote?.price
+
   const chartPoints = useMemo(() => {
     if (!history?.points) {
       return []
     }
 
-    if (!quote?.price) {
+    if (!chartLivePrice) {
       return sortHistoryPointsByTime(history.points)
     }
 
     return sortHistoryPointsByTime(
-      mergeLivePriceIntoHistory(history.points, quote.price, range),
+      mergeLivePriceIntoHistory(history.points, chartLivePrice, range),
     )
-  }, [history, quote, range])
+  }, [history, chartLivePrice, range])
 
   const chartSeries = useMemo(() => toAreaSeriesData(chartPoints), [chartPoints])
 
@@ -133,9 +138,10 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
   }
 
   return (
+    <div data-testid="stock-chart-panel">
     <Panel
       title={symbol}
-      description="Live quote and historical price chart"
+      description="Live chart with quote polling and simulated tick updates"
       variant="feed"
       className="min-h-[24rem] max-h-none flex-1"
       bodyClassName="flex flex-col gap-4"
@@ -152,7 +158,12 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
           <div>
             <dt className="text-muted-foreground">Live price</dt>
             <dd>
-              <SimulatedLivePrice price={quote.price} lastSyncedAtMs={dataUpdatedAt} />
+              <SimulatedLivePrice
+                price={quote.price}
+                lastSyncedAtMs={dataUpdatedAt}
+                liveState={livePriceState}
+                streamLabel="Live price updates"
+              />
             </dd>
           </div>
           <div>
@@ -207,9 +218,14 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
       </div>
 
       <div className="flex min-h-[16rem] flex-1 flex-col rounded-xl border border-border bg-muted/40 p-2">
-        <p className="px-1 pb-2 text-xs text-muted-foreground">
-          Click the chart to add a price alert at a specific level.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2">
+          <p className="text-xs text-muted-foreground">
+            Click the chart to add a price alert at a specific level.
+          </p>
+          {quote && dataUpdatedAt ? (
+            <LiveStreamIndicator lastSyncedAtMs={dataUpdatedAt} label="Live chart updates" />
+          ) : null}
+        </div>
         {historyError ? <ErrorMessage message={historyError} /> : null}
         {workerError ? <ErrorMessage message={workerError} /> : null}
 
@@ -253,6 +269,7 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
         />
       ) : null}
     </Panel>
+    </div>
   )
 }
 

@@ -35,6 +35,7 @@ function PriceAlertsPanel({
   const canAddMore = countActiveAlerts(alerts) < MAX_PRICE_ALERTS
 
   return (
+    <div data-testid="price-alert-list">
     <AsyncListPanel
       title="Price alerts"
       description={`Configure up to ${MAX_PRICE_ALERTS} active symbols. Checked every 5 minutes during US market hours. After an alert fires, reset it from Alert history.`}
@@ -67,6 +68,7 @@ function PriceAlertsPanel({
         />
       )}
     />
+    </div>
   )
 }
 

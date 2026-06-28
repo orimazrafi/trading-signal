@@ -1,0 +1,60 @@
+---
+description: Unit, integration, and E2E test standards — behavior over mocks
+globs: "**/*.test.{ts,tsx},**/*.integration.test.ts,**/*_test.go,e2e/**"
+alwaysApply: false
+---
+
+# Testing standards
+
+## Pyramid (this repo)
+
+| Layer | Tool | Where | Focus |
+|-------|------|-------|-------|
+| Unit | Vitest | `lib/`, parsers, contracts | Pure logic, cheap |
+| HTTP integration | Vitest + Testcontainers | `server/src/test/integration/` | Golden-path API + real Postgres/Redis |
+| UI unit | Vitest + RTL | `client/**/*.test.tsx` | Hook/component **behavior** only |
+| E2E | Playwright | `e2e/tests/` | Critical user journeys (Docker stack) |
+
+Run: `npm run test` (unit + server integration), `npm run test:e2e` (Playwright).
+
+## Must — test behavior, not wiring
+
+Assert what **callers and users** see: return values, thrown errors, rendered text/state, HTTP status/body.
+
+Do **not** assert implementation details such as:
+
+- `toHaveBeenCalledTimes`, `toHaveBeenCalledWith`
+- Mock call order or argument shapes
+- Internal cache invalidation / refetch counts
+
+```ts
+// ❌ wiring
+expect(fetchPriceAlerts).toHaveBeenCalledTimes(1)
+expect(api.get).toHaveBeenCalledWith('/auth/me', undefined)
+
+// ✅ behavior
+expect(result.current.alerts).toEqual([sampleAlert])
+expect(result.user.email).toBe('user@example.com')
+```
+
+Mocks are for **isolating I/O** (HTTP, DB, vendors), not for proving the code called them.
+
+## Prefer
+
+- **Server:** parsers and rules in unit tests; few serial integration specs per domain (auth, alerts, watchlists). Use real repositories/factories to seed DB data in integration tests.
+- **Client:** pure `lib/` tests in `node`; hooks/components in `jsdom`. Reuse **contracts schemas** in API tests — avoid ad-hoc `z.object()`. Prefer **MSW** for mocking network requests.
+- **Selectors:** strict hierarchy — 1. `getByRole`, 2. `getByLabelText` / `getByPlaceholderText`, 3. `getByText`. Add `data-testid` only when needed for E2E stability.
+- **E2E:** API signup for auth setup, unique emails per run, `test.skip` when market-data keys are missing; route mocks for chart quotes, not for auth.
+- **Time:** use Vitest fake timers (`vi.useFakeTimers()`) for debounces, intervals, or other time-sensitive logic.
+
+## Avoid
+
+- Testing thin glue (fetch wrapper → axios) beyond parse success/failure.
+- Duplicating the same user journey in RTL **and** E2E — pick one layer.
+- Tests that break on refactors with no behavior change.
+- Coverage gates or tests that only assert mocks fired.
+
+## Go (alerts-runner)
+
+- Table-driven tests for pure helpers and email templates.
+- No external APIs in unit tests.

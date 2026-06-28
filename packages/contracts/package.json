@@ -24,6 +24,10 @@
       "types": "./dist/auth.d.ts",
       "import": "./dist/auth.js"
     },
+    "./auth.js": {
+      "types": "./dist/auth.d.ts",
+      "import": "./dist/auth.js"
+    },
     "./parseAlertNotification": {
       "types": "./dist/alert.d.ts",
       "import": "./dist/alert.js"

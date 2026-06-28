@@ -5,10 +5,13 @@ on:
     branches: [main, master]
   pull_request:
 
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
+jobs:
+  lint:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,26 +25,118 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint client
-        run: npm run lint -w client
+      - name: Lint
+        run: npm run lint
 
-      - name: Lint server
-        run: npm run lint -w server
+  test-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Test contracts
-        run: npm run test -w @trading-signal/contracts
+        run: npm run test:contracts
 
-      - name: Test server
-        run: npm run test -w server
+  test-server-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Build monorepo
-        run: npm run build
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
 
-      - name: Test alerts-runner
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test server unit
+        run: npm run test:server
+
+  test-client:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test client
+        run: npm run test:client
+
+  test-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test server integration
+        run: npm run test:integration
+
+  test-go:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: "1.22"
+          cache-dependency-path: alerts-runner/go.sum
 
       - name: Run Go tests
         working-directory: alerts-runner
         run: go test ./...
+
+  build:
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - test-contracts
+      - test-server-unit
+      - test-client
+      - test-integration
+      - test-go
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build monorepo
+        run: npm run build
