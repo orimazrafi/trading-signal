@@ -93,6 +93,8 @@ jobs:
           script: |
             set -euo pipefail
             cd ~/trading-signal
+            git fetch origin main
+            git reset --hard origin/main
             TAG="${{ needs.build-and-push.outputs.image_tag }}"
             export IMAGE_TAG="${TAG}"
             export GHCR_IMAGE_PREFIX="${{ env.REGISTRY }}/${{ github.repository }}"
