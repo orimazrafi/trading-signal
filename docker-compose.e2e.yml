@@ -1,0 +1,5 @@
+# E2E overrides — disables simulated live ticks so Playwright assertions stay stable.
+services:
+  client:
+    environment:
+      VITE_SIMULATED_LIVE: "false"

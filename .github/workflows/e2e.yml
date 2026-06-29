@@ -43,7 +43,7 @@ jobs:
         run: cp server/.env.example server/.env
 
       - name: Start dev stack
-        run: docker compose -f docker-compose.dev.yml up -d --build
+        run: docker compose -f docker-compose.dev.yml -f docker-compose.e2e.yml up -d --build
 
       - name: Run E2E tests
         run: npm run test:e2e
@@ -52,4 +52,4 @@ jobs:
 
       - name: Stop dev stack
         if: always()
-        run: docker compose -f docker-compose.dev.yml down -v
+        run: docker compose -f docker-compose.dev.yml -f docker-compose.e2e.yml down -v

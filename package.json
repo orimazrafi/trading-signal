@@ -8,6 +8,7 @@
   ],
   "devDependencies": {
     "@playwright/test": "^1.55.0",
+    "@vitest/coverage-v8": "^4.1.9",
     "npm-run-all": "^4.1.5"
   },
   "overrides": {
@@ -24,6 +25,11 @@
     "test:contracts": "npm run test -w @trading-signal/contracts",
     "test:server": "npm run test -w server",
     "test:client": "npm run test -w client",
+    "test:coverage:contracts": "npm run test:coverage -w @trading-signal/contracts",
+    "test:coverage:server": "npm run test:coverage -w server",
+    "test:coverage:client": "npm run test:coverage -w client",
+    "test:coverage": "npm-run-all --sequential test:coverage:contracts test:coverage:server test:coverage:client",
+    "coverage:summary": "node scripts/coverage-summary.mjs",
     "test:integration": "npm run test:integration -w server",
     "test:unit": "npm-run-all --parallel test:contracts test:server test:client",
     "test": "npm run test:unit && npm run test:integration",

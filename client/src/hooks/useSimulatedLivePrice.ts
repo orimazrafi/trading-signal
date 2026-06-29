@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { isSimulatedLiveEnabled } from '@/lib/isSimulatedLiveEnabled'
 import { isPageActive, subscribePageActivity } from '@/lib/pageActivity'
 import {
   applySimulatedMicroFluctuation,
@@ -22,6 +23,10 @@ export function useSimulatedLivePrice(basePrice: number | null, lastSyncedAtMs: 
 
   useEffect(() => {
     if (basePrice === null || !Number.isFinite(basePrice)) {
+      return
+    }
+
+    if (!isSimulatedLiveEnabled()) {
       return
     }
 
