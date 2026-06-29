@@ -22,7 +22,7 @@ test.describe('Watchlist', () => {
 
     await expect(page).toHaveURL(/\/watchlist\/AAPL/)
     await expect(page.getByTestId('stock-chart-panel')).toBeVisible()
-    await expect(page.getByText('Live chart with quote polling and simulated tick updates')).toBeVisible()
+    await expect(page.getByText('May differ from actual market price')).toBeVisible()
     await expect(page.getByText('Apple Inc.')).toBeVisible()
   })
 

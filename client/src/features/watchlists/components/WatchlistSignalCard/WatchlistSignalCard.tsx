@@ -1,9 +1,9 @@
 import { SignalCard } from '@/features/dashboard/components/SignalCard'
-import { useStockQuote } from '@/features/stocks/hooks/useStockQuote'
+import { LazyStockCard } from '@/features/dashboard/components/LazyStockCard'
 import { computeLiveChangePercent } from '@/features/watchlists/lib/liveQuoteChange'
 import type { WatchlistSignalCardProps } from './types'
 
-/** Watchlist row that syncs price with the live quote cache and smart polling. */
+/** Watchlist row that lazy-loads quotes and syncs price with smart polling when visible. */
 function WatchlistSignalCard({
   signal,
   isSelected = false,
@@ -11,23 +11,30 @@ function WatchlistSignalCard({
   onRemove,
   removing = false,
 }: WatchlistSignalCardProps) {
-  const { quote, dataUpdatedAt } = useStockQuote(signal.symbol)
-  const livePrice = quote?.price ?? signal.price
-  const liveChangePercent = quote ? computeLiveChangePercent(signal.price, quote.price) : signal.changePercent
-
   return (
-    <SignalCard
-      signal={{
-        ...signal,
-        price: livePrice,
-        changePercent: liveChangePercent,
+    <LazyStockCard symbol={signal.symbol} enablePolling>
+      {({ quote, lastSyncedAtMs }) => {
+        const livePrice = quote?.price ?? signal.price
+        const liveChangePercent = quote
+          ? computeLiveChangePercent(signal.price, quote.price)
+          : signal.changePercent
+
+        return (
+          <SignalCard
+            signal={{
+              ...signal,
+              price: livePrice,
+              changePercent: liveChangePercent,
+            }}
+            isSelected={isSelected}
+            onSelect={onSelect}
+            onRemove={onRemove}
+            removing={removing}
+            liveQuoteSyncedAtMs={quote ? lastSyncedAtMs : null}
+          />
+        )
       }}
-      isSelected={isSelected}
-      onSelect={onSelect}
-      onRemove={onRemove}
-      removing={removing}
-      liveQuoteSyncedAtMs={quote ? dataUpdatedAt : null}
-    />
+    </LazyStockCard>
   )
 }
 

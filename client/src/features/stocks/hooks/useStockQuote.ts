@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/api/queryKeys'
-import { fetchStockQuote } from '@/api/stocks'
 import type { UseStockQuoteOptions } from '@/features/stocks/types'
 import { useSmartPollingInterval } from '@/hooks/useSmartPolling'
+import { fetchStockQuoteBatched } from '@/lib/quoteRequestBatcher'
 import {
   marketDataQueryOptions,
   STOCK_QUOTE_GC_TIME_MS,
@@ -22,7 +22,7 @@ export function useStockQuote(symbol: string | null, options: UseStockQuoteOptio
 
   const quoteQuery = useQuery({
     queryKey: queryKeys.stocks.quote(symbol ?? ''),
-    queryFn: ({ signal }) => fetchStockQuote(symbol!, { signal }),
+    queryFn: ({ signal }) => fetchStockQuoteBatched(symbol!, { signal }),
     enabled: Boolean(symbol),
     staleTime: STOCK_QUOTE_STALE_TIME_MS,
     gcTime: STOCK_QUOTE_GC_TIME_MS,

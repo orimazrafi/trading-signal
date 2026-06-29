@@ -7,7 +7,10 @@ import {
   formatChangePercent,
   signalActionBadgeVariant,
 } from '@/lib/signalUtils'
-import { formatMinutesSinceSync } from '@/lib/simulatedLivePrice'
+import {
+  DISPLAY_PRICE_DISCLAIMER,
+  formatPriceSyncLabel,
+} from '@/lib/simulatedLivePrice'
 import type { SignalCardProps } from './types'
 
 /** Renders a saved watchlist stock row, optionally selectable. */
@@ -68,7 +71,7 @@ function SignalCard({
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             {liveQuoteSyncedAtMs
-              ? `Live quote · synced ${formatMinutesSinceSync(liveQuoteSyncedAtMs)} min ago`
+              ? `${formatPriceSyncLabel(liveQuoteSyncedAtMs)} · ${DISPLAY_PRICE_DISCLAIMER}`
               : 'Saved at snapshot · tap to view chart'}
           </p>
         </div>

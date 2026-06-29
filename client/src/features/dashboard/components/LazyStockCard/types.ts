@@ -12,4 +12,6 @@ export type LazyStockCardProps = {
   symbol: string
   children: (props: LazyStockCardRenderProps) => ReactNode
   className?: string
+  /** When true, refetches the quote on the smart polling interval after the card is visible. */
+  enablePolling?: boolean
 }

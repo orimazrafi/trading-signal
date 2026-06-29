@@ -141,7 +141,7 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
     <div data-testid="stock-chart-panel">
     <Panel
       title={symbol}
-      description="Live chart with quote polling and simulated tick updates"
+      description="Chart and indicative price (polled from API, with optional UI micro-moves)"
       variant="feed"
       className="min-h-[24rem] max-h-none flex-1"
       bodyClassName="flex flex-col gap-4"
@@ -156,13 +156,12 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
             <dd className="font-medium text-foreground">{quote.name}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">Live price</dt>
+            <dt className="text-muted-foreground">Price</dt>
             <dd>
               <SimulatedLivePrice
                 price={quote.price}
                 lastSyncedAtMs={dataUpdatedAt}
                 liveState={livePriceState}
-                streamLabel="Live price updates"
               />
             </dd>
           </div>
@@ -223,7 +222,7 @@ function StockChartPanel({ symbol }: StockChartPanelProps) {
             Click the chart to add a price alert at a specific level.
           </p>
           {quote && dataUpdatedAt ? (
-            <LiveStreamIndicator lastSyncedAtMs={dataUpdatedAt} label="Live chart updates" />
+            <LiveStreamIndicator lastSyncedAtMs={dataUpdatedAt} />
           ) : null}
         </div>
         {historyError ? <ErrorMessage message={historyError} /> : null}

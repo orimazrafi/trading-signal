@@ -97,3 +97,29 @@ export async function getStockQuote(symbol: string): Promise<StockQuote> {
     throw toStockProviderError(error, `quote for ${normalizedSymbol}`);
   }
 }
+
+/** Returns quotes for many symbols, skipping symbols that fail provider lookup. */
+export async function getStockQuotes(symbols: readonly string[]): Promise<StockQuote[]> {
+  const uniqueSymbols = [
+    ...new Set(
+      symbols
+        .map((symbol) => symbol.trim().toUpperCase())
+        .filter((symbol) => symbol.length > 0),
+    ),
+  ];
+
+  if (uniqueSymbols.length === 0) {
+    return [];
+  }
+
+  const settled = await Promise.allSettled(uniqueSymbols.map((symbol) => getStockQuote(symbol)));
+
+  const quotes: StockQuote[] = [];
+  for (const result of settled) {
+    if (result.status === "fulfilled") {
+      quotes.push(result.value);
+    }
+  }
+
+  return quotes;
+}

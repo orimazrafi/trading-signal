@@ -1,8 +1,7 @@
 import { buildPaginationMeta } from "@trading-signal/contracts/pagination";
-import { HTTP_STATUS, type HttpStatusCode } from "@trading-signal/contracts/httpStatus";
-import type { Signal, Watchlist, WatchlistItem } from "@prisma/client";
-import { Prisma } from "@prisma/client";
+import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import { DEFAULT_WATCHLIST_NAME } from "../lib/watchlistConstants.js";
+import { WatchlistError } from "../lib/watchlistError.js";
 import type { PaginationQuery } from "../lib/parsePaginationQuery.js";
 import {
   addStockToWatchlist,
@@ -18,42 +17,11 @@ import {
   findLatestSignalByUserAndSymbol,
   findSignalByIdAndUser,
 } from "../repositories/signal.repository.js";
+import type { SignalRecord } from "../types/signal.js";
+import type { WatchlistStock, WatchlistWithStocks } from "../types/watchlist.js";
 import { getCachedStockQuote, searchStock } from "./stock.service.js";
 
-export class WatchlistError extends Error {
-  constructor(
-    message: string,
-    readonly statusCode: HttpStatusCode = HTTP_STATUS.BAD_REQUEST,
-  ) {
-    super(message);
-    this.name = "WatchlistError";
-  }
-}
-
-type WatchlistWithItems = Watchlist & {
-  items: Array<
-    WatchlistItem & {
-      signal: Signal;
-    }
-  >;
-};
-
-type WatchlistStockView = {
-  signalId: string;
-  symbol: string;
-  recommendation: string;
-  price: number;
-  previousPrice: number;
-  changePercent: number;
-  createdAt: Date;
-};
-
-export type WatchlistView = {
-  id: string;
-  name: string;
-  createdAt: Date;
-  stocks: WatchlistStockView[];
-};
+export { WatchlistError } from "../lib/watchlistError.js";
 
 /** Normalizes and validates a custom view name. */
 function normalizeWatchlistName(name: string): string {
@@ -81,26 +49,11 @@ function normalizeSymbol(symbol: string): string {
   return normalized;
 }
 
-/** Maps a watchlist row to an API-friendly view payload. */
-function mapWatchlistView(watchlist: WatchlistWithItems): WatchlistView {
-  return {
-    id: watchlist.id,
-    name: watchlist.name,
-    createdAt: watchlist.createdAt,
-    stocks: watchlist.items.map((item) => ({
-      signalId: item.signal.id,
-      symbol: item.signal.symbol,
-      recommendation: item.signal.recommendation,
-      price: item.signal.price,
-      previousPrice: item.signal.previousPrice,
-      changePercent: item.signal.changePercent,
-      createdAt: item.signal.createdAt,
-    })),
-  };
-}
-
 /** Ensures the watchlist exists and belongs to the user. */
-async function assertWatchlistOwned(userId: string, watchlistId: string): Promise<WatchlistWithItems> {
+async function assertWatchlistOwned(
+  userId: string,
+  watchlistId: string,
+): Promise<WatchlistWithStocks> {
   const watchlist = await findWatchlistByIdAndUser(watchlistId, userId);
 
   if (!watchlist) {
@@ -111,7 +64,7 @@ async function assertWatchlistOwned(userId: string, watchlistId: string): Promis
 }
 
 /** Reuses a cached signal or creates a fresh search signal for the symbol. */
-async function resolveSignalForSymbol(userId: string, symbol: string): Promise<Signal> {
+async function resolveSignalForSymbol(userId: string, symbol: string): Promise<SignalRecord> {
   const cachedQuote = await getCachedStockQuote(symbol);
   const existingSignal = await findLatestSignalByUserAndSymbol(userId, symbol);
 
@@ -146,19 +99,9 @@ export async function getWatchlistSymbolsForUser(userId: string): Promise<string
 }
 
 /** Creates a new custom view for the authenticated user. */
-export async function createWatchlistView(userId: string, name: string): Promise<WatchlistView> {
+export async function createWatchlistView(userId: string, name: string): Promise<WatchlistWithStocks> {
   const normalizedName = normalizeWatchlistName(name);
-
-  try {
-    const watchlist = await createWatchlist(userId, normalizedName);
-    return mapWatchlistView(watchlist);
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new WatchlistError("A watchlist with this name already exists", HTTP_STATUS.CONFLICT);
-    }
-
-    throw error;
-  }
+  return createWatchlist(userId, normalizedName);
 }
 
 /** Returns paginated custom views for the authenticated user. */
@@ -170,15 +113,14 @@ export async function getWatchlistsPageForUser(userId: string, pagination: Pagin
   );
 
   return {
-    watchlists: watchlists.map(mapWatchlistView),
+    watchlists,
     ...buildPaginationMeta(pagination.page, pagination.limit, total),
   };
 }
 
 /** Returns all custom views for the authenticated user. */
-export async function getWatchlistsForUser(userId: string): Promise<WatchlistView[]> {
-  const watchlists = await getUserWatchlists(userId);
-  return watchlists.map(mapWatchlistView);
+export async function getWatchlistsForUser(userId: string): Promise<WatchlistWithStocks[]> {
+  return getUserWatchlists(userId);
 }
 
 /** Saves a searched stock signal into a user-owned custom view. */
@@ -186,7 +128,7 @@ export async function saveStockToView(
   userId: string,
   watchlistId: string,
   symbol: string,
-): Promise<WatchlistStockView> {
+): Promise<WatchlistStock> {
   await assertWatchlistOwned(userId, watchlistId);
 
   const normalizedSymbol = normalizeSymbol(symbol);
@@ -205,17 +147,7 @@ export async function saveStockToView(
     };
   }
 
-  const item = await addStockToWatchlist(watchlistId, signal.id);
-
-  return {
-    signalId: item.signal.id,
-    symbol: item.signal.symbol,
-    recommendation: item.signal.recommendation,
-    price: item.signal.price,
-    previousPrice: item.signal.previousPrice,
-    changePercent: item.signal.changePercent,
-    createdAt: item.signal.createdAt,
-  };
+  return addStockToWatchlist(watchlistId, signal.id);
 }
 
 /** Removes a linked stock signal from a user-owned custom view. */

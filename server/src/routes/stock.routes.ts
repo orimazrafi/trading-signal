@@ -4,6 +4,7 @@ import { stockQuoteRateLimiter } from "../lib/rateLimiters.js";
 import {
   getStockBySymbol,
   getStockHistoryBySymbol,
+  postStockQuotes,
   searchStockBySymbol,
 } from "../controllers/stock.controller.js";
 
@@ -17,4 +18,5 @@ stockRoutes.get(
   getStockHistoryBySymbol,
 );
 stockRoutes.get("/stock/:symbol", stockQuoteRateLimiter, requireAuth, getStockBySymbol);
+stockRoutes.post("/stocks/quotes", stockQuoteRateLimiter, requireAuth, postStockQuotes);
 stockRoutes.get("/stocks/:symbol/search", requireAuth, searchStockBySymbol);

@@ -6,8 +6,10 @@ import { sendStockErrorResponse } from "../lib/stockHttpErrors.js";
 import { getStockHistory } from "../services/stock-history.service.js";
 import {
   getStockQuote,
+  getStockQuotes,
   searchStock,
 } from "../services/stock.service.js";
+import { parseStockQuotesBody } from "../lib/parseStockQuotesBody/index.js";
 
 /** Returns historical OHLCV bars for the requested symbol. */
 export async function getStockHistoryBySymbol(req: Request, res: Response): Promise<void> {
@@ -38,6 +40,23 @@ export async function getStockBySymbol(req: Request, res: Response): Promise<voi
   try {
     const quote = await getStockQuote(symbol);
     res.json(quote);
+  } catch (error) {
+    sendStockErrorResponse(res, error, req.path);
+  }
+}
+
+/** Returns stock quotes for multiple symbols in one request. */
+export async function postStockQuotes(req: Request, res: Response): Promise<void> {
+  const { symbols } = parseStockQuotesBody(req.body);
+
+  if (symbols.length === 0) {
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ error: "At least one stock symbol is required" });
+    return;
+  }
+
+  try {
+    const quotes = await getStockQuotes(symbols);
+    res.json({ quotes });
   } catch (error) {
     sendStockErrorResponse(res, error, req.path);
   }

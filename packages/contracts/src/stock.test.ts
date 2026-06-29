@@ -5,6 +5,7 @@ import {
   parseStockHistory,
   parseStockHistoryPoint,
   parseStockQuote,
+  parseStockQuotesBatchResponse,
   STOCK_HISTORY_RANGES,
 } from "./stock.js";
 
@@ -69,5 +70,22 @@ describe("stock parsers", () => {
 
     expect(result?.signalId).toBe("sig-1");
     expect(result?.quote.symbol).toBe("AAPL");
+  });
+
+  it("parses a batch stock quotes response", () => {
+    const response = parseStockQuotesBatchResponse({
+      quotes: [
+        {
+          symbol: "AAPL",
+          name: "Apple",
+          price: 190,
+          peRatio: 28,
+          sector: "Technology",
+        },
+      ],
+    });
+
+    expect(response?.quotes).toHaveLength(1);
+    expect(response?.quotes[0]?.symbol).toBe("AAPL");
   });
 });

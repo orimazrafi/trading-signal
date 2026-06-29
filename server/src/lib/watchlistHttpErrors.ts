@@ -1,7 +1,7 @@
 import { HTTP_STATUS } from "@trading-signal/contracts/httpStatus";
 import type { Response } from "express";
 import { log } from "./logger/index.js";
-import { WatchlistError } from "../services/watchlist.service.js";
+import { WatchlistError } from "./watchlistError.js";
 
 /** Maps watchlist service errors to HTTP responses. */
 export function sendWatchlistErrorResponse(res: Response, error: unknown, path: string): void {

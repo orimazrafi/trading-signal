@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   applySimulatedMicroFluctuation,
   formatMinutesSinceSync,
+  formatPriceSyncLabel,
   SIMULATED_LIVE_MAX_FLUCTUATION_PERCENT,
   SIMULATED_LIVE_MIN_FLUCTUATION_PERCENT,
 } from './simulatedLivePrice'
@@ -29,5 +30,14 @@ describe('formatMinutesSinceSync', () => {
 
   it('returns zero for invalid timestamps', () => {
     expect(formatMinutesSinceSync(0)).toBe(0)
+  })
+})
+
+describe('formatPriceSyncLabel', () => {
+  it('formats minutes since last API sync', () => {
+    const nowMs = Date.UTC(2026, 5, 24, 12, 0, 0)
+    const lastSyncedAtMs = nowMs - 125_000
+
+    expect(formatPriceSyncLabel(lastSyncedAtMs, nowMs)).toBe('Synced 2 mins ago')
   })
 })

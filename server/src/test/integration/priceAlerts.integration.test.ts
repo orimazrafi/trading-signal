@@ -23,9 +23,20 @@ describe("price alerts HTTP integration", () => {
     await Promise.all([prisma.$disconnect(), redis.quit()]);
   });
 
-  it("creates alerts, lists them with pagination meta, and rejects a fourth active alert", async () => {
+  it("creates alerts, lists them with pagination meta, and rejects alerts beyond the per-user limit", async () => {
     const agent = await signupAuthenticatedAgent(app, API_BASE_PATH);
-    const symbols = ["AAPL", "MSFT", "TSLA"];
+    const symbols = [
+      "AAPL",
+      "MSFT",
+      "TSLA",
+      "NVDA",
+      "GOOGL",
+      "AMZN",
+      "META",
+      "JPM",
+      "XOM",
+      "NFLX",
+    ];
 
     for (const symbol of symbols) {
       const createResponse = await agent
@@ -56,7 +67,7 @@ describe("price alerts HTTP integration", () => {
     const conflictResponse = await agent
       .post(`${API_BASE_PATH}/price-alerts`)
       .send({
-        symbol: "NVDA",
+        symbol: "AMD",
         thresholdPercent: 2,
         emailEnabled: false,
         baselinePrice: 100,

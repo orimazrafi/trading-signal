@@ -1,7 +1,8 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { API_BASE_PATH } from '@trading-signal/contracts/apiPath'
 import { http, HttpResponse } from 'msw'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { QUOTE_BATCH_DEBOUNCE_MS } from '@/lib/quoteRequestBatcher'
 import { mswServer } from '@/test/msw/server'
 import {
   getMockIntersectionObservers,
@@ -20,13 +21,17 @@ const aaplQuote = {
 
 describe('LazyStockCard', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
     resetMockIntersectionObservers()
     mswServer.use(
-      http.get(`${API_BASE_PATH}/stock/AAPL`, () => HttpResponse.json(aaplQuote)),
+      http.post(`${API_BASE_PATH}/stocks/quotes`, () =>
+        HttpResponse.json({ quotes: [aaplQuote] }),
+      ),
     )
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     cleanup()
     resetMockIntersectionObservers()
   })
@@ -50,6 +55,8 @@ describe('LazyStockCard', () => {
 
     const observer = getMockIntersectionObservers()[0]
     observer.trigger(true, screen.getByLabelText('card status'))
+
+    await vi.advanceTimersByTimeAsync(QUOTE_BATCH_DEBOUNCE_MS)
 
     await waitFor(() => {
       expect(screen.getByLabelText('card status').textContent).toBe('true:false:190.25')

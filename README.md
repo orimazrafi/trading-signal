@@ -32,7 +32,7 @@ A personal trading dashboard for watchlists, market news, investment ideas (Mark
 | **Market News** | Market headlines (Finnhub + background ingest) |
 | **Market Ideas** | P/E and sector-based recommendations with URL-synced filters |
 | **Watchlist** | Custom views, symbol search, price chart |
-| **Price Alerts** | Up to 3 active alerts, email notifications, history, real-time SSE toasts |
+| **Price Alerts** | Up to 10 active alerts, email notifications, history, real-time SSE toasts |
 | **Landing** | Public page with news (no login required) |
 
 **Authentication:** email/password and Google OAuth (JWT in an httpOnly cookie).
@@ -330,6 +330,7 @@ Paginated today: **price alerts**, **alert notifications**, **watchlists**.
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/stock/:symbol` | Live quote (auth) |
+| POST | `/stocks/quotes` | Batch live quotes `{ symbols: string[] }` (auth) |
 | GET | `/stock/:symbol/history?range=` | OHLCV for chart (auth) |
 | GET | `/stocks/:symbol/search` | Search + persist Signal (auth) |
 
@@ -347,7 +348,7 @@ Paginated today: **price alerts**, **alert notifications**, **watchlists**.
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/` | List alerts (paginated) |
-| POST | `/` | Create (max 3 active per user) |
+| POST | `/` | Create (max 10 active per user) |
 | PATCH | `/:id` | Update threshold, enabled, email |
 | DELETE | `/:id` | Delete |
 | GET | `/notifications` | History (paginated) |
@@ -403,7 +404,8 @@ Market data is expensive (Finnhub rate limits, server Redis TTL). The client use
 
 | Technique | Where | What it does |
 |-----------|--------|----------------|
-| **Intersection Observer** | `LazyStockCard` (Market Ideas), `NewsFeed` (infinite scroll) | Fetches a stock quote **only when the card enters the viewport** (`freezeOnceVisible`). Off-screen cards make **zero** quote API calls. News loads the next page when a sentinel scrolls into view. |
+| **Intersection Observer** | `LazyStockCard` (Market Ideas, Watchlist), `NewsFeed` (infinite scroll) | Fetches a stock quote **only when the card enters the viewport** (`freezeOnceVisible`). Off-screen cards make **zero** quote API calls. News loads the next page when a sentinel scrolls into view. |
+| **Quote batching** | `quoteRequestBatcher` + `POST /stocks/quotes` | Coalesces per-symbol quote hooks into one debounced HTTP batch (~75ms) instead of N parallel `GET /stock/:symbol` calls. |
 | **Smart polling** | `useStockQuote` + `useSmartPollingInterval` | Refetches the open chart quote every **5 minutes**, but **only while the tab is visible and focused** (`pageActivity.ts`). Background tabs pause polling — no wasted requests. |
 | **Simulated live ticks** | `useSimulatedLivePrice` + `mergeLivePriceIntoHistory` | Between API syncs, the UI applies tiny random micro-moves (~0.01–0.05% every 3s) so price text and the **chart’s last bar** feel live. Pauses when the tab is hidden. |
 
@@ -413,7 +415,7 @@ Market data is expensive (Finnhub rate limits, server Redis TTL). The client use
 2. `useStockQuote` polls the real price on the smart interval above.
 3. `useSimulatedLivePrice` drives display ticks from the last API price.
 4. `mergeLivePriceIntoHistory` writes the live/simulated price into today’s (or 1D last) bar so the area chart endpoint moves.
-5. `LiveStreamIndicator` shows a pulsing **“Live chart updates”** badge with **last API sync** time for transparency.
+5. `LiveStreamIndicator` shows **last API sync** time; simulated prices also show **“May differ from actual market price”** beside the value.
 
 This is **not** a WebSocket tick stream — it is **polling + client-side simulation** with honest sync labels. True exchange-grade realtime would need a streaming vendor or websocket feed (future option).
 
@@ -470,7 +472,7 @@ httpOnly cookie (not localStorage) to reduce XSS token exposure.
 
 ### 8. Product rules
 
-- Maximum **3** active price alerts per user.
+- Maximum **10** active price alerts per user.
 - Triggered alert → **disabled**; re-arm from alert history.
 
 ### 9. Alert emails

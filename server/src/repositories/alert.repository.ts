@@ -78,22 +78,26 @@ export async function listUserPriceAlerts(userId: string): Promise<PriceAlert[]>
 export async function findUserPriceAlertById(
   userId: string,
   alertId: string,
-): Promise<PriceAlertRecord | null> {
-  return prisma.priceAlert.findFirst({
+): Promise<PriceAlert | null> {
+  const alert = await prisma.priceAlert.findFirst({
     where: { id: alertId, userId },
   });
+
+  return alert ? mapPriceAlert(alert) : null;
 }
 
 /** Finds a price alert by user and symbol. */
 export async function findUserPriceAlertBySymbol(
   userId: string,
   symbol: string,
-): Promise<PriceAlertRecord | null> {
-  return prisma.priceAlert.findUnique({
+): Promise<PriceAlert | null> {
+  const alert = await prisma.priceAlert.findUnique({
     where: {
       userId_symbol: { userId, symbol },
     },
   });
+
+  return alert ? mapPriceAlert(alert) : null;
 }
 
 /** Creates a new price alert for a user. */

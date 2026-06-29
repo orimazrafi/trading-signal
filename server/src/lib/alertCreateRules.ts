@@ -3,7 +3,7 @@ import { MAX_ALERTS_PER_USER } from "./alertConstants.js";
 import { AlertError } from "./alertError.js";
 import { normalizeAlertSymbol, normalizeAlertBaselinePrice, normalizeAlertThresholdPercent } from "./alertInput.js";
 import { isActivePriceAlert } from "./priceAlertStatus.js";
-import type { PriceAlertRecord } from "../types/alertDb.js";
+import type { PriceAlert } from "../types/alert.js";
 
 export type CreateAlertServiceInput = {
   symbol: string;
@@ -39,7 +39,7 @@ export function parseCreateAlertFields(input: CreateAlertServiceInput): Validate
 }
 
 /** Throws when an active alert already exists for the symbol. */
-export function assertNoActiveAlertForSymbol(existing: PriceAlertRecord): void {
+export function assertNoActiveAlertForSymbol(existing: PriceAlert): void {
   if (isActivePriceAlert(existing)) {
     throw new AlertError("An alert already exists for this symbol", HTTP_STATUS.CONFLICT);
   }

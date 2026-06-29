@@ -3,7 +3,12 @@ import { useIntersectionObserver } from '@/hooks/useIntersectionObserver'
 import type { LazyStockCardProps, LazyStockCardRenderProps } from './types'
 
 /** Delays per-symbol quote fetching until the card scrolls into the viewport. */
-function LazyStockCard({ symbol, children, className }: LazyStockCardProps) {
+function LazyStockCard({
+  symbol,
+  children,
+  className,
+  enablePolling = false,
+}: LazyStockCardProps) {
   const { ref, isIntersecting } = useIntersectionObserver({
     rootMargin: '120px 0px',
     freezeOnceVisible: true,
@@ -11,7 +16,7 @@ function LazyStockCard({ symbol, children, className }: LazyStockCardProps) {
 
   const shouldFetch = isIntersecting
   const { quote, isLoading, dataUpdatedAt } = useStockQuote(shouldFetch ? symbol : null, {
-    enablePolling: false,
+    enablePolling: enablePolling && shouldFetch,
   })
 
   const renderProps: LazyStockCardRenderProps = {

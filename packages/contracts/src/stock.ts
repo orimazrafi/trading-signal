@@ -46,6 +46,17 @@ export const searchStockResultSchema = z.object({
   signalId: z.string(),
 });
 
+/** Maximum symbols accepted by POST /api/stocks/quotes per request. */
+export const MAX_STOCK_QUOTES_BATCH_SIZE = 50;
+
+export const stockQuotesBatchBodySchema = z.object({
+  symbols: z.array(z.string()).max(MAX_STOCK_QUOTES_BATCH_SIZE),
+});
+
+export const stockQuotesBatchResponseSchema = z.object({
+  quotes: z.array(stockQuoteSchema),
+});
+
 /** Live or cached stock quote from GET /api/stock/:symbol. */
 export type StockQuote = z.infer<typeof stockQuoteSchema>;
 
@@ -57,6 +68,12 @@ export type StockHistory = z.infer<typeof stockHistorySchema>;
 
 /** Response from GET /api/stocks/:symbol/search. */
 export type SearchStockResult = z.infer<typeof searchStockResultSchema>;
+
+/** Request body for POST /api/stocks/quotes. */
+export type StockQuotesBatchBody = z.infer<typeof stockQuotesBatchBodySchema>;
+
+/** Response from POST /api/stocks/quotes. */
+export type StockQuotesBatchResponse = z.infer<typeof stockQuotesBatchResponseSchema>;
 
 /** Validates a parsed JSON value as a stock quote. */
 export function parseStockQuote(value: unknown): StockQuote | null {
@@ -76,4 +93,9 @@ export function parseStockHistory(value: unknown): StockHistory | null {
 /** Validates a parsed JSON value as a stock search result. */
 export function parseSearchStockResult(value: unknown): SearchStockResult | null {
   return safeParseApiResponse(searchStockResultSchema, value);
+}
+
+/** Validates a parsed JSON value as a batch stock quotes response. */
+export function parseStockQuotesBatchResponse(value: unknown): StockQuotesBatchResponse | null {
+  return safeParseApiResponse(stockQuotesBatchResponseSchema, value);
 }

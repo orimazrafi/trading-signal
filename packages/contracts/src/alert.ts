@@ -3,7 +3,7 @@ import { paginationMetaSchema } from "./pagination.js";
 import { safeParseApiResponse } from "./lib/zodApi.js";
 
 /** Maximum active price alerts per user. */
-export const MAX_ALERTS_PER_USER = 3;
+export const MAX_ALERTS_PER_USER = 10;
 
 /** Minimum allowed alert threshold percent. */
 export const ALERT_MIN_THRESHOLD_PERCENT = 0.5;

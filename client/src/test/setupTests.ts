@@ -42,6 +42,7 @@ export function resetMockIntersectionObservers(): void {
 class MockIntersectionObserver implements IntersectionObserver {
   readonly root: Element | Document | null = null
   readonly rootMargin = ''
+  readonly scrollMargin = ''
   readonly thresholds: ReadonlyArray<number> = []
 
   observe = vi.fn()
@@ -49,14 +50,14 @@ class MockIntersectionObserver implements IntersectionObserver {
   unobserve = vi.fn()
   takeRecords = vi.fn(() => [])
 
-  constructor(private readonly callback: IntersectionObserverCallbackLike) {
+  constructor(callback: IntersectionObserverCallbackLike) {
     const instance: MockIntersectionObserverInstance = {
       callback,
       observe: this.observe,
       disconnect: this.disconnect,
       unobserve: this.unobserve,
       trigger: (isIntersecting, target = document.createElement('div')) => {
-        callback([{ isIntersecting, target }], this)
+        callback([{ isIntersecting, target }], this as unknown as IntersectionObserver)
       },
     }
 

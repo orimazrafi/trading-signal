@@ -21,7 +21,6 @@ import {
   markAlertNotificationRead,
   updateUserPriceAlert,
 } from "../repositories/alert.repository.js";
-import type { PriceAlertRecord } from "../types/alertDb.js";
 import type { PriceAlert } from "../types/alert.js";
 import type { PaginationQuery } from "../lib/parsePaginationQuery.js";
 
@@ -63,7 +62,7 @@ export async function createAlertForUser(
   const existing = await findUserPriceAlertBySymbol(userId, fields.symbol);
 
   if (existing) {
-    return rearmAlertForUser(existing, fields, baselinePrice);
+    return rearmAlertForUser(userId, existing, fields, baselinePrice);
   }
 
   await assertUserHasActiveAlertSlot(userId);
@@ -78,12 +77,13 @@ export async function createAlertForUser(
 
 /** Re-enables a previously triggered alert for the same symbol. */
 async function rearmAlertForUser(
-  existing: PriceAlertRecord,
+  userId: string,
+  existing: PriceAlert,
   fields: ValidatedCreateAlertFields,
   baselinePrice: number,
 ): Promise<PriceAlert> {
   assertNoActiveAlertForSymbol(existing);
-  await assertUserHasActiveAlertSlot(existing.userId, { hintRemoveExisting: true });
+  await assertUserHasActiveAlertSlot(userId, { hintRemoveExisting: true });
 
   return updateUserPriceAlert(existing.id, {
     thresholdPercent: fields.thresholdPercent,

@@ -21,7 +21,9 @@
       "@trading-signal/contracts/news": ["../packages/contracts/src/news.ts"],
       "@trading-signal/contracts/watchlist": ["../packages/contracts/src/watchlist.ts"],
       "@trading-signal/contracts/zodApi": ["../packages/contracts/src/lib/zodApi.ts"],
-      "@trading-signal/contracts/httpStatus": ["../packages/contracts/src/httpStatus.ts"]
+      "@trading-signal/contracts/httpStatus": ["../packages/contracts/src/httpStatus.ts"],
+      "@trading-signal/contracts/apiPath": ["../packages/contracts/src/apiPath.ts"],
+      "@trading-signal/contracts/pagination": ["../packages/contracts/src/pagination.ts"]
     },
 
     /* Bundler mode */

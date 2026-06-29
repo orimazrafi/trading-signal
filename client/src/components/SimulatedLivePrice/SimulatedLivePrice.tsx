@@ -1,6 +1,9 @@
 import { LiveStreamIndicator } from '@/components/LiveStreamIndicator'
 import { useSimulatedLivePrice } from '@/hooks/useSimulatedLivePrice'
-import type { SimulatedPriceFlashDirection } from '@/lib/simulatedLivePrice'
+import {
+  DISPLAY_PRICE_DISCLAIMER,
+  type SimulatedPriceFlashDirection,
+} from '@/lib/simulatedLivePrice'
 import { cn } from '@/lib/utils'
 import type { SimulatedLivePriceProps } from './types'
 
@@ -16,12 +19,11 @@ function classNameForFlashDirection(direction: SimulatedPriceFlashDirection): st
   }
 }
 
-/** Renders a price with client-side micro-fluctuations and a live-stream label. */
+/** Renders a price with client-side micro-fluctuations and a delayed-data disclaimer. */
 function SimulatedLivePrice({
   price,
   lastSyncedAtMs,
   liveState,
-  streamLabel = 'Live price updates',
   className,
   labelClassName,
 }: SimulatedLivePriceProps) {
@@ -39,20 +41,21 @@ function SimulatedLivePrice({
 
   return (
     <div className="space-y-1">
-      <p
-        className={cn(
-          'inline-flex rounded-md px-1.5 py-0.5 text-lg font-semibold transition-colors duration-500',
-          flashClassName,
-          className,
-        )}
-      >
-        ${displayPrice.toFixed(2)}
+      <p className="inline-flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span
+          className={cn(
+            'inline-flex rounded-md px-1.5 py-0.5 text-lg font-semibold transition-colors duration-500',
+            flashClassName,
+            className,
+          )}
+        >
+          ${displayPrice.toFixed(2)}
+        </span>
+        <span className={cn('text-xs font-normal text-muted-foreground', labelClassName)}>
+          {DISPLAY_PRICE_DISCLAIMER}
+        </span>
       </p>
-      <LiveStreamIndicator
-        lastSyncedAtMs={lastSyncedAtMs}
-        label={streamLabel}
-        className={labelClassName}
-      />
+      <LiveStreamIndicator lastSyncedAtMs={lastSyncedAtMs} />
     </div>
   )
 }

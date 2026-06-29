@@ -2,14 +2,43 @@ import {
   searchStockResultSchema,
   stockHistorySchema,
   stockQuoteSchema,
+  stockQuotesBatchResponseSchema,
 } from '@trading-signal/contracts/stock'
 import type { SearchStockResult, StockHistory, StockHistoryRange, StockQuote } from '@/types/stock'
 import type { ApiRequestOptions } from './types'
-import { fetchValidated } from './fetchValidated'
+import { fetchValidated, postValidated } from './fetchValidated'
 
 /** Normalizes a ticker symbol to uppercase. */
 function normalizeSymbol(symbol: string): string {
   return symbol.trim().toUpperCase()
+}
+
+/** Fetches live or cached quotes for multiple symbols in one request. */
+export async function fetchStockQuotes(
+  symbols: readonly string[],
+  options: ApiRequestOptions = {},
+): Promise<StockQuote[]> {
+  const normalized = [
+    ...new Set(
+      symbols
+        .map((symbol) => symbol.trim().toUpperCase())
+        .filter((symbol) => symbol.length > 0),
+    ),
+  ]
+
+  if (normalized.length === 0) {
+    return []
+  }
+
+  const response = await postValidated(
+    '/stocks/quotes',
+    stockQuotesBatchResponseSchema,
+    'stock quotes batch',
+    { symbols: normalized },
+    { signal: options.signal },
+  )
+
+  return response.quotes
 }
 
 /** Fetches a live or cached stock quote without persisting a signal. */
