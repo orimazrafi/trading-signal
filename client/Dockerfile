@@ -10,7 +10,9 @@ COPY packages/contracts/src ./packages/contracts/src
 COPY client/package.json client/package-lock.json* ./client/
 
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+    npm ci --ignore-scripts
+
+RUN npm run build:contracts
 
 ARG TARGETARCH
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
