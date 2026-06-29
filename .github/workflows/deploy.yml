@@ -94,11 +94,27 @@ jobs:
             set -euo pipefail
             cd ~/trading-signal
             TAG="${{ needs.build-and-push.outputs.image_tag }}"
-            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
             export IMAGE_TAG="${TAG}"
             export GHCR_IMAGE_PREFIX="${{ env.REGISTRY }}/${{ github.repository }}"
-            docker compose --env-file .env.deploy -f docker-compose.deploy.yml pull
-            docker compose --env-file .env.deploy -f docker-compose.deploy.yml up -d --remove-orphans
+
+            login_ok=false
+            for attempt in $(seq 1 5); do
+              if echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin; then
+                login_ok=true
+                break
+              fi
+              echo "GHCR login attempt ${attempt}/5 failed; retrying in 15s..."
+              sleep 15
+            done
+
+            if [ "${login_ok}" != "true" ]; then
+              echo "GHCR login failed after retries; attempting to restart existing images"
+              docker compose --env-file .env.deploy -f docker-compose.deploy.yml up -d --remove-orphans || true
+            else
+              docker compose --env-file .env.deploy -f docker-compose.deploy.yml pull
+              docker compose --env-file .env.deploy -f docker-compose.deploy.yml up -d --remove-orphans
+            fi
+
             for attempt in $(seq 1 48); do
               if curl -fsS "https://${{ secrets.SITE_DOMAIN }}/health"; then
                 exit 0
