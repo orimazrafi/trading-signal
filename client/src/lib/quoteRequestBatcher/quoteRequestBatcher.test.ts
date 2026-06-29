@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { API_BASE_PATH } from '@trading-signal/contracts/apiPath'
 import { http, HttpResponse } from 'msw'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mswServer } from '@/test/msw/server'
 import {
   fetchStockQuoteBatched,

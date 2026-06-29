@@ -1,5 +1,5 @@
-import { SignalCard } from '@/features/dashboard/components/SignalCard'
 import { LazyStockCard } from '@/features/dashboard/components/LazyStockCard'
+import { SignalCard } from '@/features/dashboard/components/SignalCard'
 import { computeLiveChangePercent } from '@/features/watchlists/lib/liveQuoteChange'
 import type { WatchlistSignalCardProps } from './types'
 

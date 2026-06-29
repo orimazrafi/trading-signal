@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/api/queryKeys'
 import type { UseStockQuoteOptions } from '@/features/stocks/types'
 import { useSmartPollingInterval } from '@/hooks/useSmartPolling'
-import { fetchStockQuoteBatched } from '@/lib/quoteRequestBatcher'
 import {
   marketDataQueryOptions,
   STOCK_QUOTE_GC_TIME_MS,
@@ -10,6 +9,7 @@ import {
   STOCK_QUOTE_STALE_TIME_MS,
 } from '@/lib/marketDataQueryOptions'
 import { queryErrorHandledMeta } from '@/lib/queryMeta'
+import { fetchStockQuoteBatched } from '@/lib/quoteRequestBatcher'
 
 /** Loads a live stock quote for the given symbol via React Query. */
 export function useStockQuote(symbol: string | null, options: UseStockQuoteOptions = {}) {
