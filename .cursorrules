@@ -5,7 +5,7 @@ Scoped rules live in `.cursor/rules/`:
 | File | When it applies |
 |------|-----------------|
 | `core.mdc` | Always |
-| `testing.mdc` | `*.test.ts`, `*.test.tsx`, `*_test.go`, `e2e/**` |
+| `testing.mdc` | `*.test.ts`, `*.test.tsx`, `e2e/**` |
 | `client.mdc` | `client/**` |
 | `server.mdc` | `server/**` |
 

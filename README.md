@@ -49,7 +49,8 @@ trading-signal/
 │   └── contracts/          # Shared types and constants (client + server)
 ├── docker-compose.dev.yml  # Full local stack
 ├── docker-compose.prod.yml # Production builds
-└── .cursor/rules/          # Scoped Cursor rules by package
+├── .cursorrules            # Pointer to scoped rules (local `.cursor/` is gitignored)
+└── deploy/                 # Oracle Cloud deploy guide
 ```
 
 **npm workspaces:** `client`, `server`, `packages/*`
@@ -325,6 +326,7 @@ Paginated today: **price alerts**, **alert notifications**, **watchlists**.
 |--------|------|------|-------------|
 | GET | `/dashboard/news` | Optional | News feed (`?offset=&limit=`) |
 | GET | `/dashboard/recommendations` | No | Market Ideas |
+
 ### Stocks
 
 | Method | Path | Description |
@@ -439,43 +441,52 @@ Shared types in `packages/contracts` prevent client/server drift (alerts, HTTP s
 - `server.ts` — HTTP API only.
 - `worker.ts` — news ingest, recommendations refresh, and price-alert evaluation.
 
-### 3. Server layering
+### 3. Server layering and repository boundary
 
 ```
-routes → controllers → services → repositories
+routes → controllers → services → repositories → Prisma
 ```
 
-- No Prisma in controllers.
+- No Prisma in **controllers** or **services**.
+- **Repositories** map DB rows to domain types (`server/src/types/`) or `@trading-signal/contracts` shapes before returning.
 - Request parsing in `lib/parse*.ts` helpers.
 - Domain errors in services; HTTP mapping in controllers via typed error helpers.
 - Auth middleware: `server/src/middleware/auth.ts`.
 - Request logging: `requestContextMiddleware` adds `requestId`, logs `userId` and `durationMs` on response finish.
 
-### 4. Redis caching
+### 4. Simplified background stack
+
+- **No RabbitMQ** — the worker writes news directly to Redis; there is no message broker.
+- **No Go alerts-runner** — price-alert evaluation runs in the Node worker (`jobs/alerts.job.ts`).
+- **Redis pub/sub** remains only to bridge worker → HTTP server for SSE toasts.
+
+Alert evaluation fetches each **unique symbol once per cycle** (in-memory dedupe + Redis quote cache), not once per alert row.
+
+### 5. Redis caching
 
 - Quotes and history: TTL + `:backup` key for resilience.
 - Dashboard news and recommendations: TTL aligned with ingest intervals.
 - Helper: `lib/redisJsonCache.ts`, `lib/redisBackupCache.ts`.
 
-### 5. Market data providers
+### 6. Market data providers
 
 `MarketDataProvider` interface — Finnhub (quotes, news), Yahoo (free-tier history), Twelve Data (optional).
 
-### 6. Cookie-based JWT
+### 7. Cookie-based JWT
 
 httpOnly cookie (not localStorage) to reduce XSS token exposure.
 
-### 7. TypeScript discipline
+### 8. TypeScript discipline
 
 - No `as` type assertions — use narrowing, parsers, or generics (`as const` allowed).
 - Shared types promoted to dedicated `types.ts` files by scope (see `.cursor/rules/core.mdc`).
 
-### 8. Product rules
+### 9. Product rules
 
 - Maximum **10** active price alerts per user.
 - Triggered alert → **disabled**; re-arm from alert history.
 
-### 9. Alert emails
+### 10. Alert emails
 
 HTML templates live in `server/src/lib/alertEmailTemplate.ts`. Inline “TS” monogram header — no external image URL (localhost logos break in Gmail). Sent via Resend when configured.
 
@@ -540,7 +551,7 @@ Testing conventions (behavior over mock wiring): see [`.cursor/rules/testing.mdc
 
 **Phase 2 integration coverage** (Testcontainers Postgres + Redis): auth signup/login/me, price alert CRUD limits, watchlist create + add stock. Requires Docker locally for `npm run test:integration`.
 
-**Phase 3 client coverage** (Vitest + React Testing Library): smart polling, intersection observer, validated API fetch, `usePriceAlerts`, and lazy quote loading in `LazyStockCard`.
+**Phase 3 client coverage** (Vitest + React Testing Library): smart polling, intersection observer, quote batching (`quoteRequestBatcher`), validated API fetch, `usePriceAlerts`, and lazy quote loading in `LazyStockCard`.
 
 **Phase 4 E2E coverage** (Playwright against Docker dev stack): landing news, signup UI, watchlist chart, Market Ideas URL filters, price alerts. Market-data-dependent tests skip automatically when the server has no vendor API key.
 
@@ -588,11 +599,10 @@ Checklist:
 
 ## Code conventions and Cursor rules
 
-| File | Scope |
-|------|--------|
-| `.cursor/rules/core.mdc` | Always — types, no magic strings, no `as` casts |
-| `.cursor/rules/client.mdc` | `client/**` — React Query, component layout, API paths |
-| `.cursor/rules/server.mdc` | `server/**` — layering, logging, pagination, HTTP status |
+| Location | Scope |
+|----------|--------|
+| [`.cursorrules`](.cursorrules) | Entry point — lists scoped rule files |
+| `.cursor/rules/*.mdc` | Detailed rules per package (local; listed in `.gitignore`) |
 
 Principles:
 
