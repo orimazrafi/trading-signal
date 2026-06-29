@@ -39,6 +39,9 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      - name: Create server env for E2E
+        run: cp server/.env.example server/.env
+
       - name: Start dev stack
         run: docker compose -f docker-compose.dev.yml up -d --build
 
