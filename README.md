@@ -586,19 +586,33 @@ cd alerts-runner && go test ./...   # or: npm run test:go from repo root (requir
 
 ## Production deployment
 
+### Local (build on machine)
+
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
+### Oracle Cloud ($0) — recommended
+
+Full guide: **[deploy/README.md](deploy/README.md)**
+
+Summary:
+
+1. Always Free **ARM** VM (Ubuntu) on Oracle Cloud
+2. Free subdomain (e.g. DuckDNS) → VM public IP
+3. `bash deploy/oracle-bootstrap.sh` on the VM
+4. `.env.deploy` + `server/.env` on the server
+5. GitHub Actions **Deploy** workflow → GHCR → SSH (`docker-compose.deploy.yml` + Caddy TLS)
+
 Checklist:
 
 - `NODE_ENV=production`
-- Strong `JWT_SECRET`
+- Strong `JWT_SECRET` and `POSTGRES_PASSWORD`
 - `AUTH_ALLOW_MOCK=false`
-- `prisma migrate deploy` (never `db push --accept-data-loss` in production)
+- `prisma migrate deploy` via server entrypoint (never `db push --accept-data-loss` in production)
 - Finnhub / Resend / Google credentials configured
-- `CLIENT_URL` and `GOOGLE_CALLBACK_URL` point to the real domain (`…/api/v1/auth/google/callback`)
-- Docker healthcheck hits `GET /health`
+- `CLIENT_URL` and `GOOGLE_CALLBACK_URL` point to the public HTTPS URL (`…/api/v1/auth/google/callback`)
+- `GET /health` via Caddy → client nginx → server
 
 ---
 

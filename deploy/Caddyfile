@@ -1,0 +1,5 @@
+# Public HTTPS entrypoint — proxies to the client nginx container (which forwards /api to server).
+{$SITE_DOMAIN} {
+	encode gzip
+	reverse_proxy client:80
+}

@@ -12,7 +12,12 @@ COPY client/package.json client/package-lock.json* ./client/
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
 
-RUN npm install @tailwindcss/oxide-linux-x64-gnu -w client
+ARG TARGETARCH
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+      npm install @tailwindcss/oxide-linux-arm64-gnu -w client; \
+    else \
+      npm install @tailwindcss/oxide-linux-x64-gnu -w client; \
+    fi
 
 WORKDIR /app/client
 

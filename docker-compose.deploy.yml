@@ -1,0 +1,145 @@
+# Oracle Cloud / VPS deploy — GHCR images + Caddy TLS.
+# On the VM: copy deploy/env.deploy.example → .env.deploy, server/.env.example → server/.env
+# Run: docker compose --env-file .env.deploy -f docker-compose.deploy.yml pull && up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: trading
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.deploy}
+      POSTGRES_DB: trading_signal
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trading -d trading_signal"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  worker:
+    image: ${GHCR_IMAGE_PREFIX:?Set GHCR_IMAGE_PREFIX}/server:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: ["node", "dist/worker.js"]
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://trading:${POSTGRES_PASSWORD}@postgres:5432/trading_signal
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      RECOMMENDATIONS_ENABLED: "true"
+      RECOMMENDATIONS_INTERVAL_MS: "300000"
+      RECOMMENDATION_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL,AMZN,META,JPM,XOM"
+      NEWS_INGEST_ENABLED: "true"
+      NEWS_INGEST_INTERVAL_MS: "300000"
+      NEWS_INGEST_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  server:
+    image: ${GHCR_IMAGE_PREFIX}/server:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://trading:${POSTGRES_PASSWORD}@postgres:5432/trading_signal
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://rabbitmq:5672
+      JWT_EXPIRES_IN: 1h
+      CLIENT_URL: ${CLIENT_URL:?Set CLIENT_URL in .env.deploy}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:?Set GOOGLE_CALLBACK_URL in .env.deploy}
+      AUTH_ALLOW_MOCK: "false"
+      RECOMMENDATIONS_ENABLED: "true"
+      RECOMMENDATION_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL,AMZN,META,JPM,XOM"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "fetch(''http://127.0.0.1:3000/health'').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  alerts-runner:
+    image: ${GHCR_IMAGE_PREFIX}/alerts-runner:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      DATABASE_URL: postgresql://trading:${POSTGRES_PASSWORD}@postgres:5432/trading_signal
+      REDIS_URL: redis://redis:6379
+      ALERT_CHECK_INTERVAL_MS: "300000"
+      STOCK_CACHE_TTL_SECONDS: "60"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      server:
+        condition: service_started
+
+  client:
+    image: ${GHCR_IMAGE_PREFIX}/client:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_started
+      worker:
+        condition: service_started
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?Set SITE_DOMAIN in .env.deploy}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - client
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
