@@ -89,6 +89,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 30m
           script: |
             set -euo pipefail
             cd ~/trading-signal
@@ -98,12 +99,12 @@ jobs:
             export GHCR_IMAGE_PREFIX="${{ env.REGISTRY }}/${{ github.repository }}"
             docker compose --env-file .env.deploy -f docker-compose.deploy.yml pull
             docker compose --env-file .env.deploy -f docker-compose.deploy.yml up -d --remove-orphans
-            for attempt in $(seq 1 24); do
+            for attempt in $(seq 1 48); do
               if curl -fsS "https://${{ secrets.SITE_DOMAIN }}/health"; then
                 exit 0
               fi
-              echo "Health check attempt ${attempt}/24 failed; retrying in 5s..."
+              echo "Health check attempt ${attempt}/48 failed; retrying in 5s..."
               sleep 5
             done
-            echo "Health check failed after 2 minutes"
+            echo "Health check failed after 4 minutes"
             exit 1
