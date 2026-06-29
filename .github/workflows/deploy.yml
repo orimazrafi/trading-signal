@@ -111,5 +111,12 @@ jobs:
             export GHCR_IMAGE_PREFIX="${{ env.REGISTRY }}/${{ github.repository }}"
             docker compose --env-file .env.deploy -f docker-compose.deploy.yml pull
             docker compose --env-file .env.deploy -f docker-compose.deploy.yml up -d --remove-orphans
-            sleep 15
-            curl -fsS "https://${{ secrets.SITE_DOMAIN }}/health"
+            for attempt in $(seq 1 24); do
+              if curl -fsS "https://${{ secrets.SITE_DOMAIN }}/health"; then
+                exit 0
+              fi
+              echo "Health check attempt ${attempt}/24 failed; retrying in 5s..."
+              sleep 5
+            done
+            echo "Health check failed after 2 minutes"
+            exit 1
