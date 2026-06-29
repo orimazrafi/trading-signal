@@ -54,7 +54,7 @@ jobs:
           context: .
           file: server/Dockerfile
           target: production
-          platforms: linux/amd64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ steps.meta.outputs.prefix }}/server:${{ steps.meta.outputs.tag }}
@@ -68,7 +68,7 @@ jobs:
           context: .
           file: client/Dockerfile
           target: production
-          platforms: linux/amd64
+          platforms: linux/arm64
           push: true
           tags: |
             ${{ steps.meta.outputs.prefix }}/client:${{ steps.meta.outputs.tag }}
