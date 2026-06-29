@@ -55,7 +55,7 @@ export const HTTP_STATUS_IN_APP: Record<HttpStatusCode, string> = {
   [HTTP_STATUS.INTERNAL_SERVER_ERROR]: 'Unexpected server error.',
   [HTTP_STATUS.BAD_GATEWAY]: 'Upstream dependency failed (market data quote or Google OAuth).',
   [HTTP_STATUS.SERVICE_UNAVAILABLE]:
-    'Feature or dependency unavailable (market data not configured or alerts-runner dev trigger disabled).',
+    'Feature or dependency unavailable (market data not configured or dev-only feature disabled).',
   [HTTP_STATUS.NOT_IMPLEMENTED]: 'Endpoint or provider capability is not implemented.',
 }
 

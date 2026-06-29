@@ -25,7 +25,6 @@
     "test:server": "npm run test -w server",
     "test:client": "npm run test -w client",
     "test:integration": "npm run test:integration -w server",
-    "test:go": "go test -C alerts-runner ./...",
     "test:unit": "npm-run-all --parallel test:contracts test:server test:client",
     "test": "npm run test:unit && npm run test:integration",
     "test:e2e": "playwright test --config e2e/playwright.config.ts",

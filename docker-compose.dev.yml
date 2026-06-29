@@ -104,7 +104,6 @@ services:
       AUTH_ALLOW_MOCK: "false"
       RECOMMENDATIONS_ENABLED: "true"
       RECOMMENDATION_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL,AMZN,META,JPM,XOM"
-      ALERTS_RUNNER_URL: http://alerts-runner:8081
     depends_on:
       postgres:
         condition: service_healthy
@@ -120,31 +119,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-
-  alerts-runner:
-    build:
-      context: ./alerts-runner
-      dockerfile: Dockerfile
-    image: trading-signal-alerts-runner:dev
-    ports:
-      - "8081:8081"
-    env_file:
-      - ./server/.env
-    environment:
-      DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
-      REDIS_URL: redis://redis:6379
-      ALERT_CHECK_INTERVAL_MS: "300000"
-      STOCK_CACHE_TTL_SECONDS: "60"
-      ALERT_RUNNER_DEV_HTTP: "true"
-      ALERT_RUNNER_DEV_HTTP_PORT: "8081"
-      CLIENT_URL: http://localhost:5173
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      server:
-        condition: service_started
 
   client:
     build:

@@ -40,9 +40,9 @@ queue/         → RabbitMQ publishers, consumers, parsers
 ## Worker separation
 
 - `server.ts` — HTTP API only.
-- `worker.ts` — background queue consumers; separate process from API.
+- `worker.ts` — background jobs (RabbitMQ consumers, news ingest, recommendations, price-alert evaluation); separate process from API.
 
-Price-alert **checking** runs in **alerts-runner** (Go), not in Node — do not add cron/check logic to the Express server.
+Price-alert **checking** runs in **`worker.ts`** via `jobs/alerts.job.ts` — not in the Express HTTP process. Dev manual trigger calls the same evaluation service from the API in development only.
 
 ## Logging
 

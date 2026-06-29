@@ -45,7 +45,6 @@ A personal trading dashboard for watchlists, market news, investment ideas (Mark
 trading-signal/
 ├── client/                 # React + Vite + Tailwind
 ├── server/                 # Express API + Prisma + background worker
-├── alerts-runner/          # Go — price alert checks + email + SSE pub/sub
 ├── packages/
 │   └── contracts/          # Shared types and constants (client + server)
 ├── docker-compose.dev.yml  # Full local stack
@@ -77,11 +76,7 @@ flowchart TB
 
   subgraph node [Node.js]
     Server[Express API :3000]
-    Worker[Worker — RabbitMQ consumers + jobs]
-  end
-
-  subgraph go [Go]
-    AlertsRunner[alerts-runner :8081]
+    Worker[Worker — RabbitMQ, news, recommendations, alerts]
   end
 
   subgraph data [Infrastructure]
@@ -103,12 +98,9 @@ flowchart TB
   Worker --> RMQ
   Worker --> Redis
   Worker --> Finnhub
-  AlertsRunner --> PG
-  AlertsRunner --> Redis
-  AlertsRunner --> Finnhub
-  AlertsRunner --> Resend
+  Worker --> Resend
+  Worker -->|Redis pub/sub| Server
   Server --> Google
-  AlertsRunner -->|Redis pub/sub| Server
   Server -->|SSE| Client
 ```
 
@@ -118,14 +110,13 @@ flowchart TB
 |-------|------|
 | **client** | UI, React Query, routing, design system |
 | **server (HTTP)** | Routes → controllers → services → repositories |
-| **server (worker)** | News ingest, recommendations refresh, RabbitMQ consumers — **not** alert checking |
-| **alerts-runner** | Scheduled price checks, triggers, email, Redis pub/sub for SSE |
+| **server (worker)** | News ingest, recommendations refresh, price-alert evaluation, RabbitMQ consumers |
 | **packages/contracts** | Shared models, `HTTP_STATUS`, API path constants, Zod parsers |
 
 ### Price alert flow
 
 1. User creates a `PriceAlert` (baseline price + threshold %).
-2. **alerts-runner** (every ~5 min during US market hours) reads price from Redis/Finnhub.
+2. **worker** (every ~5 min during US market hours) reads price from Redis/Finnhub.
 3. On breach → row in `AlertNotification`, alert disabled (`enabled: false`).
 4. Optional: branded email via Resend.
 5. Redis pub/sub → server SSE → client toast + unread badge on Alerts tab.
@@ -163,15 +154,6 @@ flowchart TB
 | bcrypt + JWT | Authentication |
 | Vitest + Supertest | Tests |
 | ESLint | Recommended TS, `no-console` (except `lib/logger/`) |
-
-### Alerts runner
-
-| Tool | Use |
-|------|-----|
-| Go 1.22 | Alert evaluation service |
-| PostgreSQL | Same DB as the Node server |
-| Redis | Quotes + pub/sub for SSE |
-| Resend | Alert emails |
 
 ### Contracts (`@trading-signal/contracts`)
 
@@ -219,7 +201,6 @@ docker compose -f docker-compose.dev.yml up -d --build
 | API | http://localhost:3000/api/v1 |
 | Health | http://localhost:3000/health |
 | RabbitMQ UI | http://localhost:15672 (guest/guest) |
-| alerts-runner (dev trigger) | http://localhost:8081 |
 
 ### Local development without full Docker (partial)
 
@@ -235,9 +216,6 @@ cd server && npm run dev:worker
 
 # Terminal 4 — client
 cd client && npm run dev
-
-# Terminal 5 — alerts-runner (requires Go)
-cd alerts-runner && go run .
 ```
 
 Vite proxies `/api` and `/health` to the server (`API_PROXY_TARGET`, default `http://localhost:3000` in Docker: `http://server:3000`).
@@ -291,8 +269,8 @@ Register the **exact** callback URL in [Google Cloud Console → Credentials](ht
 | Variable | Description |
 |----------|-------------|
 | `RESEND_API_KEY` / `EMAIL_FROM` | Alert emails (Resend) |
-| `ALERTS_RUNNER_URL` | e.g. `http://localhost:8081` — dev “Run check now” button |
-| `ALERT_CHECK_INTERVAL_MS` | Check interval in alerts-runner (Go) |
+| `ALERT_CHECK_INTERVAL_MS` | Price alert evaluation interval in the Node worker |
+| `ALERTS_EVALUATION_ENABLED` | Set `false` to disable alert checks |
 
 ### Production
 
@@ -460,11 +438,10 @@ This is **not** a WebSocket tick stream — it is **polling + client-side simula
 
 Shared types in `packages/contracts` prevent client/server drift (alerts, HTTP status, pagination, API paths).
 
-### 2. Separate worker and Go alert runner
+### 2. Separate API and worker processes
 
 - `server.ts` — HTTP API only.
-- `worker.ts` — RabbitMQ, news ingest, recommendations refresh.
-- **Price alert checking runs only in alerts-runner (Go)** — stable scheduling, isolated from the Express process.
+- `worker.ts` — RabbitMQ consumers, news ingest, recommendations refresh, and price-alert evaluation.
 
 ### 3. Server layering
 
@@ -504,7 +481,7 @@ httpOnly cookie (not localStorage) to reduce XSS token exposure.
 
 ### 9. Alert emails
 
-HTML templates live in **alerts-runner** (and a mirror in `server/src/lib/alertEmailTemplate.ts` for the Node email path). Inline “TS” monogram header — no external image URL (localhost logos break in Gmail). Sent via Resend when configured.
+HTML templates live in `server/src/lib/alertEmailTemplate.ts`. Inline “TS” monogram header — no external image URL (localhost logos break in Gmail). Sent via Resend when configured.
 
 ---
 
@@ -514,14 +491,13 @@ HTML templates live in **alerts-runner** (and a mirror in `server/src/lib/alertE
 
 ```bash
 # Logs
-docker compose -f docker-compose.dev.yml logs -f server client alerts-runner
+docker compose -f docker-compose.dev.yml logs -f server client worker
 
 # Rebuild after Dockerfile changes
 docker compose -f docker-compose.dev.yml up -d --build
 
 # Tests
 npm run test
-cd alerts-runner && go test ./...
 
 # Lint (both workspaces)
 npm run lint
@@ -548,7 +524,6 @@ Testing conventions (behavior over mock wiring): see [`.cursor/rules/testing.mdc
 | Script | What runs |
 |--------|-----------|
 | `npm run test:unit` | contracts, server unit, client — **in parallel** |
-| `npm run test:go` | alerts-runner (requires Go locally; always runs in CI) |
 | `npm run test:integration` | server HTTP integration (Testcontainers; needs Docker) |
 | `npm run test` | unit (parallel) then integration (serial) |
 | `npm run test:e2e` | Playwright (Docker dev stack on `:5173`) |
@@ -557,7 +532,7 @@ Testing conventions (behavior over mock wiring): see [`.cursor/rules/testing.mdc
 
 **CI** (`.github/workflows/ci.yml`) — parallel jobs on every push/PR:
 
-- `lint`, `test-contracts`, `test-server-unit`, `test-client`, `test-integration`, `test-go` run concurrently
+- `lint`, `test-contracts`, `test-server-unit`, `test-client`, `test-integration` run concurrently
 - `build` runs after all jobs pass
 
 **E2E** (`.github/workflows/e2e.yml`) — separate workflow:
@@ -565,7 +540,7 @@ Testing conventions (behavior over mock wiring): see [`.cursor/rules/testing.mdc
 - Runs on push to `main`/`master`, PRs that touch app/e2e paths, or manual dispatch
 - Docker dev stack + Playwright
 
-**Phase 1 unit coverage** targets pure helpers: chart series, simulated live price, recommendation filters (client); request parsers and pagination (server/contracts); alert email template (alerts-runner).
+**Phase 1 unit coverage** targets pure helpers: chart series, simulated live price, recommendation filters (client); request parsers, pagination, and alert change percent (server/contracts).
 
 **Phase 2 integration coverage** (Testcontainers Postgres + Redis): auth signup/login/me, price alert CRUD limits, watchlist create + add stock. Requires Docker locally for `npm run test:integration`.
 
@@ -579,7 +554,6 @@ Before opening a PR locally:
 npm run lint
 npm run test
 npm run build
-cd alerts-runner && go test ./...   # or: npm run test:go from repo root (requires Go)
 ```
 
 ---
@@ -623,7 +597,6 @@ Checklist:
 | `.cursor/rules/core.mdc` | Always — types, no magic strings, no `as` casts |
 | `.cursor/rules/client.mdc` | `client/**` — React Query, component layout, API paths |
 | `.cursor/rules/server.mdc` | `server/**` — layering, logging, pagination, HTTP status |
-| `.cursor/rules/alerts-runner.mdc` | `alerts-runner/**` |
 
 Principles:
 

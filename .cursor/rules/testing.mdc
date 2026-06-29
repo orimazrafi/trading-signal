@@ -1,6 +1,6 @@
 ---
 description: Unit, integration, and E2E test standards — behavior over mocks
-globs: "**/*.test.{ts,tsx},**/*.integration.test.ts,**/*_test.go,e2e/**"
+globs: "**/*.test.{ts,tsx},**/*.integration.test.ts,e2e/**"
 alwaysApply: false
 ---
 
@@ -53,8 +53,3 @@ Mocks are for **isolating I/O** (HTTP, DB, vendors), not for proving the code ca
 - Duplicating the same user journey in RTL **and** E2E — pick one layer.
 - Tests that break on refactors with no behavior change.
 - Coverage gates or tests that only assert mocks fired.
-
-## Go (alerts-runner)
-
-- Table-driven tests for pure helpers and email templates.
-- No external APIs in unit tests.

@@ -8,6 +8,5 @@ Scoped rules live in `.cursor/rules/`:
 | `testing.mdc` | `*.test.ts`, `*.test.tsx`, `*_test.go`, `e2e/**` |
 | `client.mdc` | `client/**` |
 | `server.mdc` | `server/**` |
-| `alerts-runner.mdc` | `alerts-runner/**` |
 
-Stack: client (Vite/React), server (Express/Prisma), alerts-runner (Go). Docker: `docker-compose.dev.yml` (local) or `docker-compose.prod.yml` (production builds).
+Stack: client (Vite/React), server (Express/Prisma + worker). Docker: `docker-compose.dev.yml` (local) or `docker-compose.prod.yml` (production builds).

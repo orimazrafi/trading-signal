@@ -76,19 +76,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push alerts-runner image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./alerts-runner
-          file: alerts-runner/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ${{ steps.meta.outputs.prefix }}/alerts-runner:${{ steps.meta.outputs.tag }}
-            ${{ steps.meta.outputs.prefix }}/alerts-runner:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   deploy:
     needs: build-and-push
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'

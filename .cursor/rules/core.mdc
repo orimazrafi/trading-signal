@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Stack
 
-Monorepo: **client** (Vite/React), **server** (Express/Prisma), **alerts-runner** (Go), Docker Compose.
+Monorepo: **client** (Vite/React), **server** (Express/Prisma + background worker), Docker Compose.
 
 ## Must
 

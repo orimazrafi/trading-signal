@@ -97,24 +97,6 @@ services:
       retries: 5
       start_period: 30s
 
-  alerts-runner:
-    image: ${GHCR_IMAGE_PREFIX}/alerts-runner:${IMAGE_TAG:-latest}
-    restart: unless-stopped
-    env_file:
-      - ./server/.env
-    environment:
-      DATABASE_URL: postgresql://trading:${POSTGRES_PASSWORD}@postgres:5432/trading_signal
-      REDIS_URL: redis://redis:6379
-      ALERT_CHECK_INTERVAL_MS: "300000"
-      STOCK_CACHE_TTL_SECONDS: "60"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      server:
-        condition: service_started
-
   client:
     image: ${GHCR_IMAGE_PREFIX}/client:${IMAGE_TAG:-latest}
     restart: unless-stopped

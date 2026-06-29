@@ -11,7 +11,8 @@ import {
   startAlertStream,
 } from "../lib/alertStreamRegistry/index.js";
 import { parsePaginationQuery } from "../lib/parsePaginationQuery.js";
-import { isAlertRunnerDevTriggerEnabled, triggerAlertsRunnerCheck } from "../lib/alertsRunnerClient.js";
+import { runAlertEvaluationOnce } from "../jobs/alerts.job.js";
+import { env } from "../config/env.js";
 import {
   createAlertForUser,
   deleteAlertForUser,
@@ -156,22 +157,21 @@ export function getAlertStream(req: Request, res: Response): void {
   registerAlertStreamClient(userId, res);
 }
 
-/** Triggers an immediate alert check via alerts-runner (development only). */
+/** Triggers an immediate alert check (development only). */
 export async function postAlertRunCheck(req: Request, res: Response): Promise<void> {
   if (!getAuthenticatedUserId(req, res)) {
     return;
   }
 
-  if (!isAlertRunnerDevTriggerEnabled()) {
+  if (env.nodeEnv !== "development") {
     res.status(HTTP_STATUS.SERVICE_UNAVAILABLE).json({
-      error:
-        "Alert check trigger is unavailable. Start alerts-runner with ALERT_RUNNER_DEV_HTTP=true and set ALERTS_RUNNER_URL.",
+      error: "Alert check trigger is only available in development.",
     });
     return;
   }
 
   try {
-    await triggerAlertsRunnerCheck();
+    await runAlertEvaluationOnce();
     res.json({ ok: true });
   } catch (error) {
     sendAlertErrorResponse(res, error, req.path);

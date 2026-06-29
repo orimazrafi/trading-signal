@@ -1,8 +1,10 @@
 import { prisma as prismaClient } from "../config/prisma.js";
+import { AlertAlreadyTriggeredError } from "../lib/alertAlreadyTriggeredError.js";
 import type { AlertNotification, PriceAlert } from "../types/alert.js";
 import type {
   AlertNotificationRecord,
   AlertPrismaClient,
+  EnabledPriceAlertWithEmail,
   PriceAlertRecord,
   PriceAlertUpdateFields,
 } from "../types/alertDb.js";
@@ -179,4 +181,76 @@ export async function findUserEmailById(userId: string): Promise<string | null> 
   });
 
   return user?.email ?? null;
+}
+
+/** Lists all enabled price alerts with owner emails for background evaluation. */
+export async function listEnabledAlertsWithUserEmail(): Promise<EnabledPriceAlertWithEmail[]> {
+  const rows = await prisma.priceAlert.findMany({
+    where: { enabled: true },
+    include: {
+      user: {
+        select: { email: true },
+      },
+    },
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    userId: row.userId,
+    userEmail: row.user.email,
+    symbol: row.symbol,
+    thresholdPercent: row.thresholdPercent,
+    baselinePrice: row.baselinePrice,
+    emailEnabled: row.emailEnabled,
+  }));
+}
+
+/** Atomically inserts a notification and disables the alert; throws when already triggered. */
+export async function triggerPriceAlert(input: {
+  alertId: string;
+  userId: string;
+  symbol: string;
+  changePercent: number;
+  currentPrice: number;
+  baselinePrice: number;
+  emailSent: boolean;
+}): Promise<AlertNotificationRecord> {
+  return prismaClient.$transaction(async (tx) => {
+    const now = new Date();
+
+    const notification = await tx.alertNotification.create({
+      data: {
+        alertId: input.alertId,
+        userId: input.userId,
+        symbol: input.symbol,
+        changePercent: input.changePercent,
+        price: input.currentPrice,
+        baselinePrice: input.baselinePrice,
+        emailSent: input.emailSent,
+      },
+    });
+
+    const updated = await tx.priceAlert.updateMany({
+      where: { id: input.alertId, enabled: true },
+      data: {
+        enabled: false,
+        lastTriggeredAt: now,
+        updatedAt: now,
+      },
+    });
+
+    if (updated.count === 0) {
+      throw new AlertAlreadyTriggeredError();
+    }
+
+    return notification;
+  });
+}
+
+/** Marks a triggered notification as having its email delivered. */
+export async function markAlertNotificationEmailSent(notificationId: string): Promise<void> {
+  await prisma.alertNotification.update({
+    where: { id: notificationId },
+    data: { emailSent: true },
+  });
 }

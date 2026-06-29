@@ -12,6 +12,17 @@ export type PriceAlertRecord = {
   updatedAt: Date;
 };
 
+/** Enabled price alert loaded for background evaluation with the owner's email. */
+export type EnabledPriceAlertWithEmail = {
+  id: string;
+  userId: string;
+  userEmail: string;
+  symbol: string;
+  thresholdPercent: number;
+  baselinePrice: number;
+  emailEnabled: boolean;
+};
+
 /** AlertNotification row shape from PostgreSQL. */
 export type AlertNotificationRecord = {
   id: string;

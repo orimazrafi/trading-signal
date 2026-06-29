@@ -104,26 +104,6 @@ services:
       retries: 5
       start_period: 30s
 
-  alerts-runner:
-    build:
-      context: ./alerts-runner
-      dockerfile: Dockerfile
-    image: trading-signal-alerts-runner:latest
-    env_file:
-      - ./server/.env
-    environment:
-      DATABASE_URL: postgresql://trading:trading@postgres:5432/trading_signal
-      REDIS_URL: redis://redis:6379
-      ALERT_CHECK_INTERVAL_MS: "300000"
-      STOCK_CACHE_TTL_SECONDS: "60"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      server:
-        condition: service_started
-
   client:
     build:
       context: ./client

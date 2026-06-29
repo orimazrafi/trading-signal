@@ -9,20 +9,6 @@ function trimEnv(value: string | undefined): string {
   return (value ?? "").trim();
 }
 
-/** Resolves alerts-runner URL for dev manual check triggers. */
-function resolveAlertsRunnerUrl(nodeEnv: string): string {
-  const configured = trimEnv(process.env.ALERTS_RUNNER_URL);
-  if (configured) {
-    return configured;
-  }
-
-  if (nodeEnv === "development") {
-    return "http://localhost:8081";
-  }
-
-  return "";
-}
-
 const nodeEnv = process.env.NODE_ENV ?? "development";
 
 const jwtExpiresIn = process.env.JWT_EXPIRES_IN ?? "1h";
@@ -93,7 +79,7 @@ export const env = {
   resendApiKey: trimEnv(process.env.RESEND_API_KEY),
   emailFrom: trimEnv(process.env.EMAIL_FROM),
   alertCheckIntervalMs: Number(process.env.ALERT_CHECK_INTERVAL_MS) || 300_000,
-  alertsRunnerUrl: resolveAlertsRunnerUrl(nodeEnv),
+  alertsEvaluationEnabled: process.env.ALERTS_EVALUATION_ENABLED !== "false",
   mockUser: {
     userId: "user-mock-default",
     email: "demo@trading-signal.local",
