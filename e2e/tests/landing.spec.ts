@@ -15,8 +15,9 @@ test.describe('Landing page', () => {
     await newsResponse
 
     await expect(page.getByTestId('news-feed')).toBeVisible()
+    const newsFeed = page.getByTestId('news-feed')
     await expect(
-      page.getByText(/No headlines available right now|Broad market news from multiple sources/),
+      newsFeed.getByRole('article').first().or(newsFeed.getByText('No headlines available right now')),
     ).toBeVisible()
   })
 })
