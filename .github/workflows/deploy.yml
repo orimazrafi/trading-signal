@@ -9,7 +9,7 @@ on:
 
 concurrency:
   group: deploy-production
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -89,7 +89,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 30m
+          command_timeout: 60m
           script: |
             set -euo pipefail
             cd ~/trading-signal
@@ -113,7 +113,8 @@ jobs:
               echo "GHCR login failed after retries; attempting to restart existing images"
               docker compose --env-file .env.deploy -f docker-compose.deploy.yml up -d --remove-orphans || true
             else
-              docker compose --env-file .env.deploy -f docker-compose.deploy.yml pull
+              echo "Pulling only application images (server, client); base images stay cached on the VM"
+              docker compose --env-file .env.deploy -f docker-compose.deploy.yml pull server client
               docker compose --env-file .env.deploy -f docker-compose.deploy.yml up -d --remove-orphans
             fi
 
