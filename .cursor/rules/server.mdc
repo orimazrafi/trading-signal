@@ -1,5 +1,5 @@
 ---
-description: Node API — layers, logging, queues, workers
+description: Node API — layers, worker, repositories, logging
 globs: server/**
 alwaysApply: false
 ---
@@ -12,21 +12,27 @@ alwaysApply: false
 routes/        → wire HTTP paths only
 controllers/   → parse request, call service, map status/response
 services/      → business logic, orchestration
-repositories/  → Prisma / DB access only
+repositories/  → Prisma / DB access only; map rows → domain or contracts types
 lib/           → pure helpers (parsers, constants, registries)
-types/         → shared TypeScript types
+types/         → domain types (e.g. watchlist, signal, alertDb row shapes)
 config/        → env, prisma, redis, bootstrap
 jobs/          → repeating worker tasks (news, recommendations, alerts)
 ```
 
-**Must:** controllers stay thin; no raw SQL/Prisma in controllers; no HTTP concerns in repositories.
+**Must:**
+
+- Controllers stay thin — no Prisma, no business rules.
+- **Services must not import `@prisma/client`.** They receive domain types from repositories or `@trading-signal/contracts`.
+- Repositories own all Prisma access and map DB rows before returning (e.g. `PriceAlert`, `WatchlistWithStocks`, `SignalRecord`).
+- No HTTP concerns in repositories.
+- Prisma-specific errors (e.g. `P2002` unique violation) are handled in repositories via `lib/prismaErrors.ts`, not with `Prisma` imports in services.
 
 - **API versioning:** all endpoints must be prefixed with `/api/v1/`. Use consistent plural nouns and kebab-case for resource naming (e.g. `/api/v1/price-alerts`, never `/api/v1/getAlerts`).
 - **Health check:** expose a lightweight `/health` endpoint directly in `server.ts` (outside feature routes) that returns `HTTP_STATUS.OK` (200) and service status (DB connected, Redis status). Mandatory for Docker Compose orchestration.
 
 ## Data & responses
 
-- **Mandatory pagination:** every list endpoint (alerts, logs, signals, etc.) must implement pagination from day one via query parameters (`?page=1&limit=20` or cursor-based). Map these directly to Prisma `skip` and `take` in the repository layer.
+- **Mandatory pagination:** every list endpoint (alerts, watchlists, etc.) must implement pagination via query parameters (`?page=1&limit=20`). Map these to Prisma `skip` and `take` in the repository layer.
 - **Structured logging meta:** when using `log.info(msg, meta)`, always include a correlation `requestId`, `userId` (if authenticated), and operation `duration` for log aggregators.
 
 ## HTTP
@@ -35,14 +41,17 @@ jobs/          → repeating worker tasks (news, recommendations, alerts)
 - Use **`HTTP_STATUS`** from `@trading-signal/contracts/httpStatus` for all `res.status(...)` calls and domain error `statusCode` values — never raw numbers.
 - **`HTTP_STATUS.CONFLICT` (409)** — duplicate alert symbol, max alerts reached, duplicate watchlist name, or email already registered.
 - **`HTTP_STATUS_IN_APP`** documents what each code means in this API; **`describeHttpStatus()`** returns that text.
-- Exceptions: none for new code; migrate existing `fetch` call sites to axios.
+- Stock quotes: `GET /stock/:symbol` (single) and `POST /stocks/quotes` (batch body `{ symbols: string[] }`).
 
-## Worker separation
+## Background stack
 
-- `server.ts` — HTTP API only.
-- `worker.ts` — background jobs (news ingest, recommendations, price-alert evaluation); separate process from API.
+- **No RabbitMQ** — worker jobs write directly to Redis/Postgres; do not add a message broker.
+- `server.ts` — HTTP API only (+ Redis pub/sub subscriber for alert SSE).
+- `worker.ts` — separate process: news ingest, recommendations refresh, price-alert evaluation.
 
-Price-alert **checking** runs in **`worker.ts`** via `jobs/alerts.job.ts` — not in the Express HTTP process. Dev manual trigger calls the same evaluation service from the API in development only.
+Price-alert **checking** runs in **`worker.ts`** via `jobs/alerts.job.ts` — not in the Express HTTP process. Evaluation dedupes **unique symbols per cycle** and uses Redis quote cache before calling Finnhub. Dev manual trigger (`POST /price-alerts/run-check`) calls the same evaluation service in development only.
+
+On trigger: persist `AlertNotification`, disable alert, optional Resend email, `redis.publish` → server SSE.
 
 ## Logging
 
@@ -53,14 +62,17 @@ Price-alert **checking** runs in **`worker.ts`** via `jobs/alerts.job.ts` — no
 
 ## Error handling
 
-- Wrap async controllers, services, and queue consumers in `try/catch`.
-- Return typed HTTP errors from controllers; throw domain errors from services.
+- Wrap async controllers and services in `try/catch`.
+- Return typed HTTP errors from controllers via `lib/*HttpErrors.ts`; throw domain errors (`AlertError`, `WatchlistError`, etc.) from services.
 
 ## Examples
 
 ```ts
 // ❌ Prisma in controller
 const row = await prisma.priceAlert.findMany(...)
+
+// ❌ Prisma types in service
+import type { Signal } from "@prisma/client"
 
 // ✅ controller → service → repository
 const alerts = await getAlertsForUser(userId)
@@ -70,12 +82,18 @@ const alerts = await getAlertsForUser(userId)
 // ❌ inline request body type + parsing in handler
 app.patch('/alerts/:id', (req, res) => { const x = req.body.threshold... })
 
-// ✅ named parser helper in controller file or lib/
+// ✅ named parser helper in lib/
 const input = parseUpdatePriceAlertBody(req.body)
 ```
 
 ## Prefer
 
 - Request/query parsing in `lib/parse*.ts` helpers.
-- Domain constants in `lib/*Constants.ts`.
+- Domain constants in `lib/*Constants.ts` or `@trading-signal/contracts`.
 - Config values from `server/src/config/env.ts`, not hardcoded.
+- Promote shared row shapes to `server/src/types/` when used outside one repository.
+
+## Product limits
+
+- Maximum **10** active price alerts per user (`MAX_ALERTS_PER_USER` in contracts).
+- One active alert per symbol per user; triggered alerts disable until re-armed.
