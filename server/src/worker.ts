@@ -1,51 +1,31 @@
 import { connectWorkerInfrastructure } from "./config/bootstrap.js";
 import { prisma } from "./config/prisma.js";
 import { redis } from "./config/redis.js";
-import { startNewsIngestJob, stopNewsIngestJob } from "./jobs/news-ingest.job.js";
 import { startAlertsJob, stopAlertsJob } from "./jobs/alerts.job.js";
+import { startNewsIngestJob, stopNewsIngestJob } from "./jobs/news-ingest.job.js";
 import {
   startRecommendationsJob,
   stopRecommendationsJob,
 } from "./jobs/recommendations.job.js";
 import { log } from "./lib/logger/index.js";
-import { registerAllConsumers } from "./queue/consumers/registerConsumers.js";
-import {
-  closeRabbitConnection,
-  retryRabbitConnection,
-  setRabbitReconnectHandler,
-} from "./queue/rabbit/connection.js";
-import { formatRabbitError, isFatalRabbitError } from "./queue/rabbit/errors.js";
 
-/** Boots infrastructure connections and starts RabbitMQ consumers. */
+/** Boots infrastructure connections and starts background jobs. */
 async function startWorker(): Promise<void> {
   await connectWorkerInfrastructure();
-  setRabbitReconnectHandler(registerAllConsumers);
 
-  try {
-    await registerAllConsumers();
-    startNewsIngestJob();
-    startRecommendationsJob();
-    startAlertsJob();
-    log.info("Stock, news, recommendations, and alert evaluation workers are running");
-  } catch (error) {
-    log.error("Failed during consumer startup", error);
-
-    if (isFatalRabbitError(error)) {
-      process.exit(1);
-    }
-
-    await retryRabbitConnection(formatRabbitError(error));
-  }
+  startNewsIngestJob();
+  startRecommendationsJob();
+  startAlertsJob();
+  log.info("News, recommendations, and alert evaluation workers are running");
 }
 
-/** Gracefully closes broker, cache, and database connections. */
+/** Gracefully closes cache and database connections. */
 async function shutdown(): Promise<void> {
   log.info("Shutting down...");
   stopNewsIngestJob();
   stopRecommendationsJob();
   stopAlertsJob();
   try {
-    await closeRabbitConnection();
     await redis.quit();
     await prisma.$disconnect();
   } catch (error) {

@@ -4,9 +4,7 @@
  * Every N minutes (and once on startup):
  *   1. Fetch press releases from Twelve Data
  *   2. Skip articles we already queued (Redis dedupe)
- *   3. Publish new articles to the market_news RabbitMQ queue
- *
- * The news consumer then processes them into the dashboard feed.
+ *   3. Write new articles into the dashboard Redis feed
  */
 import { env } from "../config/env.js";
 import { log } from "../lib/logger/index.js";
@@ -21,7 +19,7 @@ async function pollNews(): Promise<void> {
     const newArticleCount = await ingestLatestNews();
 
     if (newArticleCount > 0) {
-      log.info("Queued new articles", { queue: env.marketNewsQueue, count: newArticleCount });
+      log.info("Ingested new articles", { count: newArticleCount });
     }
   } catch (error) {
     log.error("News poll failed", error);

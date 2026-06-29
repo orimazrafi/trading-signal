@@ -6,7 +6,6 @@ import { sendStockErrorResponse } from "../lib/stockHttpErrors.js";
 import { getStockHistory } from "../services/stock-history.service.js";
 import {
   getStockQuote,
-  getTrendingStocks,
   searchStock,
 } from "../services/stock.service.js";
 
@@ -60,21 +59,6 @@ export async function searchStockBySymbol(req: Request, res: Response): Promise<
   try {
     const result = await searchStock(userId, symbol);
     res.json(result);
-  } catch (error) {
-    sendStockErrorResponse(res, error, req.path);
-  }
-}
-
-/** Returns top trending stocks for the authenticated user. */
-export async function getTrending(req: Request, res: Response): Promise<void> {
-  const userId = getAuthenticatedUserId(req, res);
-  if (!userId) {
-    return;
-  }
-
-  try {
-    const trending = await getTrendingStocks(userId);
-    res.json({ userId, trending });
   } catch (error) {
     sendStockErrorResponse(res, error, req.path);
   }

@@ -26,15 +26,6 @@ services:
       timeout: 5s
       retries: 10
 
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-
   worker:
     image: ${GHCR_IMAGE_PREFIX:?Set GHCR_IMAGE_PREFIX}/server:${IMAGE_TAG:-latest}
     restart: unless-stopped
@@ -45,7 +36,6 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://trading:${POSTGRES_PASSWORD}@postgres:5432/trading_signal
       REDIS_URL: redis://redis:6379
-      RABBITMQ_URL: amqp://rabbitmq:5672
       RECOMMENDATIONS_ENABLED: "true"
       RECOMMENDATIONS_INTERVAL_MS: "300000"
       RECOMMENDATION_SYMBOLS: "AAPL,MSFT,TSLA,NVDA,GOOGL,AMZN,META,JPM,XOM"
@@ -56,8 +46,6 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
 
   server:
@@ -70,7 +58,6 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://trading:${POSTGRES_PASSWORD}@postgres:5432/trading_signal
       REDIS_URL: redis://redis:6379
-      RABBITMQ_URL: amqp://rabbitmq:5672
       JWT_EXPIRES_IN: 1h
       CLIENT_URL: ${CLIENT_URL:?Set CLIENT_URL in .env.deploy}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:?Set GOOGLE_CALLBACK_URL in .env.deploy}
@@ -81,8 +68,6 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      rabbitmq:
         condition: service_healthy
       worker:
         condition: service_started

@@ -41,9 +41,6 @@ export const env = {
   marketDataHistoryProvider: trimEnv(process.env.MARKET_DATA_HISTORY_PROVIDER),
   finnhubApiKey: trimEnv(process.env.FINNHUB_API_KEY),
   twelveDataApiKey: trimEnv(process.env.TWELVE_DATA_API_KEY),
-  rabbitmqUrl: process.env.RABBITMQ_URL ?? "amqp://localhost:5672",
-  stockTicksQueue: "stock_ticks",
-  marketNewsQueue: "market_news",
   dashboardNewsRedisKey: "dashboard:news",
   dashboardNewsCacheTtlSeconds:
     Number(process.env.DASHBOARD_NEWS_CACHE_TTL_SECONDS) ||
@@ -74,7 +71,6 @@ export const env = {
     .split(",")
     .map((symbol) => symbol.trim().toUpperCase())
     .filter(Boolean),
-  surgeThresholdPercent: 1.5,
   redisUrl: process.env.REDIS_URL ?? "redis://localhost:6379",
   resendApiKey: trimEnv(process.env.RESEND_API_KEY),
   emailFrom: trimEnv(process.env.EMAIL_FROM),

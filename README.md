@@ -76,13 +76,12 @@ flowchart TB
 
   subgraph node [Node.js]
     Server[Express API :3000]
-    Worker[Worker — RabbitMQ, news, recommendations, alerts]
+    Worker[Worker — news, recommendations, alerts]
   end
 
   subgraph data [Infrastructure]
     PG[(PostgreSQL)]
     Redis[(Redis)]
-    RMQ[RabbitMQ]
   end
 
   subgraph external [External]
@@ -95,7 +94,6 @@ flowchart TB
   Server --> PG
   Server --> Redis
   Server --> Worker
-  Worker --> RMQ
   Worker --> Redis
   Worker --> Finnhub
   Worker --> Resend
@@ -110,7 +108,7 @@ flowchart TB
 |-------|------|
 | **client** | UI, React Query, routing, design system |
 | **server (HTTP)** | Routes → controllers → services → repositories |
-| **server (worker)** | News ingest, recommendations refresh, price-alert evaluation, RabbitMQ consumers |
+| **server (worker)** | News ingest, recommendations refresh, price-alert evaluation |
 | **packages/contracts** | Shared models, `HTTP_STATUS`, API path constants, Zod parsers |
 
 ### Price alert flow
@@ -149,7 +147,6 @@ flowchart TB
 | Prisma 6 | ORM + migrations |
 | PostgreSQL 16 | Primary database |
 | Redis (ioredis) | Quote/history cache, dashboard feeds, alert pub/sub |
-| RabbitMQ | `stock_ticks`, `market_news` queues |
 | axios | Outbound market-data HTTP |
 | bcrypt + JWT | Authentication |
 | Vitest + Supertest | Tests |
@@ -200,13 +197,12 @@ docker compose -f docker-compose.dev.yml up -d --build
 | Client | http://localhost:5173 |
 | API | http://localhost:3000/api/v1 |
 | Health | http://localhost:3000/health |
-| RabbitMQ UI | http://localhost:15672 (guest/guest) |
 
 ### Local development without full Docker (partial)
 
 ```bash
 # Terminal 1 — infrastructure only
-docker compose -f docker-compose.dev.yml up postgres redis rabbitmq -d
+docker compose -f docker-compose.dev.yml up postgres redis -d
 
 # Terminal 2 — API
 cd server && npm run dev
@@ -259,7 +255,7 @@ Register the **exact** callback URL in [Google Cloud Console → Credentials](ht
 
 | Variable | Description |
 |----------|-------------|
-| `NEWS_INGEST_*` | Worker pulls news into RabbitMQ |
+| `NEWS_INGEST_*` | Worker ingests news into the dashboard Redis feed |
 | `RECOMMENDATIONS_*` | Worker computes Market Ideas |
 | `DASHBOARD_NEWS_CACHE_TTL_SECONDS` | Redis TTL for news feed |
 | `DASHBOARD_RECOMMENDATIONS_CACHE_TTL_SECONDS` | Redis TTL for recommendations |
@@ -329,8 +325,6 @@ Paginated today: **price alerts**, **alert notifications**, **watchlists**.
 |--------|------|------|-------------|
 | GET | `/dashboard/news` | Optional | News feed (`?offset=&limit=`) |
 | GET | `/dashboard/recommendations` | No | Market Ideas |
-| GET | `/dashboard/trending` | Yes | Trending symbols |
-
 ### Stocks
 
 | Method | Path | Description |
@@ -441,7 +435,7 @@ Shared types in `packages/contracts` prevent client/server drift (alerts, HTTP s
 ### 2. Separate API and worker processes
 
 - `server.ts` — HTTP API only.
-- `worker.ts` — RabbitMQ consumers, news ingest, recommendations refresh, and price-alert evaluation.
+- `worker.ts` — news ingest, recommendations refresh, and price-alert evaluation.
 
 ### 3. Server layering
 

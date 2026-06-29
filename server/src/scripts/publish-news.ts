@@ -1,17 +1,15 @@
+import { connectWorkerInfrastructure } from "../config/bootstrap.js";
 import { redis } from "../config/redis.js";
 import { log } from "../lib/logger/index.js";
-import { closeRabbitConnection, connectRabbitMq } from "../queue/rabbit/connection.js";
 import { ingestLatestNews } from "../services/news-ingest.service.js";
 
-/** Runs a one-shot news ingest and publishes unseen articles to RabbitMQ. */
+/** Runs a one-shot news ingest and writes unseen articles to the dashboard feed. */
 async function main(): Promise<void> {
-  await redis.connect();
-  await connectRabbitMq();
+  await connectWorkerInfrastructure();
 
-  const publishedCount = await ingestLatestNews();
-  log.info("One-shot news ingest completed", { publishedCount });
+  const ingestedCount = await ingestLatestNews();
+  log.info("One-shot news ingest completed", { ingestedCount });
 
-  await closeRabbitConnection();
   await redis.quit();
 }
 

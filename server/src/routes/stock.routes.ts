@@ -4,7 +4,6 @@ import { stockQuoteRateLimiter } from "../lib/rateLimiters.js";
 import {
   getStockBySymbol,
   getStockHistoryBySymbol,
-  getTrending,
   searchStockBySymbol,
 } from "../controllers/stock.controller.js";
 
@@ -19,4 +18,3 @@ stockRoutes.get(
 );
 stockRoutes.get("/stock/:symbol", stockQuoteRateLimiter, requireAuth, getStockBySymbol);
 stockRoutes.get("/stocks/:symbol/search", requireAuth, searchStockBySymbol);
-stockRoutes.get("/dashboard/trending", requireAuth, getTrending);

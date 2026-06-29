@@ -1,7 +1,7 @@
 import { env } from "../config/env.js";
 import { redis } from "../config/redis.js";
 import { getMarketDataProvider } from "../providers/marketData/index.js";
-import { publishNewsArticle } from "../queue/publishers/news.publisher.js";
+import { newsService } from "./news.service.js";
 import type { IncomingNewsArticle } from "../types/news.js";
 
 export { parseTwelveDataPressRelease } from "../providers/marketData/twelveData/twelveDataProvider.js";
@@ -25,7 +25,7 @@ export function resolveIncomingNewsArticleId(article: IncomingNewsArticle): stri
   return buildFallbackArticleId(article.title, article.publishedAt);
 }
 
-/** Marks article ids as already ingested so the queue is not republished. */
+/** Marks article ids as already ingested so they are not reprocessed. */
 export async function markIncomingArticlesAsSeen(articles: IncomingNewsArticle[]): Promise<void> {
   if (articles.length === 0) {
     return;
@@ -35,14 +35,14 @@ export async function markIncomingArticlesAsSeen(articles: IncomingNewsArticle[]
   await redis.sadd(SEEN_ARTICLE_IDS_KEY, ...articleIds);
 }
 
-/** Returns true when the article id was already published to the queue. */
-async function wasArticlePublished(articleId: string): Promise<boolean> {
+/** Returns true when the article id was already processed into the dashboard feed. */
+async function wasArticleIngested(articleId: string): Promise<boolean> {
   const seen = await redis.sismember(SEEN_ARTICLE_IDS_KEY, articleId);
   return seen === 1;
 }
 
-/** Marks an article id as published to avoid duplicate queue messages. */
-async function markArticlePublished(articleId: string): Promise<void> {
+/** Marks an article id as ingested to avoid duplicate processing. */
+async function markArticleIngested(articleId: string): Promise<void> {
   await redis.sadd(SEEN_ARTICLE_IDS_KEY, articleId);
 }
 
@@ -62,22 +62,22 @@ export async function fetchMarketNewsArticlesForSymbols(
   return getMarketDataProvider().fetchNewsArticles(symbols);
 }
 
-/** Publishes unseen articles to RabbitMQ and returns the number queued. */
+/** Fetches unseen articles and writes them into the dashboard news feed. */
 export async function ingestLatestNews(): Promise<number> {
   const articles = await fetchLatestMarketNewsArticles();
-  let publishedCount = 0;
+  let ingestedCount = 0;
 
   for (const article of articles) {
     const articleId = resolveIncomingNewsArticleId(article);
 
-    if (await wasArticlePublished(articleId)) {
+    if (await wasArticleIngested(articleId)) {
       continue;
     }
 
-    await publishNewsArticle(article);
-    await markArticlePublished(articleId);
-    publishedCount += 1;
+    await newsService.processIncomingNewsArticle(article);
+    await markArticleIngested(articleId);
+    ingestedCount += 1;
   }
 
-  return publishedCount;
+  return ingestedCount;
 }

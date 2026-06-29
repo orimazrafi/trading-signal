@@ -1,6 +1,6 @@
 import type { NewsSentiment } from "./stock.js";
 
-/** Raw article payload published to the market_news queue. */
+/** Raw article payload from the market data provider during ingest. */
 export type IncomingNewsArticle = {
   title: string;
   url: string;

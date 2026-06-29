@@ -31,7 +31,7 @@ function resolveNewsArticleSymbol(symbol: unknown, source: string): string | nul
   return parseSymbolFromSource(source);
 }
 
-/** Validates an incoming market news message from RabbitMQ. */
+/** Validates an incoming market news article during ingest. */
 export function parseIncomingNewsArticle(payload: unknown): IncomingNewsArticle | null {
   if (!isRecord(payload)) {
     return null;

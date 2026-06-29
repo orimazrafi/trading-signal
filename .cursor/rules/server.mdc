@@ -16,7 +16,7 @@ repositories/  → Prisma / DB access only
 lib/           → pure helpers (parsers, constants, registries)
 types/         → shared TypeScript types
 config/        → env, prisma, redis, bootstrap
-queue/         → RabbitMQ publishers, consumers, parsers
+jobs/          → repeating worker tasks (news, recommendations, alerts)
 ```
 
 **Must:** controllers stay thin; no raw SQL/Prisma in controllers; no HTTP concerns in repositories.
@@ -40,7 +40,7 @@ queue/         → RabbitMQ publishers, consumers, parsers
 ## Worker separation
 
 - `server.ts` — HTTP API only.
-- `worker.ts` — background jobs (RabbitMQ consumers, news ingest, recommendations, price-alert evaluation); separate process from API.
+- `worker.ts` — background jobs (news ingest, recommendations, price-alert evaluation); separate process from API.
 
 Price-alert **checking** runs in **`worker.ts`** via `jobs/alerts.job.ts` — not in the Express HTTP process. Dev manual trigger calls the same evaluation service from the API in development only.
 

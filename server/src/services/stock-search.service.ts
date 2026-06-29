@@ -2,7 +2,7 @@ import { log } from "../lib/logger/index.js";
 import { createSignalRecord } from "../repositories/signal.repository.js";
 import type { SearchStockResult, StockQuote } from "../types/stock.js";
 import { getStockQuote } from "./stock-quote.service.js";
-import { calculateChangePercent, readPreviousPrice } from "./stock-tick.service.js";
+import { calculateChangePercent, readPreviousPrice, writeLastSeenPrice } from "../lib/stockPriceChange.js";
 
 /** Normalizes a ticker symbol to uppercase. */
 function normalizeSymbol(symbol: string): string {
@@ -35,6 +35,8 @@ async function persistSearchSignal(
     previousPrice,
     changePercent,
   });
+
+  await writeLastSeenPrice(quote.symbol, quote.price);
 
   log.info("Persisted search signal to PostgreSQL", {
     userId,

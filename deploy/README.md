@@ -7,7 +7,7 @@ Deploy **Trading Signal** to an Oracle Always Free ARM VM using GHCR images and 
 ```
 Internet → Caddy :443 → client (nginx) → server :3000
                               ↓
-                    postgres, redis, rabbitmq, worker, server, client, caddy
+                    postgres, redis, worker, server, client, caddy
 ```
 
 ## 1. Create the VM (Oracle Console)
