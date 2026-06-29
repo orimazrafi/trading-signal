@@ -1,6 +1,6 @@
+import { LiveStreamIndicator } from '@/components/LiveStreamIndicator'
 import { useSimulatedLivePrice } from '@/hooks/useSimulatedLivePrice'
 import type { SimulatedPriceFlashDirection } from '@/lib/simulatedLivePrice'
-import { LiveStreamIndicator } from '@/components/LiveStreamIndicator'
 import { cn } from '@/lib/utils'
 import type { SimulatedLivePriceProps } from './types'
 

@@ -1,11 +1,11 @@
+import { renderHook, waitFor } from '@testing-library/react'
 import { API_BASE_PATH } from '@trading-signal/contracts/apiPath'
 import { HTTP_STATUS } from '@trading-signal/contracts/httpStatus'
-import { renderHook, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
-import { createQueryClientWrapper } from '@/test/testUtils'
 import { priceAlertsListBody } from '@/test/msw/fixtures'
 import { mswServer } from '@/test/msw/server'
+import { createQueryClientWrapper } from '@/test/testUtils'
 import type { PriceAlert } from '@/types/alert'
 import { usePriceAlerts } from './usePriceAlerts'
 

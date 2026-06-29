@@ -1,12 +1,12 @@
-import { API_BASE_PATH } from '@trading-signal/contracts/apiPath'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { API_BASE_PATH } from '@trading-signal/contracts/apiPath'
 import { http, HttpResponse } from 'msw'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { mswServer } from '@/test/msw/server'
 import {
   getMockIntersectionObservers,
   resetMockIntersectionObservers,
 } from '@/test/setupTests'
-import { mswServer } from '@/test/msw/server'
 import { createQueryClientWrapper } from '@/test/testUtils'
 import LazyStockCard from './LazyStockCard'
 

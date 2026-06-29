@@ -15,6 +15,7 @@ import {
   toRecommendationSelectValue,
   type RecommendationSortKey,
 } from '@/features/dashboard/lib/recommendationFilters'
+import { DASHBOARD_STICKY_SUBBAR_SHELL_CLASS } from '@/lib/surfaceClasses'
 import {
   isRecommendationAction,
   isRecommendationSource,
@@ -23,7 +24,6 @@ import {
   type RecommendationAction,
   type RecommendationSource,
 } from '@/types/recommendation'
-import { DASHBOARD_STICKY_SUBBAR_SHELL_CLASS } from '@/lib/surfaceClasses'
 import type { RecommendationsToolbarProps } from './types'
 
 const SORT_LABELS: Record<RecommendationSortKey, string> = {

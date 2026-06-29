@@ -1,10 +1,10 @@
-import { authResponseSchema, logoutResponseSchema } from '@trading-signal/contracts/auth'
 import { API_BASE_PATH } from '@trading-signal/contracts/apiPath'
+import { authResponseSchema, logoutResponseSchema } from '@trading-signal/contracts/auth'
 import { ApiValidationError } from '@trading-signal/contracts/zodApi'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
-import { fetchValidated, patchValidated, postValidated } from './fetchValidated'
 import { mswServer } from '@/test/msw/server'
+import { fetchValidated, patchValidated, postValidated } from './fetchValidated'
 
 describe('fetchValidated', () => {
   it('returns parsed data when the API response matches the schema', async () => {
